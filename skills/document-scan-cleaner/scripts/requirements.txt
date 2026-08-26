@@ -1,0 +1,7 @@
+numpy>=1.26
+opencv-python-headless>=4.10
+Pillow>=10.0
+pillow-heif>=0.18
+reportlab>=4.0
+img2pdf>=0.5
+

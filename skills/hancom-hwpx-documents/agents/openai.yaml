@@ -1,0 +1,5 @@
+interface:
+  display_name: "Hancom HWPX Documents"
+  short_description: "Create and repair print-ready HWPX forms."
+  default_prompt: "Use $hancom-hwpx-documents to create or revise a print-ready Hancom HWPX document."
+

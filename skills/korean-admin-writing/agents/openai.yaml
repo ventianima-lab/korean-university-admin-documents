@@ -1,0 +1,6 @@
+interface:
+  display_name: "Korean Administrative Writing"
+  short_description: "근거와 고정 문구를 보존하는 한국어 행정문서 작성"
+  default_prompt: "Use $korean-admin-writing to polish this administrative document without changing protected facts or template wording."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,8 @@
+interface:
+  display_name: "Korean Style Guide"
+  short_description: "한국어 문서의 어조와 용어 및 형식을 일관되게 정리"
+  default_prompt: "Use $style-guide to make the Korean tone, terminology, and formatting consistent."
+
+policy:
+  allow_implicit_invocation: true
+

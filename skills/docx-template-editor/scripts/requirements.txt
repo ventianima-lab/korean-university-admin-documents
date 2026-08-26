@@ -1,0 +1,2 @@
+# Optional fallback when Poppler/pdftoppm is unavailable.
+PyMuPDF>=1.24

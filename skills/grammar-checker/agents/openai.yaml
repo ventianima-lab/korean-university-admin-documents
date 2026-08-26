@@ -1,0 +1,8 @@
+interface:
+  display_name: "Korean Grammar Checker"
+  short_description: "한국어 문서의 맞춤법과 문법 및 띄어쓰기를 최종 점검"
+  default_prompt: "Use $grammar-checker to correct the Korean grammar and spacing in this text."
+
+policy:
+  allow_implicit_invocation: true
+

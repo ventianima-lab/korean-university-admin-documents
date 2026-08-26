@@ -1,0 +1,6 @@
+interface:
+  display_name: "DOCX Template Editor"
+  short_description: "Word 양식과 검토 표시를 보존하며 편집·검증"
+  default_prompt: "Use $docx-template-editor to fill this Word template and verify every rendered page."
+policy:
+  allow_implicit_invocation: true

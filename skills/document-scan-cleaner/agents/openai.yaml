@@ -1,0 +1,5 @@
+interface:
+  display_name: "Document Scan Cleaner"
+  short_description: "사진 문서를 깔끔한 스캔 이미지와 PDF로 보정"
+  default_prompt: "Use $document-scan-cleaner to turn these document photos into clean scan images and a combined PDF."
+

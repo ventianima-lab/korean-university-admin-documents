@@ -1,0 +1,8 @@
+interface:
+  display_name: "Fluent Korean Writing"
+  short_description: "명확하고 자연스러운 한국어 문서와 공지 작성 지원"
+  default_prompt: "Use $fluent-korean to draft clear, natural Korean prose for this document or notice."
+
+policy:
+  allow_implicit_invocation: true
+

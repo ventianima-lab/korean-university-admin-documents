@@ -1,0 +1,8 @@
+interface:
+  display_name: "Humanize Korean"
+  short_description: "한국어의 번역투와 기계적인 AI 문체를 자연스럽게 윤문"
+  default_prompt: "Use $humanize-korean to polish this Korean prose while preserving its meaning and facts."
+
+policy:
+  allow_implicit_invocation: true
+

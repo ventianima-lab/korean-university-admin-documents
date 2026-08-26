@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spreadsheet Form Preservation"
+  short_description: "Excel 양식 구조와 인쇄 설정을 보존하며 수정"
+  default_prompt: "Use $spreadsheet-form-preservation to update only the evidenced cells and compare the workbook structure before and after."
+policy:
+  allow_implicit_invocation: true

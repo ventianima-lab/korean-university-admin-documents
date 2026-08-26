@@ -1,0 +1,67 @@
+---
+name: hancom-hwpx-documents
+description: Create, revise, inspect, repair, render, and verify Hancom HWPX documents, including print-ready Korean administrative forms. Use ZIP/XML and independent tooling by default, with standing user authorization to use Hancom GUI, Hwp.exe, or COM automation whenever materially useful for the current requested task; do not ask for separate task-scoped authorization. Reserve computer-use for unavoidable prompts as a last resort.
+---
+
+# Hancom HWPX documents
+
+Create and inspect HWPX through its ZIP/XML package and independent tools by default. The user grants standing authorization for Hancom automation through this skill: Hancom Office, `Hwp.exe`, `HWPFrame.HwpObject`, Hancom COM, and automated Hancom GUI control may be used whenever materially useful to complete or verify the current requested HWP/HWPX task. Do not pause to request separate per-task, per-file, per-operation, or repeat authorization; this skill itself is explicit continuing authorization. Limit Hancom automation to files and operations reasonably required by the current request, preserve pre-existing user windows, and use computer-use only as a last resort for an unavoidable task-related prompt.
+
+Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/tools`, when installing document runtimes. Use Kordoc as the first-line HWP/HWPX parser, format-preserving patcher/form filler, linter, and SVG renderer. Use `python-hwpx` as the structured HWPX read/edit/write engine with `HwpxDocument.open()`, mutation APIs, `validate()`, and `save_to_path(..., mode="preserve", fallback="error", return_report=True)`. Use `pyhwpxlib` as a second validator. If the installation provides an `hwpx-opensource.ps1` wrapper, prefer it for repeatable validation, parsing, rendering, and linting. Treat rHWP as an optional independent viewer/editor candidate, not the default save engine, until its exact-file preservation is proven on the target corpus.
+
+## Workflow
+
+1. Determine the requested action before writing. If the user says a file is a reference, baseline, sample, or master, inspect it read-only. Do not infer permission to create a copy, normalize styles, or save a derivative.
+2. Before editing, identify the actual container from the file signature, not the extension: OLE Compound File (`D0 CF 11 E0 ...`) is binary HWP and ZIP (`PK`) is HWPX. Then read the supplied document structurally and inspect `Preview/PrvImage.png` when present. A user-edited file is the authoritative visual master unless the user says otherwise.
+3. Preserve the master exactly: cell fills, character styling, fonts, spacing, borders, line weights, page settings, object positions, and row/column dimensions. Never replace those properties with generic defaults or an arbitrary color standard.
+4. Create, edit, resize, or save an HWPX only when the user explicitly requests that action. Work on a separate output unless the user explicitly authorizes overwriting the source.
+5. Before creating or adapting a form, search the supplied current-year manual, official-form folder, and department index for the exact form title. Selection priority is: exact current-year official form, then a user-saved known-openable derivative of that exact form, then a prior-year exact form. Do not repurpose a different form when the exact form exists (for example, never turn a program preapproval form into a meeting preapproval form when an official meeting preapproval form is available). Copy the selected authoritative master and change only the requested fields.
+6. After changing text, invalidate stale line-layout caches for every changed paragraph. Remove that paragraph's direct child `hp:linesegarray`; do not alter `paraPrIDRef`, `styleIDRef`, `charPrIDRef`, or other formatting references. For changed paragraphs inside a table, also set the enclosing `hp:tc` element's existing `dirty` attribute to `1`. Do not invent a `dirty` attribute on `hp:p`; ordinary body paragraphs reflow by omitting their stale `hp:linesegarray`. Use `scripts/reflow_hwpx.py` to repair a package broadly when the exact changed-paragraph set was not tracked.
+7. Validate any changed HWPX: `mimetype` must be the first, uncompressed ZIP entry; `Contents/header.xml`, `Contents/section0.xml`, and `Contents/content.hpf` must parse; extracted text must contain all requested labels and names; and no changed paragraph may retain its pre-edit `hp:linesegarray`.
+8. When copying a page, table, field, picture, or form, prefer the authoritative master’s existing copy pattern. Do not partially renumber object IDs or global `zOrder` values: remapping only selected `hp:tbl`, `hp:pic`, or field IDs while leaving other relationships unchanged can create a Hancom-only damage error. If remapping is required, remap the complete relationship graph and verify the exact result in the installed Hangul. Otherwise preserve the master’s accepted duplicate placeholder and visual-object IDs.
+9. Validate package references, not only ZIP/XML syntax. Every section, preview, image, or other part named by `Contents/content.hpf`, `META-INF/container.xml`, or `META-INF/container.rdf` must exist. For a form embedded in a multi-page or multi-section HWPX, default to a topology-preserving full copy with only the target form fields changed. Do not create a one-page HWPX by deleting top-level `hp:p`, section parts, manifests, previews, or relationship parts unless the source contains a proven page-copy pattern and the exact final file is verified in installed Hangul under the standing authorization. Every standalone section must retain its authoritative `hp:secPr` and `hp:colPr`; their absence is a hard failure, while copying `hp:secPr` alone is not proof of openability. Hancom 2020 may reject a package after internally consistent links or page topology are deleted or reserialized even though ZIP/XML validators pass.
+10. Do not treat open-source HWP-to-HWPX conversion success, ZIP validity, XML parsing, or a copied preview as proof that Hancom Hangul can open the file. Validate with a known-openable master topology, `kr.dogfoot.hwpxlib.reader.HWPXReader` or another independent importer, and PDF/page-image inspection when available. When installed-Hancom openability materially affects completion, test the exact file in Hangul automatically under the standing authorization; report `교차 파서 및 렌더 검증 성공, 한글 열림 미확인` only when that exact Hancom test could not actually be completed.
+11. If a user reports that an output does not open or Hangul labels it damaged, treat that report as a failed completion gate even when every open-source validator passes. Withdraw any prior success claim, preserve the failed artifact for diagnosis, and rebuild from the exact official form in a known-openable HWPX master through a different preservation path. Do not repeat the same serialization path, page-extraction method, or reconstructed package and call it repaired.
+12. Visually inspect the exact changed document whenever a current preview or independently rendered equivalent exists. A copied preview is not proof after XML edits; state that limitation if direct visual verification is unavailable.
+13. Match the target Hangul generation when compatibility matters. Inspect the installed `.hwpx` association and the `version.xml` of several documents actually saved by that installation. For Hangul 2020 build 11.0.0.9136, write `major=5`, `minor=1`, `micro=0`, `buildNumber=1`, and `appVersion="11, 0, 0, 9136 WIN32LEWindows_10"`; do not leave a version-13/5.1.1 declaration on an output intended for Hangul 2020. Hancom states that newer-version properties may not be supported by older versions.
+14. Run two independent format validators on the exact final bytes. Use `python-hwpx` (`HwpxDocument.open(...).validate()`) and `pyhwpxlib validate --mode both`. Treat any `lineseg_textpos_consistency` issue as a repair item; run `pyhwpxlib reflow-linesegs <file> --mode precise`, then repeat both validators. Preserve a backup before any canonical save or reflow.
+15. Do not report installed-Hancom success when only `Compat (Hancom OK)` passes. Treat format validators and independent PDF/page-image review as supporting evidence. When installed-Hancom compatibility materially affects delivery, launch the exact final path automatically under the standing authorization, require the title to change from `빈 문서 1 - 한글` to the exact file name, and record the SHA256. Record `HancomOpened=미검증` only when that exact-file launch/reopen test could not actually be completed, not because separate authorization was not requested.
+16. Before delivery, record three gates for the exact final bytes: `TemplateMatch` (exact official form title and source), `MasterTopologyPreserved` (yes/no), and `HancomOpened` (verified/unverified). Never mark the task complete when `TemplateMatch` is false, topology was reconstructed without a proven pattern, or the user has already reported the exact final file as damaged.
+
+## Authorized exact-page copying in Hangul
+
+Use this route when the user requires pages from an HWP/HWPX master to be copied exactly and open-source tools cannot preserve page topology. The standing Hancom authorization in this skill already covers this route; do not ask for separate authorization before page-copy automation. Keep the run limited to files and operations reasonably required by the current request.
+
+Read [references/hancom-page-copy.md](references/hancom-page-copy.md) before the first page-copy run on a machine. Prefer the bundled [scripts/copy_hancom_pages_exact.ps1](scripts/copy_hancom_pages_exact.ps1) instead of rebuilding COM commands.
+
+- Use Hancom's `CopyPage` and `PastePage`; do not select text ranges or rebuild pages from Markdown.
+- Determine physical page indexes with `PageCount` and `GetPageText(index, 0xFFFFFFFF)`. The `Goto` dialog follows printed page numbering and can select a different physical page.
+- Navigate from `MoveDocBegin` with repeated `MovePageDown`. Copy the source pages into a separate output and remove only the target document's automatically created initial blank page with `DeletePage`.
+- `PastePage` can fail transiently or when pages cross section/topology boundaries. Retry the same clipboard operation once after 400-600 ms. If a multi-page paste still fails, preserve the authoritative grouping by writing separate output files rather than reconstructing the package.
+- Kordoc patch can leave empty cell paragraphs when edited Markdown has fewer lines than the master. If those empty paragraphs push a fixed form onto an extra page, use [scripts/clean_empty_form_paragraphs.py](scripts/clean_empty_form_paragraphs.py) with exact changed-cell anchors. The cleaner must preserve original namespace prefixes, remove only empty paragraphs in matched cells, set existing cell `dirty="1"`, and strip stale `linesegarray` children before Hancom reopen verification.
+- Register Hancom's official `FilePathCheckerModuleExample` and require `RegisterModule(...) == true`. `SetMessageBoxMode` is not a replacement for the file-path security module; use it only for ordinary task-related confirmation dialogs that fall within the standing authorization and reset it in `finally`.
+- Capture the pre-existing `Hwp.exe` process list. Quit only COM objects created by the current run and never terminate a pre-existing user window.
+- Verify the exact saved bytes with Hancom reopen, expected page count, `GetPageText`, SHA-256, the two open-source validators, and a current render.
+
+## Forms and attendance sheets
+
+Use the user’s corrected file as the sizing and visual baseline whenever available. For an explicitly requested new attendance sheet, check that:
+
+- all attendees, the header row, and each signature column fit on one page;
+- signature cells are at least 9 mm high when practical;
+- fills and character styling match the authoritative master unless the user explicitly requests a change;
+- no unrelated visual property changes occur.
+
+## Unified table structure
+
+When consecutive rectangular sections share the same overall width and alignment, build them as one actual HWPX table object rather than separate floating tables or independently positioned boxes.
+
+- Reproduce differing internal column layouts with cell merging and splitting inside the same table.
+- Make sections look separate with borderless spacer rows, selective border suppression, row height, and cell margins while retaining one selectable table structure.
+- Preserve the reference appearance exactly: the unified structure must not introduce visible grid lines, shifts, altered gaps, or changed widths.
+- Prefer one coherent table for headings, information rows, and roster grids when their outer left and right edges align. Use separate objects only when geometry, wrapping, pagination, or the user’s explicit instruction requires them.
+- Verify structurally that the intended region is represented by one table element and visually that it remains indistinguishable from the reference.
+
+## Guardrail
+
+Comments about shade density, sizing, or visual mistakes are not automatically edit requests. When the user identifies a corrected file as the reference, record and follow that reference; do not generate a “cleaned,” “normalized,” or “corrected” HWPX unless explicitly asked.

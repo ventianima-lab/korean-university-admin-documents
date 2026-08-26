@@ -1,0 +1,5 @@
+interface:
+  display_name: "HWP to HWPX Converter"
+  short_description: "HWP 바이너리를 무팝업 HWPX로 변환·검증"
+  default_prompt: "Use $hwp-to-hwpx-converter to convert an HWP file into a validated HWPX document without Hancom automation."
+
