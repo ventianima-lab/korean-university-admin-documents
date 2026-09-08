@@ -13,3 +13,5 @@ Apply the following route only to prose that is not protected by a supplied form
 4. Use `grammar-checker` last and change only clear errors.
 
 Do not normalize numbers, units, dates, list markers or links without an explicit governing rule. When rules conflict, preserve the source and report `UNIT_RULE_CONFLICT`. Return the polished result directly unless the user requests a detailed language audit.
+
+Apply `fluent-korean`'s prohibition on unsolicited administrative annotations: leave unsupported form fields blank, and do not insert workflow explanations into remarks or attachment fields. Apply `style-guide`'s item/quantity checks across related purchase documents, including package versus unit counts, specification subtotals, and stale prices or quantities after revisions.

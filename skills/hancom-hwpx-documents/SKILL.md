@@ -9,6 +9,14 @@ Create and inspect HWPX through its ZIP/XML package and independent tools by def
 
 Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/tools`, when installing document runtimes. Use Kordoc as the first-line HWP/HWPX parser, format-preserving patcher/form filler, linter, and SVG renderer. Use `python-hwpx` as the structured HWPX read/edit/write engine with `HwpxDocument.open()`, mutation APIs, `validate()`, and `save_to_path(..., mode="preserve", fallback="error", return_report=True)`. Use `pyhwpxlib` as a second validator. If the installation provides an `hwpx-opensource.ps1` wrapper, prefer it for repeatable validation, parsing, rendering, and linting. Treat rHWP as an optional independent viewer/editor candidate, not the default save engine, until its exact-file preservation is proven on the target corpus.
 
+## Mandatory template-first routing for Korean public documents
+
+- Interpret ordinary requests such as `공문 작성`, `공문 써줘`, or `공문 만들어줘` as requests to adapt the institution's existing form. They do not authorize designing a new form, rebuilding the layout, or starting from a generic document.
+- Before drafting the body, table, approval line, or footer, search in this order: a user-supplied or user-edited master; the current-year same-department same-document-type form; the current-year same-department latest public document; then the current university-wide official form. Select the highest-priority known-openable master and change only the authorized content.
+- Record the searched locations, candidates, and selected master as `TemplateSearch` evidence. Finding a suitable master blocks new-form generation. Do not generate a new HWPX or repurpose another form merely because the user did not provide an exact filename.
+- If no suitable master is found, stop before creating a document. Report the search result and ask whether to use the closest prior-year or other-department form, or to create a new form. Only an explicit instruction to create a new form authorizes new layout design.
+- Treat `TemplateMatch=false` or a missing `TemplateSearch` record as a hard completion failure for a newly drafted Korean public document.
+
 ## Official letters: manual and precedent first
 
 - Ordinary requests such as `공문 작성` require adapting an institutional form, not designing a new one. First inspect an applicable manual, notice, official form, or actual issued precedent. Search the supplied master, current-year same-department same-document-type records, the department's latest official letter, then institution-wide forms. If local evidence is insufficient, search the institution's notice board, administrative resources, and procedure manuals.
@@ -19,12 +27,15 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 
 ## Workflow
 
+For administrative deliverables, follow `fluent-korean`'s no-unsolicited-annotations rule and `style-guide`'s item/quantity consistency rule. Do not fill blank remarks with agent notes or paste conversation-only explanations into official forms. Obtain the user's approval for the exact wording and location before adding an unrequested explanation. Preserve official required wording; leave unsupported values blank. Check quantity meaning, package size versus total units, and row totals before text/render validation.
+
 1. Determine the requested action before writing. If the user says a file is a reference, baseline, sample, or master, inspect it read-only. Do not infer permission to create a copy, normalize styles, or save a derivative.
 2. Before editing, identify the actual container from the file signature, not the extension: OLE Compound File (`D0 CF 11 E0 ...`) is binary HWP and ZIP (`PK`) is HWPX. Then read the supplied document structurally and inspect `Preview/PrvImage.png` when present. A user-edited file is the authoritative visual master unless the user says otherwise.
 3. Preserve the master exactly: cell fills, character styling, fonts, spacing, borders, line weights, page settings, object positions, and row/column dimensions. Never replace those properties with generic defaults or an arbitrary color standard.
 4. Create, edit, resize, or save an HWPX only when the user explicitly requests that action. Work on a separate output unless the user explicitly authorizes overwriting the source.
 5. Before creating or adapting a form, search the supplied current-year manual, official-form folder, and department index for the exact form title. Selection priority is: exact current-year official form, then a user-saved known-openable derivative of that exact form, then a prior-year exact form. Do not repurpose a different form when the exact form exists (for example, never turn a program preapproval form into a meeting preapproval form when an official meeting preapproval form is available). Copy the selected authoritative master and change only the requested fields.
    - Treat every date cell inside a 결재란, approval block, signature block, or signer row as signer-controlled. Leave it blank even when the document date, issue date, submission date, or another supported date is known. Fill that exact approval-date field only when the user explicitly directs it; never copy another document date into it by inference.
+   - When the user or an official completed sample explicitly requires removing a manual-only form-number badge, remove the complete nested label table/run, not just its text. Preserve the paragraph containing `hp:secPr` and `hp:colPr`, all other fields and layout, and verify the badge is absent and the page count remains correct. This is form-specific: retain badges in other forms unless their removal is independently required.
 6. After changing text, invalidate stale line-layout caches for every changed paragraph. Remove that paragraph's direct child `hp:linesegarray`; do not alter `paraPrIDRef`, `styleIDRef`, `charPrIDRef`, or other formatting references. For changed paragraphs inside a table, also set the enclosing `hp:tc` element's existing `dirty` attribute to `1`. Do not invent a `dirty` attribute on `hp:p`; ordinary body paragraphs reflow by omitting their stale `hp:linesegarray`. Use `scripts/reflow_hwpx.py` to repair a package broadly when the exact changed-paragraph set was not tracked.
 7. Validate any changed HWPX: `mimetype` must be the first, uncompressed ZIP entry; `Contents/header.xml`, `Contents/section0.xml`, and `Contents/content.hpf` must parse; extracted text must contain all requested labels and names; and no changed paragraph may retain its pre-edit `hp:linesegarray`.
 8. When copying a page, table, field, picture, or form, prefer the authoritative master’s existing copy pattern. Do not partially renumber object IDs or global `zOrder` values: remapping only selected `hp:tbl`, `hp:pic`, or field IDs while leaving other relationships unchanged can create a Hancom-only damage error. If remapping is required, remap the complete relationship graph and verify the exact result in the installed Hangul. Otherwise preserve the master’s accepted duplicate placeholder and visual-object IDs.
@@ -54,7 +65,7 @@ Read [references/hancom-page-copy.md](references/hancom-page-copy.md) before the
 
 ## Forms and attendance sheets
 
-Use the user’s corrected file as the sizing and visual baseline whenever available. For an explicitly requested new attendance sheet, check that:
+Use the user’s corrected file as the sizing and visual baseline whenever available. Read [references/attendance-form.md](references/attendance-form.md) when adapting an attendance-sheet master. For an explicitly requested new attendance sheet, check that:
 
 - all attendees, the header row, and each signature column fit on one page;
 - signature cells are at least 9 mm high when practical;

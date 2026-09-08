@@ -29,6 +29,8 @@ Use `scripts/copy_hancom_pages_exact.ps1` for this sequence. If a page paste fai
 
 If format-preserving text patching leaves empty paragraphs in edited table cells and the form overflows, inspect the changed cells first. Run `scripts/clean_empty_form_paragraphs.py` only with anchors that uniquely identify those changed cells. The helper preserves the source namespace prefixes and ZIP entry properties. Always write a separate candidate, validate it, and reopen the candidate in Hancom before replacing a working file.
 
+When an explicitly identified form requires removing a manual-only badge, remove its entire nested label table and enclosing run after copying. Preserve the first paragraph and its section/column properties. Blank text alone leaves an empty object and does not reclaim space. Apply this only to forms with a documented removal requirement; preserve all other form-number badges. Reflow, reopen, and verify the expected page count and absence of the removed label.
+
 ## Completion gates
 
 - The source remains byte-identical.

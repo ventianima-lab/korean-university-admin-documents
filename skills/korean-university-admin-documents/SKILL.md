@@ -18,7 +18,7 @@ The user grants standing authorization through this skill for Hancom document au
 3. Snapshot protected values and structures before editing. Read [references/evidence-and-protected-fields.md](references/evidence-and-protected-fields.md).
 4. Select the format workflow in [references/format-routing.md](references/format-routing.md).
 5. Fill only supported values. Leave unsupported approval, contact, vendor, amount, quantity, document-number, and issue-date fields blank or explicitly unresolved. Treat every date field inside a 결재란, approval block, signature block, or signer row as signer-controlled: leave it blank even when another document date is known, and fill that exact field only when the user explicitly directs it.
-6. Preserve the authoritative template's layout and change only the requested content. Do not redesign a supplied form.
+6. Preserve the authoritative template's layout and change only the requested content. Do not redesign a supplied form. Leave unsupported values blank in the artifact and report unresolved facts separately; do not insert unsolicited remarks or workflow explanations. For purchase packets, verify item, specification, package/unit quantity, price, and totals across every related document using `style-guide`.
 7. Apply the Korean writing route in `korean-admin-writing` only to unprotected prose.
 8. Validate protected values, structure, text, formulas where applicable, page images, and application openability. Read [references/quality-gates.md](references/quality-gates.md).
 9. Deliver the requested final artifact and a concise verification status. Do not expose internal QA intermediates unless requested.

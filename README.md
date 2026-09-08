@@ -18,6 +18,7 @@
 | `korean-university-admin-documents` | 전체 문서 작업의 통합 진입점 |
 | `hancom-hwpx-documents` | HWPX 양식 보존 편집, 한컴 자동화와 최종 재열기 검증 |
 | `hwp-to-hwpx-converter` | 실제 파일 시그니처 기반 HWP→HWPX 변환 |
+| `hwpx-internet-comparison-quotes` | 동일 제품·옵션·수량의 인터넷 견적 캡처, 편집 가능한 출처 설명문과 검증 |
 | `docx-template-editor` | Word 양식, 변경 내용 추적, 댓글, 렌더 검증 |
 | `spreadsheet-form-preservation` | Excel 양식의 셀·수식·숨김 시트·인쇄 설정 보존 |
 | `document-scan-cleaner` | 사진 문서를 원문 픽셀을 보존한 스캔 이미지/PDF로 정리 |
