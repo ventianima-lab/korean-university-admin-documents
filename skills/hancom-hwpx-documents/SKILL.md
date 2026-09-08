@@ -48,6 +48,14 @@ For administrative deliverables, follow `fluent-korean`'s no-unsolicited-annotat
 15. Do not report installed-Hancom success when only `Compat (Hancom OK)` passes. Treat format validators and independent PDF/page-image review as supporting evidence. When installed-Hancom compatibility materially affects delivery, launch the exact final path automatically under the standing authorization, require the title to change from `빈 문서 1 - 한글` to the exact file name, and record the SHA256. Record `HancomOpened=미검증` only when that exact-file launch/reopen test could not actually be completed, not because separate authorization was not requested.
 16. Before delivery, record three gates for the exact final bytes: `TemplateMatch` (exact official form title and source), `MasterTopologyPreserved` (yes/no), and `HancomOpened` (verified/unverified). Never mark the task complete when `TemplateMatch` is false, topology was reconstructed without a proven pattern, or the user has already reported the exact final file as damaged.
 
+## 금액 및 자동 합계 검증
+
+- 금액이 있는 표를 작성·수정할 때는 표시 문자열만 확인하지 말고 자동 합계·계산 필드의 존재를 먼저 검사한다. HWPX의 `hp:fieldBegin type="FORMULA"`와 연결된 필드 끝, `Formula`, `Command`, `LastResult`, 표시 결과를 함께 확인한다. 행 추가·삭제 후에는 계산 범위에 모든 대상 행이 정확히 포함되는지 검사한다.
+- 각 표의 항목 금액을 독립적으로 다시 계산하여 소계·합계·집행누계·잔액과 대조한다. 같은 금액이 반복되는 본문, 붙임, 각 페이지도 위치별로 검증한다. 문서 어딘가에 정답 숫자가 있다는 문자열 검색만으로 합계 검증을 통과시키지 않는다.
+- 자동 합계를 유지하려면 계산 범위, 내부 저장 결과, 표시 금액이 독립 계산값과 일치해야 하며, 저장 후 한글에서 다시 열고 필드 재계산 후에도 같은 값인지 확인한다. 이를 신뢰성 있게 검증할 수 없으면 해당 자동 계산 필드를 완전히 제거하고 직접 계산한 금액을 일반 텍스트로 넣는다. 보이는 숫자만 덮어쓰고 이전 계산식이나 캐시를 남기지 않는다. 필드 제거 시 대응 시작·끝과 관련 메타데이터만 처리하고 서식 및 다른 필드는 보존한다.
+- 수정 후에는 실제 저장 파일의 본문과 현재 렌더를 다시 대조하고, 미리보기 텍스트·이미지도 이전 금액을 표시하지 않도록 갱신·확인한다. 복사된 이전 미리보기는 검증 근거로 사용하지 않는다. 금액 불일치가 남으면 완료로 보고하지 않는다.
+- 사용자가 금액을 직접 고쳤으며 스킬 반영만 요청했다면 문서를 다시 저장하거나 덮어쓰지 않는다.
+
 ## Authorized exact-page copying in Hangul
 
 Use this route when the user requires pages from an HWP/HWPX master to be copied exactly and open-source tools cannot preserve page topology. The standing Hancom authorization in this skill already covers this route; do not ask for separate authorization before page-copy automation. Keep the run limited to files and operations reasonably required by the current request.
