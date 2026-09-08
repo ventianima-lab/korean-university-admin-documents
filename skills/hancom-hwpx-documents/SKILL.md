@@ -9,6 +9,14 @@ Create and inspect HWPX through its ZIP/XML package and independent tools by def
 
 Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/tools`, when installing document runtimes. Use Kordoc as the first-line HWP/HWPX parser, format-preserving patcher/form filler, linter, and SVG renderer. Use `python-hwpx` as the structured HWPX read/edit/write engine with `HwpxDocument.open()`, mutation APIs, `validate()`, and `save_to_path(..., mode="preserve", fallback="error", return_report=True)`. Use `pyhwpxlib` as a second validator. If the installation provides an `hwpx-opensource.ps1` wrapper, prefer it for repeatable validation, parsing, rendering, and linting. Treat rHWP as an optional independent viewer/editor candidate, not the default save engine, until its exact-file preservation is proven on the target corpus.
 
+## Official letters: manual and precedent first
+
+- Ordinary requests such as `공문 작성` require adapting an institutional form, not designing a new one. First inspect an applicable manual, notice, official form, or actual issued precedent. Search the supplied master, current-year same-department same-document-type records, the department's latest official letter, then institution-wide forms. If local evidence is insufficient, search the institution's notice board, administrative resources, and procedure manuals.
+- Preserve more than appearance: verify recipient, routing, sender, approval lines, section labels, document-number/date citation syntax, body numbering, and attachment placement against the selected authority. Change only what current facts require. Do not arbitrarily change `관련근거` to `관련`, add greetings, or introduce a separate request letter.
+- An administrative office handling dispatch does not by itself establish a requirement for a separate letter addressed to that office. Verify whether staff forward the externally addressed letter or require an internal dispatch request. Do not present an inferred procedure as confirmed.
+- Assuming supporting documents are ready does not authorize inventing form conventions, procedures, citations, or approval information. Continue with a verified precedent where applicable; when none supports the necessary choice, identify the search scope and unresolved requirement before drafting that part. Create a new layout only when explicitly requested.
+- Record the exact source and relevant section, selected master, changed facts, and reasons as `TemplateSearch` evidence. Successful parsing, rendering, or application opening cannot override a failed manual/precedent comparison; missing evidence or `TemplateMatch=false` blocks completion.
+
 ## Workflow
 
 1. Determine the requested action before writing. If the user says a file is a reference, baseline, sample, or master, inspect it read-only. Do not infer permission to create a copy, normalize styles, or save a derivative.
