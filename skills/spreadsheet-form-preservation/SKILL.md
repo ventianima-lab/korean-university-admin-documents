@@ -7,6 +7,12 @@ description: Fill, repair, compare, and verify XLSX spreadsheet forms while pres
 
 Treat the supplied workbook as the structural and visual authority. Work on a copy unless overwrite is explicitly requested.
 
+## Attachment access and compatibility
+
+- For an encrypted attachment, inspect its notice and filename for password guidance first. If an explicitly supplied Korean password fails, confirm that the input reached the reader as valid Unicode. A Korean/English keyboard-state mismatch may be checked once by converting those exact Hangul keystrokes to their two-set Korean keyboard Latin equivalents. This is a bounded input correction, not permission to guess unrelated passwords. Verify successful decryption and exact-file application opening before declaring recovery. Keep password values out of scripts, command history, logs, reports, and previews; preserve required output encryption and verify it by reopening.
+- A spreadsheet written by Hancom HCell can contain `mc:AlternateContent` wrappers around fonts or cell formats. An out-of-range style error does not prove the source styles are missing. On a compatibility copy, select explicit `mc:Fallback` children in place without changing their order or style indices, then compare headers, values, merges, and styles. Do not replace unavailable styles with defaults. Keep the original intact and verify the finished file in the target application.
+- When submitting one department from a multi-institution form, retain the current official fields, supplied identifiers, row order, and not-applicable markers. Remove unrelated records from the submission copy, including unused shared-string data. Obtain each person's applicable periods from the current roster rather than applying one student's periods to everyone.
+
 ## Workflow
 
 1. Compare target cells with the reference and identify the smallest required edit set.

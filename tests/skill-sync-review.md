@@ -20,3 +20,7 @@ Reviewed complete folders for all seven existing installed counterparts, includi
 Intentional differences: personal filesystem locations are generalized; institution-specific master identity is omitted; form-badge removal is conditional on a verified requirement rather than imposed on other institutions. Existing public standing Hancom authorization remains authoritative over stale installed references. Third-party licenses and automatic invocation metadata remain unchanged. Unrelated browser, system, archive, and administrative-system skills are outside this document-authoring pack. Proprietary bundled document/spreadsheet product skills are not copied into the public repository.
 
 Validation: public release scan, all twelve skill manifests, and five synthetic quote-verifier tests. No real records, screenshots, credentials, or personal paths are included.
+
+## 2026-09-09 follow-up
+
+Updated the complete spreadsheet-form-preservation adapter with bounded Korean/English keyboard-state recovery, explicit HCell markup fallback handling, and roster-specific period preservation. Installed the maintained adapter locally with its existing scripts and metadata. The working tree was clean before this update; no pending public changes were omitted. No proprietary spreadsheet-plugin material was copied. Validated the release scan and all skill manifests; these changes add instructions only and do not change executable helpers.
