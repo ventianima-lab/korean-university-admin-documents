@@ -17,6 +17,14 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 - If no suitable master is found, stop before creating a document. Report the search result and ask whether to use the closest prior-year or other-department form, or to create a new form. Only an explicit instruction to create a new form authorizes new layout design.
 - Treat `TemplateMatch=false` or a missing `TemplateSearch` record as a hard completion failure for a newly drafted Korean public document.
 
+## Follow-up edits start from the current working final
+
+- For every follow-up edit, re-enumerate the active task folder immediately before changing anything. If that folder contains the current final deliverable, open and inspect that exact file and use it as the content baseline. This rule overrides remembered paths and earlier run artifacts; the official template remains the structural authority.
+- Do not rebuild a follow-up result from earlier components, archived sources, intermediate drafts, backups, candidates, validation copies, or a previous agent output when a newer working final exists. Timestamps alone do not prove authority. Prefer an explicitly named or user-identified final, then confirm that it contains the latest requested changes.
+- Before replacing a working final, record its path, modification time, SHA-256, page or section count, and representative markers for completed changes. Compare the candidate against that snapshot and require every change outside the new edit scope to remain present. Missing prior edits are a hard failure and block overwrite.
+- If multiple plausible finals differ and authority cannot be established from the task folder and conversation, preserve all candidates and ask which file is authoritative. Never silently choose an older copy or overwrite the current working final with a regressed reconstruction.
+- Template-first routing governs initial creation. It does not authorize discarding later user or agent edits during a follow-up revision.
+
 ## Official letters: manual and precedent first
 
 - Ordinary requests such as `공문 작성` require adapting an institutional form, not designing a new one. First inspect an applicable manual, notice, official form, or actual issued precedent. Search the supplied master, current-year same-department same-document-type records, the department's latest official letter, then institution-wide forms. If local evidence is insufficient, search the institution's notice board, administrative resources, and procedure manuals.

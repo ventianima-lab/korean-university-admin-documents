@@ -9,11 +9,13 @@ Use the bundled PowerShell scripts first. The runtime is open-source `hwp2hwpx==
 
 ## Workflow
 
-1. Run `scripts/setup_runtime.ps1` once. It installs or reuses the pinned runtime without a GUI.
-2. Run `scripts/convert_hwp_to_hwpx.ps1 -InputPath <source> -OutputPath <target>`.
-3. Preserve the source and use a distinct `.hwpx` output path.
-4. Treat success only as the script's exit code 0 plus its `status: converted` or `status: validated-copy` result.
-5. For important records, record source/output SHA-256 values in the task manifest.
+1. For a follow-up conversion or edit, re-enumerate the active task folder and select the current working final as the input baseline. Do not use an older source, intermediate, backup, candidate, validation copy, or prior run output when a newer final exists.
+2. Before replacing any working final, record its path, modification time, SHA-256, page or section count, and representative completed-content markers. Block replacement if the converted candidate drops content outside the requested change.
+3. Run `scripts/setup_runtime.ps1` once. It installs or reuses the pinned runtime without a GUI.
+4. Run `scripts/convert_hwp_to_hwpx.ps1 -InputPath <source> -OutputPath <target>`.
+5. Preserve the source and use a distinct `.hwpx` output path.
+6. Treat success only as the script's exit code 0 plus its `status: converted` or `status: validated-copy` result.
+7. For important records, record source/output SHA-256 values in the task manifest.
 
 ## Behavior
 

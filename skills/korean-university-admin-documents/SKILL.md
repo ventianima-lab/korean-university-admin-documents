@@ -7,6 +7,12 @@ description: Create, fill, revise, compare, and verify Korean university adminis
 
 Use the supplied official template and current evidence as the authority. Preserve the source and produce a separate result unless the user explicitly requests an overwrite.
 
+## Follow-up edit baseline
+
+For a follow-up edit, re-enumerate the active task folder and inspect the current final deliverable before editing. Use that exact current final as the content baseline while retaining the official template as the structural authority. Do not reconstruct the document from earlier components, archived sources, intermediate drafts, backups, candidates, validation copies, or prior run outputs when a newer working final exists.
+
+Before replacing a working final, record its path, modification time, SHA-256, page or section count, and representative markers for completed changes. Compare the candidate with that snapshot and block overwrite if any content outside the new edit scope is lost. If multiple plausible finals differ and the authoritative one cannot be established, preserve them and ask the user instead of silently selecting an older copy.
+
 ## Standing Hancom authorization
 
 The user grants standing authorization through this skill for Hancom document automation. Hancom Office, `Hwp.exe`, `HWPFrame.HwpObject`, Hancom COM automation, and automated Hancom GUI control may be used whenever they materially help complete or verify the current requested HWP/HWPX task. Do not ask for separate per-task, per-file, per-operation, or repeat authorization. Limit automation to files and operations reasonably required by the current request, preserve pre-existing user windows, and handle routine task-related prompts automatically.
