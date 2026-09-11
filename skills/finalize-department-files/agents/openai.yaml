@@ -1,0 +1,4 @@
+interface:
+  display_name: "대학 학과자료 아카이빙"
+  short_description: "본문 분류·학년도·파일명·이동·해시·색인까지 검증"
+  default_prompt: "Use $finalize-department-files to archive and verify the completed department-file work."
