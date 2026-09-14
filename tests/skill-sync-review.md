@@ -24,3 +24,9 @@ Validation: public release scan, all twelve skill manifests, and five synthetic 
 ## 2026-09-09 follow-up
 
 Updated the complete spreadsheet-form-preservation adapter with bounded Korean/English keyboard-state recovery, explicit HCell markup fallback handling, and roster-specific period preservation. Installed the maintained adapter locally with its existing scripts and metadata. The working tree was clean before this update; no pending public changes were omitted. No proprietary spreadsheet-plugin material was copied. Validated the release scan and all skill manifests; these changes add instructions only and do not change executable helpers.
+
+## 2026-09-14 follow-up
+
+Reviewed the complete installed and public `hancom-hwpx-documents` folders after a user-visible file-access prompt exposed an enforcement gap. The rule already named `FilePathCheckerModuleExample`, but it was buried in the exact-page-copy procedure and there was no shared constructor for ordinary open, page-count, or PDF-export automation. Added a fail-closed COM guard with a fixed module name, routed both PowerShell COM helpers through it, removed the caller-controlled module-name parameter, and added a static guard-contract test. The installed preflight and exact-page copy passed live checks without an access prompt; PowerShell parsing, all public skill validations, and the public release scan passed.
+
+Intentional differences remain unchanged: public files retain portable tool paths and generalized institutional examples, while private local paths and institution-specific record facts are not published. No proprietary Hancom security-module binary or real document was added.

@@ -9,9 +9,10 @@ Hancom publishes `보안모듈(Automation).zip` on its [HwpAutomation developer 
 1. Copy the DLL to a stable local path outside the records tree, such as `<local-tools-dir>\hancom-automation-security\FilePathCheckerModuleExample.dll`.
 2. Create `HKCU\Software\HNC\HwpAutomation\Modules`.
 3. Add the string value `FilePathCheckerModuleExample` whose data is the DLL's full path.
-4. Call `HwpObject.RegisterModule("FilePathCheckDLL", "FilePathCheckerModuleExample")` and require `True` before opening or saving files.
+4. Run `scripts/test_hancom_security_module.ps1` and require `REGISTERED=True`.
+5. Dot-source `scripts/hancom_com_guard.ps1` and obtain every COM object through `New-HancomGuardedObject`. The guard performs the exact `RegisterModule("FilePathCheckDLL", "FilePathCheckerModuleExample")` call and stops before document access when registration fails.
 
-`SetMessageBoxMode` does not suppress the file-path access dialog when the module is absent. It can answer ordinary message boxes during an already authorized operation. Reset it with `0xFFFFFF` in `finally`.
+`SetMessageBoxMode` does not suppress the file-path access dialog when the module is absent. Pass a message-box mode to `New-HancomGuardedObject` only when ordinary authorized dialogs must be handled, and close with `Close-HancomGuardedObject` so the mode resets to `0xFFFFFF`.
 
 ## Physical pages, not printed page numbers
 

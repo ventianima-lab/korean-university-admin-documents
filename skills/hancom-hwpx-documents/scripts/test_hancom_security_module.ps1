@@ -2,25 +2,15 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $hwp = $null
+. (Join-Path $PSScriptRoot 'hancom_com_guard.ps1')
 
 try {
-    $hwp = New-Object -ComObject HWPFrame.HwpObject
-    $registered = $hwp.RegisterModule(
-        'FilePathCheckDLL',
-        'FilePathCheckerModuleExample'
-    )
-    if (-not $registered) {
-        throw 'Hancom file-path security module registration failed: FilePathCheckerModuleExample'
-    }
+    $hwp = New-HancomGuardedObject -Hidden
     Write-Output 'REGISTERED=True'
 }
 finally {
     if ($null -ne $hwp) {
-        try { $hwp.Quit() } catch {}
-        try {
-            [void][System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($hwp)
-        }
-        catch {}
+        Close-HancomGuardedObject -Hwp $hwp
     }
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()

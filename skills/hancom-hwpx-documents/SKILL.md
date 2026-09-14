@@ -9,6 +9,14 @@ Create and inspect HWPX through its ZIP/XML package and independent tools by def
 
 Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/tools`, when installing document runtimes. Use Kordoc as the first-line HWP/HWPX parser, format-preserving patcher/form filler, linter, and SVG renderer. Use `python-hwpx` as the structured HWPX read/edit/write engine with `HwpxDocument.open()`, mutation APIs, `validate()`, and `save_to_path(..., mode="preserve", fallback="error", return_report=True)`. Use `pyhwpxlib` as a second validator. If the installation provides an `hwpx-opensource.ps1` wrapper, prefer it for repeatable validation, parsing, rendering, and linting. Treat rHWP as an optional independent viewer/editor candidate, not the default save engine, until its exact-file preservation is proven on the target corpus.
 
+## Mandatory Hancom COM security gate
+
+- Before the first Hancom COM or GUI automation in a task, run `scripts/test_hancom_security_module.ps1` and require `REGISTERED=True`. A failed preflight blocks all document access.
+- Every PowerShell helper and every ad hoc COM command must dot-source `scripts/hancom_com_guard.ps1` and create each COM object with `New-HancomGuardedObject`. Do not instantiate `HWPFrame.HwpObject` directly outside that guard.
+- The guard fixes the module name to `FilePathCheckerModuleExample` and requires `RegisterModule('FilePathCheckDLL', 'FilePathCheckerModuleExample') == true` before visibility changes, `SetMessageBoxMode`, `Open`, `Save`, or `SaveAs`. Do not expose a caller override for the module name.
+- `SetMessageBoxMode` may be enabled only by the guarded constructor after successful registration. Close objects with `Close-HancomGuardedObject` so message-box mode is reset and only the current COM object is released.
+- After adding or changing a Hancom PowerShell helper, run `scripts/test_hancom_guard_contract.ps1`. Direct COM construction, direct registration, shortened module names, or file access without the shared guard are hard failures.
+
 ## Mandatory template-first routing for Korean public documents
 
 - Interpret ordinary requests such as `공문 작성`, `공문 써줘`, or `공문 만들어줘` as requests to adapt the institution's existing form. They do not authorize designing a new form, rebuilding the layout, or starting from a generic document.
@@ -78,8 +86,7 @@ Read [references/hancom-page-copy.md](references/hancom-page-copy.md) before the
 - Navigate from `MoveDocBegin` with repeated `MovePageDown`. Copy the source pages into a separate output and remove only the target document's automatically created initial blank page with `DeletePage`.
 - `PastePage` can fail transiently or when pages cross section/topology boundaries. Retry the same clipboard operation once after 400-600 ms. If a multi-page paste still fails, preserve the authoritative grouping by writing separate output files rather than reconstructing the package.
 - Kordoc patch can leave empty cell paragraphs when edited Markdown has fewer lines than the master. If those empty paragraphs push a fixed form onto an extra page, use [scripts/clean_empty_form_paragraphs.py](scripts/clean_empty_form_paragraphs.py) with exact changed-cell anchors. The cleaner must preserve original namespace prefixes, remove only empty paragraphs in matched cells, set existing cell `dirty="1"`, and strip stale `linesegarray` children before Hancom reopen verification.
-- Register Hancom's official `FilePathCheckerModuleExample` and require `RegisterModule(...) == true`. `SetMessageBoxMode` is not a replacement for the file-path security module; use it only for ordinary task-related confirmation dialogs that fall within the standing authorization and reset it in `finally`.
-- Before any ad hoc Hancom COM or GUI helper that is not already fail-closed, run `scripts/test_hancom_security_module.ps1`. This is only a preflight: the actual COM object must register the exact same module again and require `true` before any `Open`, `Save`, or `SaveAs` call. If either check fails, stop without accessing a document. Never substitute a shortened or similar name such as `FilePathCheckerModule`.
+- Apply the mandatory Hancom COM security gate above. The page-copy helper must obtain both source and target objects through `New-HancomGuardedObject`; a successful preflight alone never authorizes an unguarded `Open`, `Save`, or `SaveAs`.
 - Capture the pre-existing `Hwp.exe` process list. Quit only COM objects created by the current run and never terminate a pre-existing user window.
 - Verify the exact saved bytes with Hancom reopen, expected page count, `GetPageText`, SHA-256, the two open-source validators, and a current render.
 

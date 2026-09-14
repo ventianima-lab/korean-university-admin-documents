@@ -2,21 +2,14 @@ param(
     [Parameter(Mandatory = $true)][string]$Source,
     [Parameter(Mandatory = $true)][string]$Output,
     [Parameter(Mandatory = $true)][ValidateRange(1, 10000)][int]$StartPhysicalPage,
-    [Parameter(Mandatory = $true)][ValidateRange(1, 100)][int]$CopyCount,
-    [string]$SecurityModuleName = 'FilePathCheckerModuleExample'
+    [Parameter(Mandatory = $true)][ValidateRange(1, 100)][int]$CopyCount
 )
 
 $ErrorActionPreference = 'Stop'
 $sourceHwp = $null
 $targetHwp = $null
 $baselineHwpPids = @(Get-Process Hwp -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id)
-
-function Set-AutoMessageResponse {
-    param($Hwp)
-    # Affirmative answers for ordinary dialogs within the skill's standing
-    # authorization. File-path approval is handled by the official module.
-    [void]$Hwp.SetMessageBoxMode(0x111111)
-}
+. (Join-Path $PSScriptRoot 'hancom_com_guard.ps1')
 
 function Compact-PageText {
     param([string]$Text, [int]$Limit = 240)
@@ -37,17 +30,8 @@ if (-not (Test-Path -LiteralPath $outputParent -PathType Container)) {
 }
 
 try {
-    $sourceHwp = New-Object -ComObject HWPFrame.HwpObject
-    $targetHwp = New-Object -ComObject HWPFrame.HwpObject
-
-    foreach ($hwp in @($sourceHwp, $targetHwp)) {
-        $registered = $hwp.RegisterModule('FilePathCheckDLL', $SecurityModuleName)
-        if (-not $registered) {
-            throw "Hancom file-path security module registration failed: $SecurityModuleName"
-        }
-        Set-AutoMessageResponse -Hwp $hwp
-        try { $hwp.XHwpWindows.Item(0).Visible = $false } catch {}
-    }
+    $sourceHwp = New-HancomGuardedObject -Hidden -MessageBoxMode 0x111111
+    $targetHwp = New-HancomGuardedObject -Hidden -MessageBoxMode 0x111111
 
     if (-not $sourceHwp.Open($Source, 'HWPX', 'forceopen:true')) {
         throw "Hancom failed to open source: $Source"
@@ -119,13 +103,11 @@ try {
     Write-Output "SHA256=$($hash.Hash)"
 }
 finally {
-    if ($sourceHwp) {
-        try { [void]$sourceHwp.SetMessageBoxMode(0xFFFFFF) } catch {}
-        try { $sourceHwp.Quit() } catch {}
+    if ($null -ne $sourceHwp) {
+        Close-HancomGuardedObject -Hwp $sourceHwp
     }
-    if ($targetHwp) {
-        try { [void]$targetHwp.SetMessageBoxMode(0xFFFFFF) } catch {}
-        try { $targetHwp.Quit() } catch {}
+    if ($null -ne $targetHwp) {
+        Close-HancomGuardedObject -Hwp $targetHwp
     }
     Start-Sleep -Seconds 2
     $remainingNew = @(
