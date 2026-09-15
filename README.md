@@ -23,6 +23,7 @@
 | `spreadsheet-form-preservation` | Excel 양식의 셀·수식·숨김 시트·인쇄 설정 보존 |
 | `document-scan-cleaner` | 사진 문서를 원문 픽셀을 보존한 스캔 이미지/PDF로 정리 |
 | `finalize-department-files` | 완료된 학과자료를 본문·학년도·업무철 기준으로 분류하고 파일명·이동·해시·색인을 검증 |
+| `korean-student-group-chat-notice` | 근거 자료에서 학생에게 필요한 일정·행동만 골라 단톡방 공지글과 세로형 공지 이미지를 제작 |
 | `korean-admin-writing` | 한국어 작성·스타일·윤문·문법 검수 라우터 |
 | `fluent-korean` | 명확하고 자연스러운 한국어 작성 |
 | `style-guide` | 공식 문서의 용어·어조·형식 일관성 |

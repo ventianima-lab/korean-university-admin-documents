@@ -1,0 +1,4 @@
+interface:
+  display_name: "학생 단톡방 공지"
+  short_description: "근거 자료에서 학생용 단톡방 공지글과 이미지를 제작합니다."
+  default_prompt: "Use $korean-student-group-chat-notice to create a concise Korean student group-chat notice from the supplied source."
