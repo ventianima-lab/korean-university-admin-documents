@@ -17,10 +17,36 @@ def text_of(element: ET.Element) -> str:
     return "".join(node.text or "" for node in element.iter() if local_name(node.tag) == "t")
 
 
+def empty_paragraph_indexes(paragraphs: list[ET.Element], position: str) -> set[int]:
+    empty = {index for index, paragraph in enumerate(paragraphs) if not text_of(paragraph).strip()}
+    if position == "all":
+        return empty
+
+    leading: set[int] = set()
+    for index in range(len(paragraphs)):
+        if index not in empty:
+            break
+        leading.add(index)
+
+    trailing: set[int] = set()
+    for index in range(len(paragraphs) - 1, -1, -1):
+        if index not in empty:
+            break
+        trailing.add(index)
+
+    if position == "leading":
+        return leading
+    if position == "trailing":
+        return trailing
+    return leading | trailing
+
+
 def remove_empty_paragraphs(
     section_xml: bytes,
     anchors: list[str],
     remove_empty_before: list[str],
+    empty_position: str,
+    reset_text_extent: bool,
 ) -> tuple[bytes, list[dict[str, object]]]:
     for _event, namespace in ET.iterparse(io.BytesIO(section_xml), events=("start-ns",)):
         prefix, uri = namespace
@@ -37,11 +63,12 @@ def remove_empty_paragraphs(
 
         paragraphs = [node for node in cell.iter() if local_name(node.tag) == "p"]
         nonempty_count = sum(bool(text_of(p).strip()) for p in paragraphs)
+        selected_indexes = empty_paragraph_indexes(paragraphs, empty_position)
         removed = 0
 
         if nonempty_count:
-            for paragraph in paragraphs:
-                if text_of(paragraph).strip():
+            for index, paragraph in enumerate(paragraphs):
+                if index not in selected_indexes:
                     continue
                 parent = parent_map.get(paragraph)
                 if parent is not None:
@@ -56,12 +83,32 @@ def remove_empty_paragraphs(
         if "dirty" in cell.attrib:
             cell.set("dirty", "1")
 
+        extents_reset = 0
+        if reset_text_extent:
+            for child in list(cell):
+                if local_name(child.tag) != "subList":
+                    continue
+                changed = False
+                for attribute in ("textWidth", "textHeight"):
+                    if attribute in child.attrib:
+                        child.set(attribute, "0")
+                        changed = True
+                if changed:
+                    extents_reset += 1
+
+        remaining = [node for node in cell.iter() if local_name(node.tag) == "p"]
+        remaining_texts = [text_of(paragraph).strip() for paragraph in remaining]
+
         reports.append(
             {
                 "cell_index": cell_index,
                 "anchors": matched,
+                "empty_position": empty_position,
                 "removed_empty_paragraphs": removed,
                 "dirty_attribute_present": "dirty" in cell.attrib,
+                "text_extents_reset": extents_reset,
+                "leading_empty_after": bool(remaining_texts and not remaining_texts[0]),
+                "trailing_empty_after": bool(remaining_texts and not remaining_texts[-1]),
             }
         )
 
@@ -96,6 +143,8 @@ def rewrite_hwpx(
     output: Path,
     anchors: list[str],
     remove_empty_before: list[str],
+    empty_position: str,
+    reset_text_extent: bool,
 ) -> list[dict[str, object]]:
     if output.exists():
         raise FileExistsError(output)
@@ -109,7 +158,11 @@ def rewrite_hwpx(
             raise ValueError(f"missing {section_name}")
 
         updated_section, reports = remove_empty_paragraphs(
-            src.read(section_name), anchors, remove_empty_before
+            src.read(section_name),
+            anchors,
+            remove_empty_before,
+            empty_position,
+            reset_text_extent,
         )
 
         with zipfile.ZipFile(output, "w") as dst:
@@ -133,10 +186,26 @@ def main() -> int:
     parser.add_argument("output", type=Path)
     parser.add_argument("--anchor", action="append", required=True)
     parser.add_argument("--remove-empty-before", action="append", default=[])
+    parser.add_argument(
+        "--empty-position",
+        choices=("all", "leading", "trailing", "edges"),
+        default="all",
+        help="remove empty paragraphs only at the selected positions in matched cells",
+    )
+    parser.add_argument(
+        "--reset-text-extent",
+        action="store_true",
+        help="zero existing cell textWidth/textHeight caches so Hancom recalculates wrapping",
+    )
     args = parser.parse_args()
 
     reports = rewrite_hwpx(
-        args.source, args.output, args.anchor, args.remove_empty_before
+        args.source,
+        args.output,
+        args.anchor,
+        args.remove_empty_before,
+        args.empty_position,
+        args.reset_text_extent,
     )
     for report in reports:
         print(report)
@@ -151,4 +220,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
