@@ -8,7 +8,7 @@ import json,subprocess,sys
 
 HP='http://www.hancom.co.kr/hwpml/2011/paragraph'
 H='{'+HP+'}'
-def document(path,product='Model B',quantity='2개',total=22000,source='Store B',note='유사제품: 브랜드와 모델이 다름.',pictures=2,number=1,extra_comparisons=(),split_sections=False):
+def document(path,product='Model B',quantity='2개',total=30000,source='Store B',note='유사제품: 브랜드와 모델이 다름.',pictures=2,number=1,extra_comparisons=(),split_sections=False):
  roots=[E.Element(H+'sec')]
  if split_sections:roots.append(E.Element(H+'sec'))
  texts=['Item | Model A | 수량 2개 | 총액 24,000원 | 출처 Store A',f'비교견적 {number} | Item | {product} | 수량 {quantity} | 총액 {total:,}원 | 출처 {source}',note]
@@ -25,7 +25,7 @@ def document(path,product='Model B',quantity='2개',total=22000,source='Store B'
   for index,root in enumerate(roots):z.writestr(f'Contents/section{index}.xml',E.tostring(root))
 def main():
  verifier=Path(__file__).with_name('verify_quote_hwpx.py')
- manifest={'authorization':'The user explicitly allowed similar products.','items':[{'item':'Item','main':{'product':'Model A','quantity':'2개','total':24000,'source':'Store A'},'comparisons':[{'product':'Model B','quantity':'2개','total':22000,'source':'Store B','kind':'similar','basis':'Same purpose and essential size, two physical units','differences':'브랜드와 모델이 다름.','allow_lower_price':True}]}]}
+ manifest={'authorization':'The user explicitly allowed similar products.','items':[{'item':'Item','main':{'product':'Model A','quantity':'2개','total':24000,'source':'Store A'},'comparisons':[{'product':'Model B','quantity':'2개','total':30000,'source':'Store B','kind':'similar','basis':'Same purpose and essential size, two physical units','differences':'브랜드와 모델이 다름.'}]}]}
  with TemporaryDirectory()as tmp:
   root=Path(tmp);doc=root/'fixture.hwpx';spec=root/'scope.json'
   count=0
@@ -42,17 +42,21 @@ def main():
    count+=1
   check('default rejects changed product',scope=None,total=30000)
   check('default accepts exact product',expected=0,scope=None,product='Model A',total=30000)
-  check('authorized similar lower price',expected=0)
+  check('authorized similar higher price',expected=0)
+  lower=deepcopy(manifest);lower['items'][0]['comparisons'][0].update(total=22000,allow_lower_price=True)
+  check('similar permission cannot authorize lower price',scope=lower,total=22000)
+  equal=deepcopy(manifest);equal['items'][0]['comparisons'][0].update(total=24000,allow_lower_price=True)
+  check('similar permission cannot authorize equal price',scope=equal,total=24000)
   check('actual quantity mismatch',quantity='3개')
-  check('actual total mismatch',total=23000)
+  check('actual total mismatch',total=31000)
   check('actual product mismatch',product='Model C')
   check('actual source mismatch',source='Store C')
   check('missing visible difference',note='유사제품')
   check('missing picture',pictures=1)
   missing_auth=deepcopy(manifest);missing_auth['authorization']=''
   check('authorization missing',expected=2,scope=missing_auth)
-  no_exception=deepcopy(manifest);no_exception['items'][0]['comparisons'][0].pop('allow_lower_price')
-  check('lower price exception missing',scope=no_exception)
+  lower_without_flag=deepcopy(lower);lower_without_flag['items'][0]['comparisons'][0].pop('allow_lower_price')
+  check('lower price fails without obsolete flag',scope=lower_without_flag,total=22000)
   wrong_kind=deepcopy(manifest);wrong_kind['items'][0]['comparisons'][0]['kind']='identical'
   check('similar cannot claim identical',scope=wrong_kind)
   missing_basis=deepcopy(manifest);missing_basis['items'][0]['comparisons'][0]['basis']=''

@@ -83,8 +83,8 @@ def check_manifest_group(main_quote, comparisons, main_caption, comparison_capti
                 issues.append(f'유사제품 비교견적 {n}의 실제 차이가 문서에 표시되지 않음')
         else:
             issues.append(f'비교견적 {n}의 kind는 identical 또는 similar여야 함')
-        if quote[3] <= main_quote[3] and not (kind == 'similar' and expected.get('allow_lower_price') is True):
-            issues.append(f'비교견적 {n}의 낮거나 같은 가격에 대한 명시적 예외가 없음')
+        if quote[3] <= main_quote[3]:
+            issues.append(f'비교견적 {n} 총액 {quote[3]:,}원이 본견적 {main_quote[3]:,}원보다 높지 않음 (유사제품도 가격 조건 적용)')
     return issues
 
 
