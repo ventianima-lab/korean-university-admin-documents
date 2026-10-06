@@ -19,15 +19,21 @@ The user grants standing authorization through this skill for Hancom document au
 
 ## Core workflow
 
+A request to write or revise a document includes the user's clearance with the relevant vendor or party for the requested preparation and use of supplied names, stamps, or signatures. Apply `fluent-korean`'s permission rule; do not ask again whether that permission was obtained. Inspect context and sources for business data, and distinguish an essential missing fact from permission. Submission or sending follows the separate task instruction.
+
 1. Identify the requested deliverable, authoritative template, current instructions, source evidence, deadline, and required fields.
 2. Read reference or master documents without modifying them. Choose the exact current official form before any prior-year or similar form. For official letters, establish the applicable manual or actual precedent before drafting; preserve its labels, citation syntax, routing, and attachment conventions, not just its appearance. If local evidence is insufficient, search institutional notices and administrative manuals. Follow the official-letter rules in [references/document-types.md](references/document-types.md).
 3. Snapshot protected values and structures before editing. Read [references/evidence-and-protected-fields.md](references/evidence-and-protected-fields.md).
 4. Select the format workflow in [references/format-routing.md](references/format-routing.md).
 5. Fill only supported values. Leave unsupported approval, contact, vendor, amount, quantity, document-number, and issue-date fields blank or explicitly unresolved. Treat every date field inside a 결재란, approval block, signature block, or signer row as signer-controlled: leave it blank even when another document date is known, and fill that exact field only when the user explicitly directs it.
-6. Preserve the authoritative template's layout and change only the requested content. Do not redesign a supplied form. Leave unsupported values blank in the artifact and report unresolved facts separately; do not insert unsolicited remarks or workflow explanations. For purchase packets, verify item, specification, package/unit quantity, price, and totals across every related document using `style-guide`.
+6. Preserve the authoritative template's layout and change only the requested content. Do not redesign a supplied form. Leave unsupported values blank in the artifact and report unresolved facts separately; do not insert unsolicited remarks or workflow explanations. For purchase packets in any format, read [../hancom-hwpx-documents/references/procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md), apply `style-guide`'s complete-column gate, and verify every target checkbox, card identifier, quotation date, actual merchant, and photo association after saving.
 7. Apply the Korean writing route in `korean-admin-writing` only to unprotected prose.
 8. Validate protected values, structure, text, formulas where applicable, page images, and application openability. Read [references/quality-gates.md](references/quality-gates.md).
 9. Deliver the requested final artifact and a concise verification status. Do not expose internal QA intermediates unless requested.
+
+Create PDFs only for an explicit request or confirmed printing/submission requirement. Prefer current page images or direct inspection; keep the minimum verification-only PDFs outside active records rather than delivering duplicate exports or unsolicited review bundles.
+
+A user correction requires a relevant same-task skill improvement through `skill-creator`. Verify the failure, fix the actual invocation or completion check when a rule already exists, validate the skill, and synchronize public-safe changes under the user's publication policy. Skill-only work does not authorize resaving the user's corrected reference.
 
 ## Document types
 

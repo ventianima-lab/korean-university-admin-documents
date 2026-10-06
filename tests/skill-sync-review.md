@@ -34,3 +34,13 @@ Intentional differences remain unchanged: public files retain portable tool path
 ## 2026-09-15 follow-up
 
 Added the complete `korean-student-group-chat-notice` skill and invocation metadata after a student event-notice workflow demonstrated a reusable audience-filtering pattern, bringing the pack to fourteen skills. The skill requires source-first extraction, separates student actions from staff-only material, protects dates, times, locations, links, and exceptions, and verifies Korean text in phone-readable portrait images. The public copy contains no real notice, institution name, private path, contact detail, or proprietary asset. The maintained clone was clean before this addition, so no related pending public changes were omitted.
+
+## 2026-10-06 procurement correction follow-up
+
+Compared all fourteen public skill folders with their available installed counterparts, including references, scripts, examples, licenses, and invocation metadata. Added the user's preparation-permission rule, a complete-column specification/quantity gate, and an explicit procurement reference covering requested checkbox/card fields, quotation dates and issuers, editable Word quotations, receipt-reference handling, consistent date-based goods/process/results layouts, and annotation rejection. Entry-point routing now requires that reference before filling and field-level comparisons after saving; existing no-annotation and consistency rules alone had not prevented mixed rows and unnecessary permission questions.
+
+Preserved the public-only administrative and Word adapters and their independent implementation. The related quote-grouping, current-file, and minimal-PDF updates from another task were already published in the preceding commit and remain intact. Scripts and invocation policy have no substantive changes, so no executable-helper behavior changed. Blank-line differences are retained rather than creating sync noise.
+
+Intentional local/public differences remain: private tool and record paths, the institution's attendance master, and its form-badge convention are generalized in public; the newer portable archive and standing-conversion authorization wording is preserved. No private documents, stamp images, card identifiers, credentials, or proprietary plugin instructions are published. The added decision checks use synthetic values.
+
+Validation: the public release scan, all fourteen public skill manifests, and the three updated installed manifests passed. Seven procurement-reference routes resolve to existing files. The nine synthetic decision cases were reviewed against the entrypoints and saved-field gates. No executable helpers or invocation policy changed; generated Python caches are excluded from source synchronization.

@@ -8,6 +8,8 @@
 - No unsupported facts inserted
 - Source preserved and output path distinct unless overwrite was requested
 - Exact final-byte SHA-256 recorded for important deliverables
+- Every target field checked against the user's requested state after saving; correct totals or parsing do not excuse inconsistent rows, wrong checkbox glyphs, unreadable identifiers, unsolicited annotations, or wrong photo/date associations
+- Editable deliverables retained and extra PDFs limited to requested or confirmed printing/submission needs; verification-only PDFs stay outside active records
 
 ## Visual gate
 

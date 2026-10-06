@@ -22,6 +22,8 @@ Keep planned and actual values distinct. Confirm actual dates, attendance, expen
 
 Separate plan evidence, approved budget, quotation, comparison quotation, vendor evidence, order, delivery, inspection, receipt and payment records. A past vendor or price is not a new contract fact.
 
+The current user's supplied business facts and instructions establish this packet's values and requested state. Read [../../hancom-hwpx-documents/references/procurement-forms.md](../../hancom-hwpx-documents/references/procurement-forms.md) for consistent specification/quantity summaries, editable quotations, quotation dates versus purchase dates, actual merchant records, receipt-reference handling, requested checkboxes and card identifiers, and date-by-date evidence-photo layout. Do not substitute calculation sheets for requested quotations or ask again for party permission already included in the writing request.
+
 ## Roster and attendance form
 
 Preserve row order, identity associations, signature columns and privacy. Confirm that all rows fit, headers repeat when needed, and signature cells remain usable.

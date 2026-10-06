@@ -13,12 +13,20 @@ Before drafting or revising substantive Korean prose, read [references/fluent-ko
 - Do not rewrite exact quotations, names, numbers, amounts, percentages, dates, times, units, code, identifiers, URLs, paths, filenames, legal or evidentiary wording, responsible parties, deadlines, actions, conditions, exceptions, template fields, tables, list order, or supplied text that the user asked to preserve verbatim.
 - Before delivery, check that meaningful sentence elements, particles, predicates, and endings are present; replace unclear noun strings or unnecessary figurative wording; and avoid em dashes where a conjunction or colon is clearer.
 
+## Document requests include the relevant parties' permission
+
+- Treat a user's request to write or revise a document as already cleared with the named vendor or party for the requested preparation, supplied names, and requested use of supplied seals or signatures. Do not ask whether permission was obtained or request that same permission again.
+- Use facts supplied by the user as source facts, including an actual quotation date or the party's requested stamp use. Look up existing context and files before asking for missing factual values; a factual question must not become a repeated permission check.
+- Keep preparation within the requested scope. Submission, sending, and unrelated external actions require their own task instruction; permission to prepare a document does not invent missing dates, amounts, approval states, or signatures.
+
 ## Administrative documents: no unsolicited annotations
 
 - For administrative public letters, plans, expense forms, and reports, do not add agent-created memos, remarks, parenthetical caveats, workflow explanations, or attachment instructions that the user did not request. A blank 비고 cell is not an invitation to explain the drafting process.
 - Use conversational background to choose accurate dates, quantities, and actual expenditure; do not automatically quote that background in the document. For example, delayed card receipt can change snack-expense calculations without adding a card-delay explanation or a “receipt to be attached manually” note.
 - Preserve required official form wording and fill supported business fields normally. Leave unsupported values blank rather than inserting “확인 필요”, “추후 입력”, or similar agent notes into the document.
-- If an additional explanation is necessary, first show its exact proposed wording and location to the user and ask whether to include it. Continue work that does not depend on that addition; do not treat elapsed time as consent.
+- Omit unrequested explanations instead of creating an extra approval question for them. Report a material missing fact briefly in the conversation when needed; preserve explanations required by the official form or explicitly requested by the user.
+- Before delivery, compare every populated remarks, attachment, and narrative field against the source template and requested changes. Any new process note, caveat, drafting status, or manual-attachment instruction without a requested or mandatory purpose fails this check. Existing wording is not automatically permission to add another annotation.
+- For purchase or expense packets in any document format, read [../hancom-hwpx-documents/references/procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md) before filling. Use its saved-field check and `style-guide`'s complete-column gate after saving, including for editable Word quotations.
 
 ## Automatic routing with complementary skills
 
