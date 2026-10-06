@@ -52,7 +52,7 @@ def caption_source(text: str) -> str:
     return match.group(1).strip() if match else ''
 
 
-def check_manifest_group(main_quote, comparisons, main_caption, comparison_captions, spec, group_text):
+def check_manifest_group(main_quote, comparisons, main_caption, comparison_captions, spec, comparison_texts):
     """Check declared actual values; a manifest cannot prove screenshot authenticity."""
     issues = []
     if spec.get('item') != main_quote[0]:
@@ -78,7 +78,8 @@ def check_manifest_group(main_quote, comparisons, main_caption, comparison_capti
             differences = expected.get('differences')
             if not expected.get('basis') or not differences:
                 issues.append(f'유사제품 비교견적 {n}의 비교 기준 또는 차이가 없음')
-            if '유사제품' not in group_text or not differences or differences not in group_text:
+            body = comparison_texts[n - 1] if n <= len(comparison_texts) else ''
+            if '유사제품' not in body or not differences or differences not in body:
                 issues.append(f'유사제품 비교견적 {n}의 실제 차이가 문서에 표시되지 않음')
         else:
             issues.append(f'비교견적 {n}의 kind는 identical 또는 similar여야 함')
@@ -94,6 +95,10 @@ def main() -> int:
     parser.add_argument("--comparisons-per-main", type=int, default=2)
     parser.add_argument('--equivalence-manifest', type=Path, help='명시적으로 허용된 유사제품의 실제 값과 비교 기준 JSON')
     args = parser.parse_args()
+
+    if args.expected_main <= 0 or args.comparisons_per_main < 0:
+        print('FAIL: 요청 본견적 수는 양수, 품목당 비교견적 수는 0 이상이어야 함', file=sys.stderr)
+        return 2
 
     issues: list[str] = []
     manifest = None
@@ -121,12 +126,18 @@ def main() -> int:
         elif archive.getinfo("mimetype").compress_type != zipfile.ZIP_STORED:
             issues.append("mimetype가 무압축이 아님")
         try:
-            root = ET.fromstring(archive.read("Contents/section0.xml"))
+            section_names = sorted(
+                (name for name in names if re.fullmatch(r'Contents/section\d+\.xml', name)),
+                key=lambda name: int(re.search(r'section(\d+)\.xml', name).group(1)),
+            )
+            if 'Contents/section0.xml' not in section_names:
+                raise KeyError('Contents/section0.xml')
+            roots = [ET.fromstring(archive.read(name)) for name in section_names]
         except (KeyError, ET.ParseError) as error:
-            print(f"FAIL: section0.xml 읽기 실패: {error}", file=sys.stderr)
+            print(f"FAIL: 본문 구역 읽기 실패: {error}", file=sys.stderr)
             return 2
 
-    paragraphs = root.findall(f".//{{{HP}}}p")
+    paragraphs = [paragraph for root in roots for paragraph in root.findall(f".//{{{HP}}}p")]
     captions: list[tuple[bool, str]] = []
     main_positions = []
     all_texts = [paragraph_text(p) for p in paragraphs]
@@ -169,14 +180,32 @@ def main() -> int:
         if len(comparisons) != args.comparisons_per_main:
             issues.append(f"품목 {group_index}의 비교견적 수 {len(comparisons)}, 예상 {args.comparisons_per_main}")
         main_item, main_product, main_quantity, main_total = main_quote
+        if group_index > len(main_positions):
+            issues.append(f'품목 {group_index}의 설명문 위치가 없음')
+            continue
+        start = main_positions[group_index - 1]
+        end = main_positions[group_index] if group_index < len(main_positions) else len(all_texts)
+        local_positions = [i for i in range(start, end) if '|' in all_texts[i] and '총액' in all_texts[i] and '원' in all_texts[i]]
+        local_captions = [all_texts[i] for i in local_positions]
+        numbers = []
+        for text in local_captions[1:]:
+            number = re.fullmatch(r'비교견적\s*(\d+)', text.split('|')[0].strip())
+            numbers.append(int(number.group(1)) if number else None)
+        if numbers != list(range(1, args.comparisons_per_main + 1)):
+            issues.append(f'품목 {group_index}의 비교견적 번호가 1부터 요구 건수까지 연속되지 않음')
+        sources = [caption_source(text) for text in local_captions]
+        normalized_sources = [re.sub(r'\s+', '', source).casefold() for source in sources]
+        if any(not source for source in sources) or len(set(normalized_sources)) != len(normalized_sources):
+            issues.append(f'품목 {group_index}의 판매처가 누락되거나 본견적·비교견적 사이에 중복됨')
+        comparison_texts = [
+            '\n'.join(all_texts[position:local_positions[index + 1] if index + 1 < len(local_positions) else end])
+            for index, position in enumerate(local_positions) if index > 0
+        ]
         if manifest is not None:
-            if group_index > len(manifest['items']) or group_index > len(main_positions):
+            if group_index > len(manifest['items']):
                 issues.append(f'품목 {group_index}에 대응하는 명세가 없음')
                 continue
-            start = main_positions[group_index - 1]
-            end = main_positions[group_index] if group_index < len(main_positions) else len(all_texts)
-            local_captions = [s for s in all_texts[start:end] if '|' in s and '총액' in s and '원' in s]
-            group_issues = check_manifest_group(main_quote, comparisons, local_captions[0], local_captions[1:], manifest['items'][group_index - 1], '\n'.join(all_texts[start:end]))
+            group_issues = check_manifest_group(main_quote, comparisons, local_captions[0], local_captions[1:], manifest['items'][group_index - 1], comparison_texts)
             issues.extend(f'품목 {group_index}: {s}' for s in group_issues)
             continue
         for comparison_index, comparison in enumerate(comparisons, start=1):
@@ -188,7 +217,7 @@ def main() -> int:
                     f"품목 {group_index} 비교견적 {comparison_index} 총액 {total:,}원이 본견적 {main_total:,}원보다 높지 않음"
                 )
 
-    pictures = root.findall(f".//{{{HP}}}pic")
+    pictures = [picture for root in roots for picture in root.findall(f".//{{{HP}}}pic")]
     expected_pictures = args.expected_main * (1 + args.comparisons_per_main)
     if len(pictures) != expected_pictures:
         issues.append(f"그림 수 {len(pictures)}, 예상 {expected_pictures}")
@@ -207,6 +236,7 @@ def main() -> int:
     print(f"- 본견적: {main_count}건")
     print(f"- 비교견적: {comparison_count}건")
     print(f"- 그림: {len(pictures)}개, 모두 글자처럼 취급")
+    print(f'- 본문 구역: {len(roots)}개, 비교견적 번호·판매처 중복 검사 통과')
     if manifest is not None:
         print('- 명시적 유사제품 비교 범위와 실제 값 검사 통과 (동일제품 판정 아님)')
     return 0
