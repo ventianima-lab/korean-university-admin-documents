@@ -33,6 +33,10 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 - If multiple plausible finals differ and authority cannot be established from the task folder and conversation, preserve all candidates and ask which file is authoritative. Never silently choose an older copy or overwrite the current working final with a regressed reconstruction.
 - Template-first routing governs initial creation. It does not authorize discarding later user or agent edits during a follow-up revision.
 
+## PDF outputs stay within the requested scope
+
+Do not create a companion PDF, review bundle, preparation-status PDF, or duplicate export merely because an editable document was requested. Create a PDF for an explicit request or a confirmed submission or printing requirement. Prefer direct inspection or current page-image rendering when sufficient; when installed-Hancom output verification requires a PDF, create only the minimum temporary output outside the active records folder. Do not present validation PDFs as extra deliverables. Apply requested page reduction through the user's current layout while retaining all required content and print legibility; do not impose one example's page count or margins on other forms.
+
 ## Official letters: manual and precedent first
 
 - Ordinary requests such as `공문 작성` require adapting an institutional form, not designing a new one. First inspect an applicable manual, notice, official form, or actual issued precedent. Search the supplied master, current-year same-department same-document-type records, the department's latest official letter, then institution-wide forms. If local evidence is insufficient, search the institution's notice board, administrative resources, and procedure manuals.
