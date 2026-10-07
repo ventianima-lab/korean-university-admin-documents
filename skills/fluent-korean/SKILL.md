@@ -13,6 +13,14 @@ Before drafting or revising substantive Korean prose, read [references/fluent-ko
 - Do not rewrite exact quotations, names, numbers, amounts, percentages, dates, times, units, code, identifiers, URLs, paths, filenames, legal or evidentiary wording, responsible parties, deadlines, actions, conditions, exceptions, template fields, tables, list order, or supplied text that the user asked to preserve verbatim.
 - Before delivery, check that meaningful sentence elements, particles, predicates, and endings are present; replace unclear noun strings or unnecessary figurative wording; and avoid em dashes where a conjunction or colon is clearer.
 
+## Delayed messages, dates, and forms of address
+
+- When a user explains that promised material is being sent late, open the message with a direct apology that acknowledges both the prior promise and the delay. Do not dilute the apology with excuses or shift responsibility to the recipient.
+- Resolve relative deadlines such as “next Friday” against the client-provided current date and timezone, then write the exact calendar date in the deliverable. Preserve a user-specified relative phrase only when they explicitly want it shown.
+- Treat a user-corrected honorific or form of address as protected wording. Replace every conversational occurrence consistently, while preserving official form names, role labels, and filenames unless the user also asks to change them.
+- When the user asks to remove a particular sentence or condition, delete it completely. Do not replace it with a paraphrase that recreates the same request, caution, or restriction unless mandatory legal, safety, or template wording requires disclosure.
+- Distinguish planned details from confirmed details. When a date or time comes only from a draft or plan, identify it as the planned or proposed schedule instead of presenting it as a confirmed appointment.
+
 ## Document requests include the relevant parties' permission
 
 - Treat a user's request to write or revise a document as already cleared with the named vendor or party for the requested preparation, supplied names, and requested use of supplied seals or signatures. Do not ask whether permission was obtained or request that same permission again.
