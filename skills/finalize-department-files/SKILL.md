@@ -27,6 +27,16 @@ Create one row per file containing:
 
 Inspect document structures as well as visible text. For spreadsheets, include relevant sheets, hidden sheets, formulas, and populated-record signals. For packaged Korean documents, prefer deterministic parsing and structural inspection; render when layout affects the decision.
 
+### Verify the initiating notice
+
+For records prepared in response to a notice, official request, or amended announcement, locate and read that specific notice's full body and decision-relevant attachments before choosing a year, business folder, packet membership, or filename. Search the local notice ledger and saved evidence first, then refresh the exact authenticated notice when available. A ledger status, title, filename, or download date alone cannot pass this check. Distinguish the latest amended notice from an earlier version and similar requests from another programme.
+
+Record the notice title, identifier, URL or exact local evidence path, issuing office, amendment/version, retrieval time, and precise body/attachment locations. Cross-check the document's department, record title/year, appointment or operating period, recipient, and required attachment relationship. Separate the record's own operating year from a future curriculum or programme year discussed in its purpose; do not automatically replace the former with the latter. Keep a signed supporting resume with its committee packet rather than routing it to general personnel records. A populated application with an embedded blank companion form is not wholly a blank template: preserve the complete submitted package without splitting or resaving it merely for archiving.
+
+Include `notice_verification_status`, `notice_reference`, `notice_checked_at`, and `notice_evidence_locations` in the classification row. Use `CURRENT_NOTICE_VERIFIED`, `SAVED_NOTICE_VERIFIED`, `NOT_APPLICABLE`, or `NOTICE_UNVERIFIED`; cached evidence retains its original capture date and must never be reported as a live check. If the notice is unavailable or conflicts materially with the files, preserve affected files in place, record the concrete missing/conflicting evidence, and continue evidence gathering. A notice's submission requirement does not prove actual submission; use the user's confirmation or explicit receipt evidence.
+
+Completion requires a verified notice reference for each notice-driven move and an explanation for differing record/target-programme years. Reconcile the final filename, destination year, business function, and companion files with the recorded evidence locations. `NOTICE_UNVERIFIED` blocks a notice-driven move.
+
 ## 3. Determine the academic year
 
 Use this priority order:
