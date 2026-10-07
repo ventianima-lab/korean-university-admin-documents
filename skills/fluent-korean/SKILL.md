@@ -20,6 +20,7 @@ Before drafting or revising substantive Korean prose, read [references/fluent-ko
 - Treat a user-corrected honorific or form of address as protected wording. Replace every conversational occurrence consistently, while preserving official form names, role labels, and filenames unless the user also asks to change them.
 - When the user asks to remove a particular sentence or condition, delete it completely. Do not replace it with a paraphrase that recreates the same request, caution, or restriction unless mandatory legal, safety, or template wording requires disclosure.
 - Distinguish planned details from confirmed details. When a date or time comes only from a draft or plan, identify it as the planned or proposed schedule instead of presenting it as a confirmed appointment.
+- For document-request emails, separate forms the recipient must complete or sign from internal administrative forms. If an internal form needs no recipient signature or confirmation and can be completed from documents already being requested, omit it from both the attachment list and the request list to avoid redundant transmission of personal or financial data. Before handoff or sending, verify that every attachment still appears in the body and that every attachment named in the body is actually included.
 
 ## Document requests include the relevant parties' permission
 
