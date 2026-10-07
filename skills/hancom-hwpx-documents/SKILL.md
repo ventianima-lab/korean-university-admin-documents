@@ -110,6 +110,13 @@ Read [references/hancom-page-copy.md](references/hancom-page-copy.md) before the
 
 ## Forms and attendance sheets
 
+### Recipient forms before mail handoff
+
+- Preparing document-request attachments includes prefilling source-supported fields. Before copying or attaching a form, inventory each input as known, recipient-controlled, or unconfirmed. Fill known identity, institution, role, business contact, program, department, and target fields; do not report a copied blank form as ready when these values are already available. Preserve the blank reusable master and produce a clearly named prefilled copy.
+- A business-card address does not establish a home address; advertised courses do not establish the recipient's credentials. Leave unsupported personal identifiers, account details, education, qualification dates, actual signatures, consent selections, and criminal-history results for the recipient. A printed signer name may be filled without adding a signature. Leave unconfirmed event date/place blank and remove illustrative schools, years, and account numbers from recipient input cells while retaining official instructions and unselected choices.
+- Record every known or intentionally blank input in a private JSON field inventory: `fields` entries use `section`, zero-based `table` ordinal within that section, `row`, `col`, `expected` (empty string for a required blank), and `source` (evidence or reason). Run `scripts/validate_hwpx_opensource.py <saved copy> --fields <inventory.json>` before attachment. A value in a different cell or only in preview text cannot satisfy this gate. Inspect current rendering and signer/consent controls separately.
+- If forms change after draft creation, replace the stale mail attachments, synchronize any saved EML attachment bytes and text copies, then close/reopen the saved webmail draft to verify the exact prefilled filenames and remaining-recipient instructions. Respect the requested sending boundary.
+
 Use the user’s corrected file as the sizing and visual baseline whenever available. Read [references/attendance-form.md](references/attendance-form.md) when adapting an attendance-sheet master. For an explicitly requested new attendance sheet, check that:
 
 - all attendees, the header row, and each signature column fit on one page;
