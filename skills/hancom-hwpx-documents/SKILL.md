@@ -48,6 +48,12 @@ Do not create a companion PDF, review bundle, preparation-status PDF, or duplica
 - Assuming supporting documents are ready does not authorize inventing form conventions, procedures, citations, or approval information. Continue with a verified precedent where applicable; when none supports the necessary choice, identify the search scope and unresolved requirement before drafting that part. Create a new layout only when explicitly requested.
 - Record the exact source and relevant section, selected master, changed facts, and reasons as `TemplateSearch` evidence. Successful parsing, rendering, or application opening cannot override a failed manual/precedent comparison; missing evidence or `TemplateMatch=false` blocks completion.
 
+### Institution-specific attachment notation
+
+- Do not normalize an attachment line to generic official-letter prose. Separators between the attachment name and copy count, spaces, and punctuation are protected parts of the institutional form. Omitting a separator fails verification even when the resulting sentence appears equivalent.
+- Apply a confirmed institution-specific convention only to that institution. Keep private examples and institution identities outside a public skill pack. Adapt the attachment name and count to supported facts; a single-line example does not establish numbering or layout rules for multiple attachments.
+- Before writing, record the institution and approved expected line in the private verification inventory. After saving, concatenate all text runs in the final attachment paragraph in document order and compare the complete line character by character. A missing, substituted, or miscounted separator, or an unapproved spacing or punctuation change, blocks completion. Inspect an already corrected reference read-only; a request to retain its convention does not authorize resaving it.
+
 ## User corrections require a workflow improvement
 
 A user correction authorizes a relevant skill improvement in the same task. Verify the failed behavior against the current source, correct the requested deliverable, and use `skill-creator` to encode its cause, prevention, and completion check. If a rule already exists, fix its invocation or validation path instead of merely repeating it. A skill-only request does not authorize resaving the user's corrected reference. Validate the skill and synchronize public-safe changes when the user's maintained document pack requires it.
