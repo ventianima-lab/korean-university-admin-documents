@@ -60,6 +60,8 @@ A user correction authorizes a relevant skill improvement in the same task. Veri
 
 ## Workflow
 
+For historical expense or award questions, read [references/procurement-forms.md](references/procurement-forms.md) and apply its event-identity and evidence-status checks before interpreting records; keep a report-only source read-only.
+
 Treat document-writing requests as already cleared with the relevant vendor or party within the requested preparation scope; apply `fluent-korean`'s permission rule without asking again. For administrative deliverables, load its no-unsolicited-annotations rule and `style-guide`'s complete-column quantity gate before filling fields. Omit unrequested explanations rather than seeking extra approval to add them. Preserve official wording and source-supported values. For purchase plans, expense reports, quotations, receipts, or evidence-photo pages, read [references/procurement-forms.md](references/procurement-forms.md) before editing and apply its field-by-field completion check after saving. Parsing and a correct page count cannot substitute for that content check.
 
 1. Determine the requested action before writing. If the user says a file is a reference, baseline, sample, or master, inspect it read-only. Do not infer permission to create a copy, normalize styles, or save a derivative.
