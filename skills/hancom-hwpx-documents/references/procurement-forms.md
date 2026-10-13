@@ -47,6 +47,7 @@ Read this reference before drafting or revising purchase preapproval, expense se
 
 ## Consistent evidence-photo layout
 
+- If the user says they will insert, replace, or arrange the evidence photos themselves, stop automated photo placement immediately. Restore or retain the latest authoritative document without automation-added pictures, keep the intended photo cells editable, and finish the remaining submission documents. Name the handoff so the single remaining photo action is clear; do not create a substitute photo appendix, collage, or duplicate deliverable unless the user requests one.
 - Establish one grouping key and layout before placing images. For class evidence, use one class date per page or repeated section unless the user requests another grouping. Keep the class date and purchase/inspection date distinct.
 - Prioritize purchased-goods overview and finished results. Add a representative process image between them or in a consistent smaller position when available. Use the same ordering, captions, and relative emphasis across dates; do not mix a whole-session collage on one page with unrelated individual-photo pages for other dates.
 - Select representative images and avoid duplicate angles or unnecessary group photographs. Preserve source pixels and do not invent missing process photographs. When one date lacks a source for a category, omit that category while retaining the common goods-to-results order.
