@@ -8,6 +8,10 @@ This repository contains adapted prompt and skill material or references the fol
 - `DaleSeo/korean-skills`, commit `ae12ba27982ebeff03b46dc738365aaa34260d9a`, MIT. Adapted `style-guide` and `grammar-checker` material retains the upstream author and commit metadata. The license is preserved at `licenses/DaleSeo-korean-skills-MIT.txt`.
 - `epoko77-ai/im-not-ai`, commit `c4d03d4859acda143f0b04b4bbdb56c5e6a94db1`, MIT. Adapted `humanize-korean` material retains upstream repository and commit metadata. The license is preserved at `licenses/epoko77-ai-im-not-ai-MIT.txt`.
 
+## Included Apache-2.0 material
+
+- OpenAI bundled `imagegen` skill and accompanying resources, Apache-2.0. The complete installed skill folder, including invocation metadata, scripts, references, and assets, is preserved in `skills/imagegen`; its license is retained at `skills/imagegen/LICENSE.txt`. The print-size and accepted-design preservation guidance is a local adaptation. No API credentials or private document examples are included.
+
 ## Optional runtime dependencies not redistributed here
 
 - Kordoc — MIT: https://github.com/chrisryugj/kordoc
