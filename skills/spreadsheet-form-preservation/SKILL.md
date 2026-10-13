@@ -16,6 +16,7 @@ Treat the supplied workbook as the structural and visual authority. Work on a co
 ## Workflow
 
 1. Compare target cells with the reference and identify the smallest required edit set.
+   Record the intended row identities and any explicit exclusions before filling. Identify records by stable identifiers plus section or another necessary discriminator, rather than by count alone. A request to exclude a record removes its row; do not retain it with blank dates or restore it from a roster on regeneration. Verify that the final included identity set exactly matches the requested set and that excluded identities are absent, including after a user correction.
 2. Snapshot formulas, styles, merges, row heights, column widths, sheet order and visibility, defined names, validations, print areas, page setup, printer settings, charts and relationships.
 3. Change only approved cells, formulas or labels. Do not rebuild the workbook from a generic export when the source structure matters.
 4. Preserve formulas as formulas and distinguish blank, zero, empty string and not-applicable values.
