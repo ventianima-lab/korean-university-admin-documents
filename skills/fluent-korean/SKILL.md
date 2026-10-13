@@ -38,6 +38,12 @@ Before drafting or revising substantive Korean prose, read [references/fluent-ko
 - Before delivery, compare every populated remarks, attachment, and narrative field against the source template and requested changes. Any new process note, caveat, drafting status, or manual-attachment instruction without a requested or mandatory purpose fails this check. Existing wording is not automatically permission to add another annotation.
 - For purchase or expense packets in any document format, read [../hancom-hwpx-documents/references/procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md) before filling. Use its saved-field check and `style-guide`'s complete-column gate after saving, including for editable Word quotations.
 
+## External submission emails
+
+- For a submission from a department or office, identify both the organization and the submitting unit in the subject or opening sentence, using verified names. Do not imply that one unit's records represent the entire organization.
+- Keep the covering email to the sender, requested material, and submission purpose. Apply the no-unsolicited-annotations check to the email body as well as the attachment: omit internal system names, drafting methods, verification steps, and accounting-process explanations unless the user or submission instructions require them. A choice used to prepare the attachment does not itself justify explaining that choice to the recipient. If the user rejects an unnecessary explanation, delete it rather than replacing it with a plainer version of the same explanation.
+- Before sending, inspect the actual subject and rendered or MIME-decoded body for the organization and submitting unit, and check every extra explanatory sentence against the user's request or submission requirements. Matching attachment bytes alone does not satisfy this check. A correction to already-sent wording does not authorize a follow-up or replacement email.
+
 ## Automatic routing with complementary skills
 
 - Use this skill as the drafting baseline for substantive Korean user-facing prose.
