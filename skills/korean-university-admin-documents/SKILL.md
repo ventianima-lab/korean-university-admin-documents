@@ -39,6 +39,8 @@ A user correction requires a relevant same-task skill improvement through `skill
 
 Read [references/document-types.md](references/document-types.md) when drafting an official letter, plan, result report, budget or purchase packet, meeting document, roster, or notice.
 
+For notices or attachments containing authentication context, read [references/credential-bearing-evidence.md](references/credential-bearing-evidence.md) before persistence or image display. Apply pre-output structured redaction; a later cleanup cannot certify that the original output was secret-free.
+
 ## Hard failures
 
 - `VERIFICATION_FAILED`: a protected fact, value, association, table order, or required label changed.
