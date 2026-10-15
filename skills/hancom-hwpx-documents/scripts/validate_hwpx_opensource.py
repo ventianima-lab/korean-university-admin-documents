@@ -26,6 +26,7 @@ def verify_form_fields(path: Path, expectations: dict) -> dict:
     ns = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
     seen = set()
     roots = {}
+    checked_tables = 0
     with ZipFile(path) as package:
         for index, field in enumerate(fields):
             section = field["section"]
@@ -49,7 +50,27 @@ def verify_form_fields(path: Path, expectations: dict) -> dict:
             actual = "".join(node.text or "" for node in matches[0].findall(".//hp:t", ns))
             if actual.strip() != field["expected"].strip():
                 raise ValueError(f"Field {index}: saved cell differs from expected value")
-    return {"status": "PASS", "checked_fields": len(fields)}
+        table_locations = set()
+        for index, table in enumerate(expectations.get("tables", [])):
+            section = table["section"]
+            key = (section, table["table"])
+            expected_rows = table["rows"]
+            if (key in table_locations or not table.get("source", "").strip()
+                    or type(expected_rows) is not int or expected_rows < 1):
+                raise ValueError(f"Table {index}: invalid grouping expectation or missing source")
+            table_locations.add(key)
+            if section not in roots:
+                roots[section] = ET.fromstring(package.read(section))
+            tables = roots[section].findall(".//hp:tbl", ns)
+            ordinal = table["table"]
+            if type(ordinal) is not int or not 0 <= ordinal < len(tables):
+                raise ValueError(f"Table {index}: invalid table location")
+            target = tables[ordinal]
+            actual_rows = len(target.findall("hp:tr", ns))
+            if actual_rows != expected_rows or int(target.get("rowCnt", actual_rows)) != expected_rows:
+                raise ValueError(f"Table {index}: saved row grouping differs from expected structure")
+            checked_tables += 1
+    return {"status": "PASS", "checked_fields": len(fields), "checked_tables": checked_tables}
 
 
 def main() -> None:

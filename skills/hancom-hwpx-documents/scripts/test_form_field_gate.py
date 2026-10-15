@@ -50,6 +50,36 @@ class FieldGateTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     verify_form_fields(path, inventory)
 
+    def test_summary_checkbox_and_shipping_total_are_exact_fields(self):
+        pairs = [
+            ("복사용지 외 4종", "복사용지 외 3종"),
+            ("■ 실험실습재료 □ 기타", "■ 실험실습재료 ■ 기타"),
+            ("8,000", "5,000"),
+            ("스마트폰 거치대", "홀더"),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            for expected, wrong in pairs:
+                with self.subTest(expected=expected):
+                    with self.assertRaises(ValueError):
+                        verify_form_fields(self.create(folder, wrong), self.manifest(expected))
+                    verify_form_fields(self.create(folder, expected), self.manifest(expected))
+
+    def test_grouping_is_checked_independently_for_each_table(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = self.create(folder, "12,000")
+            inventory = self.manifest("12,000")
+            table = {"section": "Contents/section0.xml", "table": 0,
+                     "rows": 1, "source": "User requests one aggregate row; total is unchanged"}
+            inventory["tables"] = [table]
+            self.assertEqual(verify_form_fields(path, inventory)["checked_tables"], 1)
+            table["rows"] = 2
+            with self.assertRaises(ValueError):
+                verify_form_fields(path, inventory)
+            table["rows"] = 1
+            table["source"] = ""
+            with self.assertRaises(ValueError):
+                verify_form_fields(path, inventory)
+
 
 if __name__ == "__main__":
     unittest.main()
