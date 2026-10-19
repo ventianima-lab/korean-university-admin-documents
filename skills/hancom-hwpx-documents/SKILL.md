@@ -127,6 +127,14 @@ Read [references/hancom-page-copy.md](references/hancom-page-copy.md) before the
 
 ## Forms and attendance sheets
 
+### Complete roster fields from authorized records
+
+- A column missing from the first contact or course-enrollment list does not establish that its values are unavailable. Before leaving attendee birth dates or other required identity fields blank, check the relevant complete records and the configured, authorized academic-system lookup when available. Index previews and a single roster are discovery aids, not an exhaustive search.
+- Match each retrieved value to the exact student ID, name, and department; do not transfer personal data by name alone. Prefer the explicit birth-date field and retain only the requested personal data in private evidence. Never capture credentials, session fields, or unrelated identifiers in broad form dumps.
+- Keep the user's selected attendees, order, exclusions, and event/class grouping fixed while filling a missing identity field. A differently defined system category does not authorize changing those choices; record a material conflict separately instead of silently remapping a participant.
+- For every remaining blank, record the sources actually checked and any concrete access failure. Distinguish "not present in this source" from "not found after checking the available authorized sources"; do not ask the user to supply a locally or electronically retrievable value before that check.
+- Verify the saved roster cell by cell against source rows keyed by student ID/name, require the full expected attendee count and no unexplained required blanks, and compare all out-of-scope fields and formatting with the live baseline. Successful opening alone does not complete the roster.
+
 ### Recipient forms before mail handoff
 
 - Establish the recipient's exact name from the latest explicit user wording or by comparing the syllables in the original message/business card before prefilling. Repeated generated copies, OCR output, and a field inventory derived from that same transcription are not independent identity evidence. A user-corrected spelling supersedes the earlier transcription.

@@ -1,5 +1,13 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-19 roster identity lookup correction
+
+A roster field was left blank after consulting contact and enrollment lists that did not contain that column, although an authorized academic-system lookup could supply it. The HWPX workflow now requires checking available authoritative sources before declaring a required identity value unavailable, matching by student ID, name, and department, and verifying every saved row while preserving the selected attendees and event grouping. Broad hidden-field dumps are excluded from evidence.
+
+Reviewed the complete installed and public HWPX skill folders, including all references, helpers, and invocation metadata. Remaining differences are existing private paths, institution-specific adaptations, portable public guidance, and trailing whitespace; no reusable pending changes were omitted or newer public corrections replaced. No executable helper or invocation metadata changed. Public-only adapters remain intact.
+
+Behavior validation used an authorized exact-ID lookup for every selected attendee, source-to-cell comparison, unchanged-field/style checks, and an exact-file native open and current one-page render. An absent date column in a contact list now fails the missing-data conclusion; name-only matches fail the identity check; different system grouping cannot silently change the user-selected event group. Real records, identities, dates of birth, credentials, system URLs, and personal paths remain outside the public repository.
+
 Reviewed complete folders for all seven existing installed counterparts, including scripts, references, examples, and invocation metadata. Reviewed the four public-only adapters without replacing them with proprietary product plugins. Added the installed comparison-quote skill, bringing the pack to twelve skills.
 
 | Skill | Result |
