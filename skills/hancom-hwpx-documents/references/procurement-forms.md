@@ -1,6 +1,6 @@
 # Procurement forms and evidence pages
 
-Read this reference before drafting or revising purchase preapproval, expense settlement, vendor quotations, receipt attachment forms, or evidence-photo pages. Use the user's current edited files as the baseline. Keep active records in their working folder when the user requests that; organization is not permission to archive them.
+Read this reference before proposing a programme budget, including a chat estimate, or drafting or revising purchase preapproval, expense settlement, vendor quotations, receipt attachment forms, or evidence-photo pages. Use the user's current edited files as the baseline. Keep active records in their working folder when the user requests that; organization is not permission to archive them.
 
 ## Permission and factual fields
 
@@ -42,6 +42,7 @@ Read this reference before drafting or revising purchase preapproval, expense se
 
 ## Complete operating-budget plans
 
+- Before the first proposal, map each user-requested or source-supported operating cost to an included calculation, an explicit user exclusion, or an unresolved input. Excluding materials does not exclude refreshments or other independent costs. Check this coverage map before an interview question or handoff; do not invent optional cost lines or treat an unknown as zero. For refreshments, record the participant categories, proposed unit price, and proposed serving frequency separately; label assumptions as plans rather than approved rates or incurred expenses.
 - When the user requests a complete allocation of a stated operating budget, a saved subset of expense rows is not a completed plan. Snapshot the current amounts and preserve the user's latest instructor, session length/count, participants, and required printing or event costs. A request to maximize spending does not override a user-fixed activity count; a recommended frequency is not evidence that an extra session is approved. If the user finalizes a lower-sum revision, accept that allocation and explicitly reconcile its unallocated remainder rather than increasing another row or claiming the ceiling is fully allocated. Reconcile the sum to the requested total before reporting budget completion.
 - Use the current applicable spending rules for participant categories, unit-rate ceilings, permitted expense types, and duplicate-payment restrictions. A ceiling is not a confirmed unit price. User-authorized proposed allocations may be entered as plans, but do not describe planned attendance, purchases, fees, or sessions as approved or already incurred; do not invent recipients or activities merely to consume a remainder.
 - If an editable form or registration screen limits the number of rows, combine only costs belonging to the same permitted expense category and retain each component's purpose, unit calculation, and subtotal. The combined amount must equal the sum of those components. Do not silently omit remaining costs or change the overall allocation to fit the row limit.

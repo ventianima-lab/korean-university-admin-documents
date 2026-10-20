@@ -1,5 +1,11 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-20 initial programme-budget coverage correction
+
+The early budget interview narrowed costs to fees and certificates before applying the existing programme-budget reference. The entrypoint now routes initial chat estimates through that reference before calculations or the next interview question. An expense-coverage map distinguishes included costs, explicit exclusions, and unresolved inputs; excluding materials cannot silently omit refreshments. Headcounts, proposed unit prices, and proposed serving frequency remain separate from approved or actual expenditure.
+
+Compared the complete installed and public HWPX skill folders, including helpers, references, and invocation metadata. No related pending reusable delta was found. Retained public-only portability, institution-neutral guidance, and existing newer corrections; remaining differences are private paths, institution-specific adaptations, translated equivalents, and whitespace. No executable helper or invocation policy changed. Added a synthetic decision case covering a materials-only exclusion and pre-document refreshments. No private record or proprietary plugin content is included.
+
 ## 2026-10-19 roster identity lookup correction
 
 A roster field was left blank after consulting contact and enrollment lists that did not contain that column, although an authorized academic-system lookup could supply it. The HWPX workflow now requires checking available authoritative sources before declaring a required identity value unavailable, matching by student ID, name, and department, and verifying every saved row while preserving the selected attendees and event grouping. Broad hidden-field dumps are excluded from evidence.
