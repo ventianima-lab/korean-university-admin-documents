@@ -1,5 +1,11 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-21 resolved font faces after native extraction
+
+A native form extraction had already substituted a source heading font before field filling. Comparing later revisions only with that extracted baseline preserved the defect. Added a read-only font-face gate that resolves each selected paragraph substring or exact paragraph through run properties and each language's font table, with independently sourced anchor counts. Six synthetic tests cover split runs, remapped IDs, a required but unused font-table entry, a wrong Latin mapping, missing/repeated anchors and title-versus-reference disambiguation. Font installation and current native rendering remain separate checks. Restoration changes only the source-backed affected font mappings and preserves correct body typography and the user's newer edits.
+
+Compared the complete twenty-file installed/public folders, including references, scripts and invocation metadata. The six remaining differences are reviewed private-path/institution generalizations or trailing blank lines; public adapters and newer corrections remain intact, with no related reusable pending deltas. The six tests, public release scan and both skill manifests passed. No real forms, identities, fonts, proprietary assets or institution-specific facts are published.
+
 ## 2026-10-21 independent attendance and approval scope
 
 The calculation-format gate had still reused a draft's learner-only headcount. Added a read-only saved-HWPX checker that compares every bound paragraph's factors with independently sourced role counts and verifies the component amount. Five synthetic tests cover repeated forms, an omitted instructor, wrong arithmetic, a lump sum, and missing evidence inventory. The helper verifies costing, not policy eligibility or actual attendance. The reference also distinguishes overall-plan meeting allocations from separate requested expense approvals without inventing a universal exclusion rule or treating a review question as edit authorization.
