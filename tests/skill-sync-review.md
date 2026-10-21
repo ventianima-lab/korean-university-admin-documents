@@ -1,5 +1,11 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-21 independent attendance and approval scope
+
+The calculation-format gate had still reused a draft's learner-only headcount. Added a read-only saved-HWPX checker that compares every bound paragraph's factors with independently sourced role counts and verifies the component amount. Five synthetic tests cover repeated forms, an omitted instructor, wrong arithmetic, a lump sum, and missing evidence inventory. The helper verifies costing, not policy eligibility or actual attendance. The reference also distinguishes overall-plan meeting allocations from separate requested expense approvals without inventing a universal exclusion rule or treating a review question as edit authorization.
+
+Compared all nineteen files of the complete relevant installed/public folders, including references, scripts, and invocation metadata. The six remaining differences are reviewed private-path/institution generalizations or harmless trailing blank lines; public adapters and newer corrections are preserved. No related reusable pending deltas remain. Records, identities, local paths, and institution-specific facts stay private. The synthetic suite and live private saved-cell check passed; release scan and both manifests are checked before publication.
+
 ## 2026-10-21 saved refreshment calculation factors
 
 A correct refreshment subtotal had replaced the calculation basis in repeated preapproval and operating-plan cells. The procurement reference now requires the supported headcount, per-person price, and serving count in every saved component, including an explicit single serving. Verification multiplies each component and reconciles the combined category while preserving a notation-only correction's allocation and the user's current edits. Added a synthetic mixed-activity, combined-category decision case.

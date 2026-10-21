@@ -30,3 +30,8 @@ Use these synthetic requests to review the updated skill route. They require no 
 | The user requests only the materials purchase-kind selection, but the draft also selects `기타`. | Verify the full saved checkbox string with only materials selected; apply any separately requested expense-category change within scope. Preserve unrelated programme boxes. | Leaving the extra selection, changing unrelated boxes, or treating a purchase-kind selection by itself as proof of accounting approval. |
 
 The entrypoints must route procurement work to the reference before filling and to the complete-column and field-map checks after saving. A parsing pass, total amount, or expected page count alone cannot satisfy these cases.
+
+## Role-based costs and approval scope
+
+- A saved refreshment row correctly multiplies three learners by a rate and frequency, but independent attendance includes an instructor. Reject it through the role-based saved-cell check; checking arithmetic alone cannot pass. Exercise repeated forms with `python tests/test_per_person_costs.py`.
+- An overall programme plan includes meetings while a separate meeting approval requests the same expense. Reconcile a nonduplicated expense-to-approval map, distinguishing an overall planning reference from a second requested approval. Report an unsupported exclusion rule as unverified; a review question alone does not authorize changing approval scope.
