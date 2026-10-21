@@ -35,3 +35,7 @@ The entrypoints must route procurement work to the reference before filling and 
 
 - A saved refreshment row correctly multiplies three learners by a rate and frequency, but independent attendance includes an instructor. Reject it through the role-based saved-cell check; checking arithmetic alone cannot pass. Exercise repeated forms with `python tests/test_per_person_costs.py`.
 - An overall programme plan includes meetings while a separate meeting approval requests the same expense. Reconcile a nonduplicated expense-to-approval map, distinguishing an overall planning reference from a second requested approval. Report an unsupported exclusion rule as unverified; a review question alone does not authorize changing approval scope.
+# Confirmed room without an unsolicited ownership suffix
+
+Given separate staff and learner meetings, the user resolves a staff-office reference to Building A room 202 and explicitly removes the office/owner wording. Learner meetings stay in room 201 and lectures in room 203. The passing saved forms use only the three activity-specific building/room values, including repeated meeting approvals and attendance sheets. A parenthetical office/owner suffix in any target venue cell or preview fails, even if its room number is correct. Independent expectations must be revised from the latest instruction before validation; unrelated participant names and source records remain unchanged.
+

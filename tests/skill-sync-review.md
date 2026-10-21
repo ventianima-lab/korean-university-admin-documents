@@ -1,5 +1,9 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-21 resolved venue labels and removed suffixes
+
+A person-associated office reference was treated as display wording after the user supplied an exact building and room. The preparation route now separates that lookup clue from the requested room-only venue value, updates exact-cell expectations from the latest correction, and checks all activity-specific repeats and previews for the removed suffix without altering unrelated names or source records. Added a synthetic decision case. The complete twenty-one-file installed/public comparison retains the six reviewed private/institution adaptations and whitespace differences; no related pending reusable change is omitted. No executable helper or invocation policy changed. Public release scanning and skill validation precede publication; no real locations or identities are published.
+
 ## 2026-10-21 all-input disposition coverage
 
 The existing identity-lookup rule was not invoked comprehensively: a selected-field check could pass while other retrievable identity and business-location inputs remained empty. Added a read-only saved-package gate that discovers every empty table cell and requires its exact-coordinate disposition. Known inputs must match independently sourced expected values; unconfirmed inputs need distinct actually checked sources. Signer-controlled, spare-row, and layout classifications require reasons and independent review. Picture placeholders and non-text controls retain separate verification. The gate does not prove source authority or make human classifications automatically correct.

@@ -10,6 +10,8 @@ Read this reference before proposing a programme budget, including a chat estima
 
 ## Before filling the forms
 
+Treat a person-associated place label as a lookup clue, not extra wording to append to a confirmed building/room. Use the latest explicit room designation at every corresponding venue field, separated by activity; do not carry one activity's room into another. If the user removes an office/owner suffix, update the independent exact-cell expectations first, then require that suffix to be absent from all affected saved venue fields and previews. Preserve unrelated names, meeting titles, and source records.
+
 Before asking for a missing expense-form value, inspect the actual current form and map the requested fact to its required field. Keep the meeting venue, proposed merchant, and any separately required dining venue distinct. A form with only an operating venue and proposed merchant does not establish a separate dining-location requirement; do not block drafting with that extra question. Ask only when the form, applicable rule, or requested decision actually needs the missing value. Before handoff, verify those existing fields against the user's answers and confirm that no invented dining-location field, duplicate venue request, or unsupported venue note was added. This does not waive an expressly required merchant or proximity check.
 
 1. Identify the exact current files, requested grouping, editable format, and supported source values. A later user edit overrides an earlier builder's cached text.
