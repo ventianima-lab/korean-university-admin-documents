@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from zipfile import ZipFile
 
-from validate_hwpx_opensource import verify_form_fields
+from validate_hwpx_opensource import verify_form_fields, verify_section_opening
 
 
 class FieldGateTests(unittest.TestCase):
@@ -79,6 +79,39 @@ class FieldGateTests(unittest.TestCase):
             table["source"] = ""
             with self.assertRaises(ValueError):
                 verify_form_fields(path, inventory)
+
+
+class SectionOpeningTests(unittest.TestCase):
+    def make(self, folder, runs):
+        path = Path(folder) / "opening.hwpx"
+        xml = ('<hs:sec xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" '
+               'xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"><hp:p>'
+               '<hp:run><hp:secPr/></hp:run>' + runs + '</hp:p></hs:sec>')
+        with ZipFile(path, "w") as package:
+            package.writestr("Contents/section0.xml", xml)
+        return path
+
+    def test_early_column_control_keeps_both_drawing_and_table(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = self.make(folder, '<hp:run><hp:ctrl><hp:colPr/></hp:ctrl></hp:run>'
+                             '<hp:run><hp:pic/><hp:tbl/></hp:run>')
+            self.assertEqual(verify_section_opening(path)["checked_sections"], 1)
+
+    def test_late_column_after_each_kind_of_object_fails(self):
+        for drawing in ("pic", "tbl"):
+            with self.subTest(drawing=drawing), tempfile.TemporaryDirectory() as folder:
+                path = self.make(folder, f'<hp:run><hp:{drawing}/><hp:ctrl><hp:colPr/>'
+                                 '</hp:ctrl></hp:run>')
+                with self.assertRaisesRegex(ValueError, "SECTION_OPENING_ORDER"):
+                    verify_section_opening(path)
+
+    def test_nested_cell_controls_do_not_change_section_order(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = self.make(folder, '<hp:run><hp:ctrl><hp:colPr/></hp:ctrl><hp:tbl>'
+                             '<hp:tr><hp:tc><hp:subList><hp:p><hp:run><hp:ctrl><hp:colPr/>'
+                             '</hp:ctrl></hp:run></hp:p></hp:subList></hp:tc></hp:tr>'
+                             '</hp:tbl></hp:run>')
+            self.assertEqual(verify_section_opening(path)["status"], "PASS")
 
 
 if __name__ == "__main__":

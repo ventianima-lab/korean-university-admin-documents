@@ -1,5 +1,13 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-21 corrected variant masters and footer typography
+
+A supplied edited variant now governs the shared content and page layout of every requested sibling. A footer correction is checked by visible glyph count, order, height, and centre pitch in each current native render, rather than accepting an image bounding-box resize. Combined marks retain their other requested text roles, and a typographic reference does not replace the destination institution's wording.
+
+Native diagnosis also confirmed that a first-paragraph column control after floating pictures can cause default page settings and separate the background from the form. Moving the existing control before the objects restored the intended one-page layout without rebuilding table cells or changing margins. The existing validator now rejects this order before claiming structural success. Synthetic tests cover early controls with both drawings and tables, late controls after either object, and an unrelated nested cell control. The original failing layout is rejected; all corrected outputs pass native reopens and table/style/geometry preservation checks.
+
+Compared all 18 files in the installed/public HWPX skill folders, including references, helpers, and invocation metadata. The remaining three differing text files retain previously reviewed private paths, institution-specific examples, translated equivalents, and public portability guidance; no reusable pending delta was omitted. Public-only adapters and newer corrections remain intact. Real records, logo assets, personal paths, and proprietary plugin material are excluded. Both helper test runs passed all nine tests; the public release scan and both changed-skill validations passed.
+
 ## 2026-10-20 initial programme-budget coverage correction
 
 The follow-up showed that a generic coverage map still allowed the estimate to mirror only the user's last named costs. The coverage check now traverses the applicable manual's programme categories and distinguishes a required banner from conditional printing and authored-material costs. Sample prices remain examples; eligible manuscript quantity and advance agreement need independent evidence. Added a synthetic banner/conditional-manuscript case. Recompared the complete installed/public HWPX folders; only previously retained private or portable differences remain. No executable helper or invocation metadata changed.

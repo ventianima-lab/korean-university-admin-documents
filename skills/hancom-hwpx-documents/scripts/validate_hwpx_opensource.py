@@ -18,6 +18,33 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def verify_section_opening(path: Path) -> dict:
+    """Reject late first-paragraph column controls before native layout testing."""
+    ns = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
+    hp = "{" + ns["hp"] + "}"
+    objects = {hp + name for name in ("tbl", "pic", "rect", "ellipse", "container",
+                                      "line", "ole", "textart", "polygon", "curve")}
+    checked = 0
+    with ZipFile(path) as package:
+        for name in package.namelist():
+            if not (name.startswith("Contents/section") and name.endswith(".xml")):
+                continue
+            root = ET.fromstring(package.read(name))
+            first = root.find("hp:p", ns)
+            if first is None or first.find("hp:run/hp:secPr", ns) is None:
+                continue
+            object_seen = False
+            for run in first.findall("hp:run", ns):
+                for child in run:
+                    if child.tag == hp + "ctrl" and child.find("hp:colPr", ns) is not None:
+                        if object_seen:
+                            raise ValueError(f"{name}: SECTION_OPENING_ORDER: column control follows a drawing or table")
+                    elif child.tag in objects:
+                        object_seen = True
+            checked += 1
+    return {"status": "PASS", "checked_sections": checked}
+
+
 def verify_form_fields(path: Path, expectations: dict) -> dict:
     """Check values at exact cells; an occurrence elsewhere is insufficient."""
     fields = expectations.get("fields", [])
@@ -97,6 +124,7 @@ def main() -> None:
             "text_length": len(original_text),
             "table_count": len(document.tables),
             "section_count": len(document.sections),
+            "section_opening": verify_section_opening(source),
         }
         if expectations is not None:
             row["form_fields"] = verify_form_fields(source, expectations)
@@ -113,6 +141,7 @@ def main() -> None:
                 "save_report": str(save_report),
                 "validation": str(reopened.validate()),
                 "text_equal": reopened.text.plain() == original_text,
+                "section_opening": verify_section_opening(output),
             }
             if expectations is not None:
                 row["roundtrip"]["form_fields"] = verify_form_fields(output, expectations)
