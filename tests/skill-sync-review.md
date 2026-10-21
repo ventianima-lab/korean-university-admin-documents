@@ -1,5 +1,11 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-21 all-input disposition coverage
+
+The existing identity-lookup rule was not invoked comprehensively: a selected-field check could pass while other retrievable identity and business-location inputs remained empty. Added a read-only saved-package gate that discovers every empty table cell and requires its exact-coordinate disposition. Known inputs must match independently sourced expected values; unconfirmed inputs need distinct actually checked sources. Signer-controlled, spare-row, and layout classifications require reasons and independent review. Picture placeholders and non-text controls retain separate verification. The gate does not prove source authority or make human classifications automatically correct.
+
+Compared all twenty-one installed/public files, including references, scripts, and invocation metadata. The same six intentional private/institution adaptations and trailing-blank differences remain; public adapters and newer corrections are preserved, with no related reusable pending delta omitted. Seven synthetic tests cover an omitted input, a blank known value, a wrong identity, duplicate disposition, and single-versus-multiple-source checks. Private live-form coverage also passed. Only generalized rules and synthetic tests are published; no records, identities, images, or private paths are included.
+
 ## 2026-10-21 resolved font faces after native extraction
 
 A native form extraction had already substituted a source heading font before field filling. Comparing later revisions only with that extracted baseline preserved the defect. Added a read-only font-face gate that resolves each selected paragraph substring or exact paragraph through run properties and each language's font table, with independently sourced anchor counts. Six synthetic tests cover split runs, remapped IDs, a required but unused font-table entry, a wrong Latin mapping, missing/repeated anchors and title-versus-reference disambiguation. Font installation and current native rendering remain separate checks. Restoration changes only the source-backed affected font mappings and preserves correct body typography and the user's newer edits.
