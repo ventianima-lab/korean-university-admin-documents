@@ -1,5 +1,11 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-10-21 saved refreshment calculation factors
+
+A correct refreshment subtotal had replaced the calculation basis in repeated preapproval and operating-plan cells. The procurement reference now requires the supported headcount, per-person price, and serving count in every saved component, including an explicit single serving. Verification multiplies each component and reconciles the combined category while preserving a notation-only correction's allocation and the user's current edits. Added a synthetic mixed-activity, combined-category decision case.
+
+Compared all 18 files in the installed/public HWPX folders, including references, executable helpers, and invocation metadata. Six remaining differences are reviewed private paths, institution-specific or translated guidance, and trailing blank lines. No reusable pending delta was omitted; public portability, public-only adapters, newer corrections, helpers, and invocation policy remain intact. No executable helper changed. Real records, private paths, and personal data are excluded.
+
 ## 2026-10-21 corrected variant masters and footer typography
 
 A supplied edited variant now governs the shared content and page layout of every requested sibling. A footer correction is checked by visible glyph count, order, height, and centre pitch in each current native render, rather than accepting an image bounding-box resize. Combined marks retain their other requested text roles, and a typographic reference does not replace the destination institution's wording.
