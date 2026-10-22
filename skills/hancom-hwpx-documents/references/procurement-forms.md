@@ -34,6 +34,12 @@ Before asking for a missing expense-form value, inspect the actual current form 
 
 ## Requested stage controls preparation
 
+### User-designated authority for repeated fields
+
+- Before reconciling dates, times, places, participant categories, or costs across advance and subsequent forms, record which source controls each field. Repetition or a majority of matching later forms does not authorize changing the preapproval. If the user designates the preapproval as the basis, preserve its supported schedule and align the authorized dependent fields to it; do not reverse that direction.
+- If an earlier agent edit changed that controlling source incorrectly, recover only the affected values from its last supported version and patch the current working final. Preserve all other current edits and explicitly excluded report content. Keep planned attendance separate from actual attendance, and do not invent travel, signatures, approvals, or outcome evidence to obtain consistency.
+- Completion requires an independently sourced authority-to-target field map: compare each saved dependent value and its date/session association with the fixed authority, verify the controlling values themselves survived, and check unchanged content inside edited tables. A successful open, matching totals, or agreement among generated forms cannot substitute for this directional comparison.
+
 - For a question about documents needed before an event, first state the source-backed advance-submission requirements. Explain later evidence separately and label its timing before offering to prepare it. A follow-up instruction to prepare the discussed documents inherits the requested stage; it does not authorize replacing an advance-approval package with minutes, completed attendance signatures, or event photos. Before creating files, reconcile each proposed filename with that stage. A prefilled future-use draft must leave actual attendance, signatures, decisions, and photos blank and must not be described as required advance evidence unless the source says so.
 
 ## Programme stage in meeting agendas

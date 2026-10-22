@@ -28,6 +28,7 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 
 ## Follow-up edits start from the current working final
 
+- When aligning repeated fields across preapproval and later forms, first read the authority-to-target rule in [references/procurement-forms.md](references/procurement-forms.md). Freeze the user-designated source values before editing; never change that source merely to match a majority of downstream forms.
 - For every follow-up edit, re-enumerate the active task folder immediately before changing anything. If that folder contains the current final deliverable, open and inspect that exact file and use it as the content baseline. This rule overrides remembered paths and earlier run artifacts; the official template remains the structural authority.
 - Do not rebuild a follow-up result from earlier components, archived sources, intermediate drafts, backups, candidates, validation copies, or a previous agent output when a newer working final exists. Timestamps alone do not prove authority. Prefer an explicitly named or user-identified final, then confirm that it contains the latest requested changes.
 - Before replacing a working final, record its path, modification time, SHA-256, page or section count, and representative markers for completed changes. Compare the candidate against that snapshot and require every change outside the new edit scope to remain present. Missing prior edits are a hard failure and block overwrite.
