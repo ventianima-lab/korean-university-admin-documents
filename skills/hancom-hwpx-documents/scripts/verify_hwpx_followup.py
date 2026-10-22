@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 from zipfile import BadZipFile, ZipFile
 import xml.etree.ElementTree as ET
+from verify_hwpx_dates import verify as verify_dates
 
 HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph'
 
@@ -51,7 +52,8 @@ def normalized(element: ET.Element) -> tuple:
 
 
 def verify(baseline: Path, candidate: Path, baseline_exclude: dict[str, set[int]],
-           candidate_exclude: dict[str, set[int]]) -> dict:
+           candidate_exclude: dict[str, set[int]], date_changes=None) -> dict:
+    dates = verify_dates(baseline, candidate, date_changes)
     checked = 0
     with ZipFile(baseline) as before, ZipFile(candidate) as after:
         sections = sorted(n for n in before.namelist() if n.startswith('Contents/section') and n.endswith('.xml'))
@@ -79,6 +81,7 @@ def verify(baseline: Path, candidate: Path, baseline_exclude: dict[str, set[int]
     if checked == 0:
         raise ValueError('No preserved blocks remain; use a separate field-level preservation check')
     return {'status':'PASS', 'preserved_blocks':checked, 'preserved_media':len(media_before),
+            'dates':dates,
             'baseline_sha256':sha256(baseline), 'candidate_sha256':sha256(candidate)}
 
 
@@ -90,13 +93,16 @@ def main() -> int:
     parser.add_argument('--candidate-exclude', action='append', default=[])
     parser.add_argument('--live-path', type=Path)
     parser.add_argument('--expected-live-sha256')
+    parser.add_argument('--date-changes', type=Path,
+                        help='Explicit user-authorized date changes; never inferred from the candidate')
     args = parser.parse_args()
     try:
         if bool(args.live_path) != bool(args.expected_live_sha256):
             raise ValueError('The live path and expected SHA-256 must be supplied together')
         if args.live_path and sha256(args.live_path).lower() != args.expected_live_sha256.lower():
             raise ValueError('Live working final changed since inspection; reread it before replacing')
-        result = verify(args.baseline, args.candidate, exclusions(args.baseline_exclude), exclusions(args.candidate_exclude))
+        date_changes = json.loads(args.date_changes.read_text(encoding='utf-8-sig')) if args.date_changes else None
+        result = verify(args.baseline, args.candidate, exclusions(args.baseline_exclude), exclusions(args.candidate_exclude), date_changes)
         if args.live_path and sha256(args.baseline).lower() != args.expected_live_sha256.lower():
             raise ValueError('Baseline snapshot does not match the inspected live working final')
         print(json.dumps(result, ensure_ascii=False))
