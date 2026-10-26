@@ -38,7 +38,7 @@ def verify(path, inventory):
                         if cell.find('.//hp:tbl',NS) is not None or cell.find('.//hp:pic',NS) is not None:continue
                         a=cell.find('hp:cellAddr',NS)
                         key=(section,ti,int(a.get('rowAddr')),int(a.get('colAddr')))
-                        value=''.join(t.text or '' for t in cell.findall('.//hp:t',NS))
+                        value=''.join(''.join(t.itertext()) for t in cell.findall('.//hp:t',NS))
                         if not value.strip():
                             blanks+=1
                             if key not in listed:raise ValueError(f'Unclassified empty cell: {key}')
