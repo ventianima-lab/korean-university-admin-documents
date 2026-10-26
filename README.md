@@ -25,6 +25,7 @@
 | `finalize-department-files` | 완료된 학과자료를 본문·학년도·업무철 기준으로 분류하고 파일명·이동·해시·색인을 검증 |
 | `korean-student-group-chat-notice` | 근거 자료에서 학생에게 필요한 일정·행동만 골라 단톡방 공지글과 세로형 공지 이미지를 제작 |
 | `imagegen` | 안내·교육용 이미지 생성과 편집, 실제 인쇄 해상도 확인과 사용자가 선택한 원본 디자인 보존 |
+| `local-model-delegation` | 사용자가 지정한 공급자·모델 버전을 확인해 디자인·문서 작업을 위임하고 실제 응답과 결과물을 검증 |
 | `korean-admin-writing` | 한국어 작성·스타일·윤문·문법 검수 라우터 |
 | `fluent-korean` | 명확하고 자연스러운 한국어 작성 |
 | `style-guide` | 공식 문서의 용어·어조·형식 일관성 |
