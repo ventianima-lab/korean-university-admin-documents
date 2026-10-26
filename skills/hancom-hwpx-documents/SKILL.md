@@ -81,6 +81,8 @@ Do not create a companion PDF, review bundle, preparation-status PDF, or duplica
 
 ## User corrections require a workflow improvement
 
+For documents prepared from a roster, verify the population before generating one copy per organization. Reconcile the requested department/period and every user-named person against current rosters and original affiliation records; a timetable from one department is not evidence of an exhaustive cross-department list. Inspect later sections and tables rather than relying on search previews. Keep organization, instructor/contact, and legal representative as separate fields. Record verified, conflicting, and unresolved associations; reopen scope and recheck affected documents when a user supplies an omitted person.
+
 A user correction authorizes a relevant skill improvement in the same task. Verify the failed behavior against the current source, correct the requested deliverable, and use `skill-creator` to encode its cause, prevention, and completion check. If a rule already exists, fix its invocation or validation path instead of merely repeating it. A skill-only request does not authorize resaving the user's corrected reference. Validate the skill and synchronize public-safe changes when the user's maintained document pack requires it.
 
 ## Workflow
