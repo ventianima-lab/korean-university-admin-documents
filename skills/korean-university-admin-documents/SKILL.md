@@ -7,6 +7,8 @@ description: Create, fill, revise, compare, and verify Korean university adminis
 
 Use the supplied official template and current evidence as the authority. Preserve the source and produce a separate result unless the user explicitly requests an overwrite.
 
+Use the active task's working-folder department as the default scope, unless the user explicitly specifies another scope. Resolve it from the nearest department ancestor, not a shared shell root, technical staging folder, remembered discussion, search hit, or template borrowed from another department. Keep the task population and deliverables within that department; borrowing a blank form does not import its people or companies. Record the folder-to-department decision in private evidence and clarify only if the actual task context leaves it unresolved.
+
 ## Follow-up edit baseline
 
 For a follow-up edit, re-enumerate the active task folder and inspect the current final deliverable before editing. Use that exact current final as the content baseline while retaining the official template as the structural authority. Do not reconstruct the document from earlier components, archived sources, intermediate drafts, backups, candidates, validation copies, or prior run outputs when a newer working final exists.

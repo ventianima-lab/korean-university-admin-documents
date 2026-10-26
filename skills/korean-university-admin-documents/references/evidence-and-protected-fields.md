@@ -11,6 +11,8 @@
 
 ## Population and affiliation evidence
 
+Resolve the default department from the active task's working folder and its nearest department ancestor. A shared shell root or technical staging directory does not replace the task folder. An explicit user scope instruction takes priority; otherwise do not switch departments because another was discussed recently or supplied a reusable template. Record the working folder and resolved department, then check the people, companies, and output locations against that scope.
+
 Before preparing a document per organization, reconcile the requested scope and every user-named person with current rosters. A single department's timetable does not establish a complete list across departments. Search results and previews route to records; inspect all relevant sections and original affiliation evidence before declaring an association absent. Keep a disposition for each scoped person: verified, conflicting, or unresolved after specified checks. Distinguish instructor/contact from legal representative, and deduplicate organizations separately from people. A user-supplied omitted name reopens the scope and requires rechecking the resulting list and affected documents.
 
 Check each source's inclusion rule: parking applications and a single class schedule are partial lists. A user-corrected department and explicit person list replace the inferred scope, rather than adding departments to it. Use the confirmed names as an allowlist for the final list and every generated artifact, checking both omissions and additions. Keep excluded drafts outside active deliverables and preserve the original source records.
