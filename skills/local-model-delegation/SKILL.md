@@ -14,6 +14,14 @@ A family nickname is not a provider/version identifier. A tool catalog can list 
 5. Save a private receipt containing requested model, returned model/provider when exposed, response identifier, completion status, and usable output location. The returned identifier may omit the routing prefix; verify it with the selected gateway route. A model-list entry or successful HTTP status alone does not prove completed model work.
 6. Apply and independently verify the returned artifact against the user's facts and requested format. For document design, preserve native editable content and perform the format-specific visual and structural checks. Report design advice as advice; claim file creation only after the file exists and opens.
 
+## Design briefs and visual references
+
+Before delegating branded document or presentation design, inspect the source assets and the existing result visually. Supply the actual official CI/logo files, their proportions and colors, the required content, and any rejected result to the designer. A typography-only brief is insufficient when the task calls for a finished institutional banner or branded layout. Use original brand assets in the final document; generated decorative art must not redraw or replace CI.
+
+Interpret a reference according to the user's purpose. A positive example can establish craftsmanship, visual hierarchy, branding, or balance without authorizing the same motif or composition. When the user rejects copying, remove the copied motif from every delegated brief and generated asset. Preserve the agreed content, background and output constraints while developing a distinct visual direction.
+
+At completion, compare the rendered deliverable with the user's concrete correction: official assets must actually be embedded with nonempty media bytes matching the supplied originals, the requested hierarchy must be visible, and rejected motifs must be absent. Successful model attribution and package validation cannot substitute for this visual check.
+
 ## Completion gate
 
 Before saying that a named model performed the task, check all three: the request used the exact user-selected route; the response completed with usable output; and the delivered result incorporates that output. Preserve the receipt privately. If any check fails, describe that boundary instead of attributing work to a different model.
