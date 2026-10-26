@@ -22,6 +22,12 @@ Interpret a reference according to the user's purpose. A positive example can es
 
 At completion, compare the rendered deliverable with the user's concrete correction: official assets must actually be embedded with nonempty media bytes matching the supplied originals, the requested hierarchy must be visible, and rejected motifs must be absent. Successful model attribution and package validation cannot substitute for this visual check.
 
+## Direct implementation requests
+
+When the user assigns file modification directly to a named model, use a tool-capable coding-agent session that lets that model read, write, render, and revise the artifact. A text-only design response that the parent manually implements does not meet this request. Inspect the local gateway catalog and installed agent runner before concluding that the requested model cannot act as a subagent. Keep the parent's work to dispatch, independent work, reconciliation, and verification of the assigned artifact.
+
+Give the worker the rejected render, original brand assets, protected facts, exact writable file scope, and output requirements. For design corrections, let the named designer revise the composition rather than locking in the parent's rejected choices. Require the worker to inspect its rendered result and iterate. Preserve a session/model receipt and the worker's actual edit/command evidence; verify the final file and changed paths before crediting direct implementation. A separate image-generation variant remains separate from the editable file and does not replace the assigned edit.
+
 ## Completion gate
 
 Before saying that a named model performed the task, check all three: the request used the exact user-selected route; the response completed with usable output; and the delivered result incorporates that output. Preserve the receipt privately. If any check fails, describe that boundary instead of attributing work to a different model.
