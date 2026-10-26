@@ -105,6 +105,15 @@ Use literal-path moves in one operating-system-native flow. After each move requ
 
 Exact duplicates are not permission to delete. Retain the authoritative business copy and move deletion candidates to an approval area only when the workspace policy allows it.
 
+### Diagnose blocked Windows moves or deletions
+
+- Capture the exact failed operation and error text, then compare the current user SID, owner SID, inherited and explicit access rules, attributes, path shape, and relevant destination or recycle-bin access. A permission dialog alone does not identify the cause.
+- Keep permission inspection, opening a handle with DELETE access, and completing a move or deletion as separate findings. A successful access probe does not prove the complete operation will succeed or that no process retains directory handles. State the coverage and any inaccessible processes.
+- If needed, compare an isolated disposable copy under the same parent with the original, using the same operation path. Verify its content hashes, restrict cleanup to the resolved scratch path, and confirm the original hashes are unchanged. Success on the copy rules out neither original-specific state nor application-specific blocking.
+- Identify processes holding the exact source or descendant paths before proposing process cleanup. An open handle is evidence of use, not proof that it blocks deletion. Do not forcibly close handles, terminate a shared application, reset ownership, or broaden access merely because a handle exists or an access check passes.
+- Keep report-only diagnosis non-mutating for the source. Perform repairs, moves, or deletions only within the user's authorized scope. Call the problem resolved only after the originally failing operation succeeds in that scope; otherwise report verified findings, the unconfirmed cause, and the remaining discriminating check.
+
+
 ## 8. Record and verify closeout
 
 Produce at least:
