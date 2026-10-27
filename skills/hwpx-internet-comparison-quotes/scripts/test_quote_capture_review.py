@@ -52,6 +52,16 @@ class CaptureReviewTests(unittest.TestCase):
                 m['captures'][0][check] = False
                 self.assertTrue(any(check in s for s in self.check(m)))
 
+    def test_external_seller_caption_cannot_replace_in_photo_seller(self):
+        m = copy.deepcopy(self.manifest)
+        m['captures'][0]['seller_and_total_same_capture'] = False
+        self.assertTrue(any('seller_and_total_same_capture' in s for s in self.check(m)))
+
+    def test_other_cart_goods_and_mixed_totals_are_rejected(self):
+        m = copy.deepcopy(self.manifest)
+        m['captures'][0]['only_quoted_product_visible'] = False
+        self.assertTrue(any('only_quoted_product_visible' in s for s in self.check(m)))
+
     def test_render_or_source_change_invalidates_review(self):
         for kind in ('original', 'render'):
             with self.subTest(kind=kind):

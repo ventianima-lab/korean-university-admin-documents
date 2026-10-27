@@ -9,8 +9,10 @@
 - `seller`: 화면·근거에서 읽은 판매처 표시명. 쇼핑몰 이름만으로 실제 입점 판매자가 다르다고 추정하지 않는다.
 - `original_file`, `original_sha256`: 원본 캡처 경로와 해시. 경로는 JSON 위치 기준 상대 경로 또는 절대 경로.
 - `render_file`, `render_sha256`: 정확한 최종 HWPX의 해당 쪽 이미지 경로와 해시.
-- 불리언 확인값: `seller_readable`, `product_photo_visible`, `product_name_readable`, `options_visible`, `quantity_visible`, `total_visible`, `shipping_verified`, `discount_verified`, `pointer_free`, `final_render_readable`.
+- 불리언 확인값: `seller_and_total_same_capture`, `only_quoted_product_visible`, `seller_readable`, `product_photo_visible`, `product_name_readable`, `options_visible`, `quantity_visible`, `total_visible`, `shipping_verified`, `discount_verified`, `pointer_free`, `final_render_readable`.
 
 옵션이 없는 상품, 무료배송, 할인 미적용처럼 조건 자체가 없거나 해당 없는 경우도 실제 화면에서 그 상태를 확인한 후 해당 검증값을 `true`로 기록한다. 단가에 수량을 곱한 작성자 계산은 화면에서 선택 수량의 최종 총액을 확인한 것을 대신하지 않는다. 모호하거나 미확인인 값은 `false`로 두어 실패시킨다. 화면 접근 제한과 원본 누락은 가독성 수정으로 해소되었다고 기록하지 않는다.
 
 그림의 배치·문서 내용·원본·쪽 이미지가 바뀌면 해시와 연결을 다시 확인하고 영향을 받는 시각 검수를 반복한다. 검수 기록을 실제 제출 문서에 추가하거나 별도 납품 PDF로 만들지 않는다.
+
+`seller_and_total_same_capture`는 업체명과 해당 상품의 실제 최종 금액이 하나의 원본 캡처 안에서 함께 읽힐 때만 참이다. 문서의 판매처 제목이나 다른 화면 조각으로 대신하지 않는다. `only_quoted_product_visible`는 관련 없는 상품·추천 상품이 없고, 합계가 그 견적 상품에만 대응할 때 참이다. 장바구니 한 상품과 판매처별 소계의 연속 영역을 자를 수 있으나 혼합 주문 전체 합계를 가져오면 실패한다.

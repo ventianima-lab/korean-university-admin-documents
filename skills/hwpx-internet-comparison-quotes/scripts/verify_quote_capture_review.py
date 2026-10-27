@@ -12,7 +12,8 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph'
-CHECKS = ('seller_readable', 'product_photo_visible', 'product_name_readable',
+CHECKS = ('seller_and_total_same_capture', 'only_quoted_product_visible',
+          'seller_readable', 'product_photo_visible', 'product_name_readable',
           'options_visible', 'quantity_visible', 'total_visible',
           'shipping_verified', 'discount_verified', 'pointer_free',
           'final_render_readable')
