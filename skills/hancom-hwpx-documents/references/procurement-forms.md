@@ -116,6 +116,8 @@ Before asking for a missing expense-form value, inspect the actual current form 
 
 Inspect the exact saved file rather than only the builder inputs:
 
+- Verify drafting-status placement separately from business fields. When the user explicitly assigns a draft or review marker to the filename only, require that marker in the saved basename and check every body, table, header, footer, and preview for agent-added variants of the same status note. Keep mandatory template wording unchanged. Verify source-backed fields before leaving them empty; keep unsupported signatures and approvals unfilled. A filename marker identifies an example or draft and does not establish actual attendance, completed discussion, or expenditure.
+
 - Extract both the material-name and specification/quantity cells in row order. Compare every named item, its specification, physical quantity, and the chosen name/`등`/count pattern against the source. One named item without its quantity is a failure even when the format and total match. Required values may not be replaced with a reference phrase; no rejected count suffix may remain. Check ordinary wrapping and legibility rather than squeezing long cell text onto a single line.
 - Compare every target checkbox and payment field to the requested state. Verify the complete card identifier in the readable page image; correct aggregate text does not excuse digits split across lines.
 - Compare quotation issuer, issue date, item lines, discounts, and total to their sources and keep the actual merchant in payment records. Verify DOCX text is selectable and editable rather than a flattened page image.
