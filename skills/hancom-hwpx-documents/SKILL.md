@@ -91,6 +91,12 @@ A user correction authorizes a relevant skill improvement in the same task. Veri
 
 ## Workflow
 
+### Cooperation-report narrative completion
+
+Before leaving `기업주요역량` or another ordinary narrative input blank, inspect every section of available same-organization cooperation reports and relevant original records. Match the organization and contact explicitly. A populated prior report may support a bounded description of its recorded services or capabilities; preserve qualifications such as `가능` and do not turn a proposed collaboration into an achieved result. Keep dates, signatures, consent, goal selections and unsupported current headcounts separate from these narrative facts.
+
+Include narrative inputs in the existing exact-cell `fields` inventory, with a nonempty expected value whenever evidence supports it, or the specific checked sources and reason for a remaining blank. Run `scripts/validate_hwpx_opensource.py <saved file> --fields <inventory.json>` for every report before handoff. A generic `unconfirmed` classification, successful parsing or correct page count cannot pass this check when a matching source already supplies the text. Inspect the current render and preserve all unrelated user edits.
+
 For programme preapproval and budget proposals, including an initial estimate in chat, read [references/procurement-forms.md](references/procurement-forms.md) before calculating. Apply its expense-coverage check to the proposal before asking the next interview question; do not wait until a document is saved.
 
 Before proposing or revising a programme budget, including a chat estimate, read [references/procurement-forms.md](references/procurement-forms.md). Verify each spending limit's actual accounting unit before combining activities or reducing an allocation. For historical expense or award questions, also apply its event-identity and evidence-status checks; keep a report-only source read-only.

@@ -19,6 +19,8 @@ Check each source's inclusion rule: parking applications and a single class sche
 
 ## Protected spans
 
+For cooperation-report narrative inputs such as enterprise capabilities, inspect all sections of matching organization records before classifying a blank as unconfirmed. Summarize only recorded services or capabilities, preserve possibility/qualification wording, and avoid inventing results or agreed goals. Include each supported narrative value, or a specific source-checked reason for a blank, in the exact-cell field inventory and validate the saved report with `hancom-hwpx-documents/scripts/validate_hwpx_opensource.py --fields`. Successful opening and page counts do not establish field completeness. Preserve unrelated current user edits and signer-controlled inputs.
+
 Protect names, organizations, titles, document numbers, dates, times, deadlines, amounts, percentages, quantities, units, URLs, email addresses, phone numbers, account information, identifiers, quotations, legal text, grounds, responsible parties, actions, conditions, exceptions, prohibitions, template labels, table geometry, row and list order.
 
 Snapshot these spans before editing. After editing, compare value, count, association and order. If an invariant changes, roll back the affected output and report `VERIFICATION_FAILED`.
