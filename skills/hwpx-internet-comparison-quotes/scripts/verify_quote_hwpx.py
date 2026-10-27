@@ -48,8 +48,9 @@ def parse_caption(text: str, comparison: bool) -> tuple[str, str, str, int]:
 
 
 def caption_source(text: str) -> str:
-    match = SOURCE_RE.fullmatch(text.split('|')[-1].strip())
-    return match.group(1).strip() if match else ''
+    matches = [SOURCE_RE.fullmatch(part.strip()) for part in text.split('|')]
+    sources = [match.group(1).strip() for match in matches if match]
+    return sources[0] if len(sources) == 1 else ''
 
 
 def check_manifest_group(main_quote, comparisons, main_caption, comparison_captions, spec, comparison_texts):
