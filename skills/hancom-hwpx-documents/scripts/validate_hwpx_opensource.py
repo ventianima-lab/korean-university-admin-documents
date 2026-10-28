@@ -74,7 +74,7 @@ def verify_form_fields(path: Path, expectations: dict) -> dict:
                     matches.append(cell)
             if len(matches) != 1:
                 raise ValueError(f"Field {index}: cell location is not unique")
-            actual = "".join(node.text or "" for node in matches[0].findall(".//hp:t", ns))
+            actual = "".join("".join(node.itertext()) for node in matches[0].findall(".//hp:t", ns))
             if actual.strip() != field["expected"].strip():
                 raise ValueError(f"Field {index}: saved cell differs from expected value")
         table_locations = set()

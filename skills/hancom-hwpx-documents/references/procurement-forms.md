@@ -12,7 +12,7 @@ Read this reference before proposing a programme budget, including a chat estima
 
 Before quoting an amount or asking the user to confirm it, inspect the live preapproval and payment forms and bind the instructor category, rates, duration, manuscript fee, and approval status to their governing sources. Prior conversations or memory are search clues, not the basis for superseding a user-confirmed approved category. If they conflict, explain the current source and recalculate before asking. On a correction, discard the earlier expected-value map and verify the corrected category, each amount, and total in every in-scope saved form.
 
-For post-event reports, proactively read supplied signed attendance and survey scans before leaving outcome fields blank. Reconcile actual signatures and each answered question against the roster, document the response denominator, and use the latest complete scan. Distinguish a payment application from a completed transfer and label requested amounts wherever the form would otherwise imply a payment already occurred; preserve unsupported signer-controlled fields.
+For post-event reports, proactively read supplied signed attendance and survey scans before leaving outcome fields blank. Reconcile actual signatures and each answered question against the roster, document the response denominator, and use the latest complete scan. Distinguish a payment application from a completed transfer using required existing fields and the approved workflow. Do not add a parenthetical status note or restore one the user removed merely to explain the distinction; if the form lacks an approved status field, communicate the status outside the form unless the governing authority requires it there. Preserve unsupported signer-controlled fields.
 
 ## Required packet completeness gate
 
@@ -125,6 +125,8 @@ Before asking for a missing expense-form value, inspect the actual current form 
 - After rotation, fit the picture's new aspect ratio within its existing photo region without stretching or clipping evidence. Reopen and render the exact saved file; require the requested direction and angle, upright readable content, unchanged neighboring pictures, and no page overflow. Record source-to-position mapping and rotation checks outside the official form.
 
 ## Saved-file completion check
+
+When a user has corrected a same-type form, compare the earlier and corrected page images and exact text before using the current file as the reference. Observe which extra notes or placeholder marks were removed, and inspect row order, widths, cell wrapping, signature areas, photo selection and attachment space. Copy no private data or signatures, and do not generalize a form-specific badge or approval-line change to other forms. Verify the new saved page against the relevant corrected layout as well as the source and required form. A page-count or XML pass alone does not verify readability.
 
 Inspect the exact saved file rather than only the builder inputs:
 
