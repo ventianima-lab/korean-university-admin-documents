@@ -28,6 +28,8 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 
 ## Follow-up edits start from the current working final
 
+- For post-event programme expense or result packets, read the applicable current manual and apply the packet inventory gate in [references/procurement-forms.md](references/procurement-forms.md) before reporting completion. A few validated forms do not establish that the required packet is complete.
+
 - Before proposing a correction, bind each disputed field to its latest explicit user instruction and live value. A user saying that the displayed value is their correction establishes it as the baseline; it is not a request to reverse that value. Stop any superseded edit plan immediately. Do not replace a user-confirmed numeric time with a guessed timetable or vague wording. Any later authorized candidate must retain that exact value in its original field unless the user explicitly changes it again; an acknowledgement-only turn must leave the document bytes untouched.
 - When aligning repeated fields across preapproval and later forms, first read the authority-to-target rule in [references/procurement-forms.md](references/procurement-forms.md). Freeze the user-designated source values before editing; never change that source merely to match a majority of downstream forms.
 - For every follow-up edit, re-enumerate the active task folder immediately before changing anything. If that folder contains the current final deliverable, open and inspect that exact file and use it as the content baseline. This rule overrides remembered paths and earlier run artifacts; the official template remains the structural authority.
