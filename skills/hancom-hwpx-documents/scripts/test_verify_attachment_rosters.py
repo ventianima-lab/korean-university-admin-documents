@@ -161,6 +161,106 @@ class PacketRoleTests(unittest.TestCase):
         wrong_list["paragraphs"][0]["segments"][3]["text"] = "참석예정자 명단 서명부 --- 3부."
         self.assertIn("planned_roster_listed_as_signature", self.issues(wrong_list))
 
+    def selected_signature_template(self):
+        adapted = copy.deepcopy(self.planned)
+        adapted[0]["template_role"] = "signature_sheet"
+        adapted[0]["source_location"] = "Example form A, page 1"
+        adapted[0]["user_template_selection"] = {
+            "kind": "explicit_user_instruction",
+            "template_id": "form A",
+            "quote": "Adapt form A into a planned attendee roster with no signature area.",
+            "reference": "user message selecting the template",
+        }
+        return adapted
+
+    def test_explicitly_selected_signin_template_allows_unsigned_roster(self):
+        self.package_roster(self.template, content="person (서명)")
+        self.assertEqual(packet.check_planned_rosters(self.selected_signature_template(), self.artifacts), [])
+
+    def test_selection_evidence_must_identify_the_same_selected_template(self):
+        for key, value in (("kind", "inferred"), ("kind", True), ("quote", ""),
+                           ("reference", ""), ("template_id", "different form"),
+                           ("quote", "Use the other form")):
+            with self.subTest(key=key, value=value):
+                adapted = self.selected_signature_template()
+                adapted[0]["user_template_selection"][key] = value
+                problems = {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)}
+                self.assertIn("planned_roster_wrong_source_role", problems)
+
+        adapted = self.selected_signature_template()
+        adapted[0]["source_location"] = "Example form B, page 1"
+        self.assertIn("planned_roster_wrong_source_role",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+
+    def test_selected_template_never_waives_signature_or_extra_cell_checks(self):
+        adapted = self.selected_signature_template()
+        self.package_roster(self.rosters[0], content="학생 (서명)")
+        self.assertIn("planned_roster_signature_text",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+        self.package_roster(self.rosters[0], headers=("연번", "성명", "소속", ""))
+        self.assertIn("planned_roster_header_mismatch",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+        with ZipFile(self.rosters[0]) as source:
+            root = ET.fromstring(source.read("Contents/section0.xml"))
+        rows = list(root.iter(packet.HP + "tr"))
+        rows[0].remove(rows[0].findall(packet.HP + "tc")[-1])
+        extra = ET.SubElement(rows[1], packet.HP + "tc")
+        ET.SubElement(extra, packet.HP + "cellAddr", rowAddr="1", colAddr="3")
+        with ZipFile(self.rosters[0], "w") as target:
+            target.writestr("Contents/section0.xml", ET.tostring(root, encoding="utf-8"))
+        self.assertIn("planned_roster_grid_mismatch",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+
+    def test_signature_text_in_another_saved_section_is_rejected(self):
+        adapted = self.selected_signature_template()
+        extra = ET.Element(packet.HP + "sec")
+        ET.SubElement(extra, packet.HP + "t").text = "서 명"
+        with ZipFile(self.rosters[0], "a") as target:
+            target.writestr("Contents/section1.xml", ET.tostring(extra, encoding="utf-8"))
+        self.assertIn("planned_roster_signature_text",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+
+    def test_multiple_roster_tables_in_one_file_are_each_checked(self):
+        combined = self.rosters[0]
+        with ZipFile(combined) as source:
+            root = ET.fromstring(source.read("Contents/section0.xml"))
+        root.append(copy.deepcopy(root.find(packet.HP + "tbl")))
+        with ZipFile(combined, "w") as target:
+            target.writestr("Contents/section0.xml", ET.tostring(root, encoding="utf-8"))
+        adapted = self.selected_signature_template()[:1]
+        self.assertIn("planned_roster_table_unaccounted",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+        second = copy.deepcopy(adapted[0])
+        second["table"] = 1
+        adapted.append(second)
+        self.assertEqual(packet.check_planned_rosters(adapted, self.artifacts), [])
+        extra = ET.SubElement(root.findall(packet.HP + "tbl")[1].findall(packet.HP + "tr")[1],
+                              packet.HP + "tc")
+        ET.SubElement(extra, packet.HP + "cellAddr", rowAddr="1", colAddr="3")
+        with ZipFile(combined, "w") as target:
+            target.writestr("Contents/section0.xml", ET.tostring(root, encoding="utf-8"))
+        self.assertIn("planned_roster_grid_mismatch",
+                      {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)})
+        second["table"] = 0
+        with self.assertRaises(ValueError):
+            packet.check_planned_rosters(adapted, self.artifacts)
+
+    def test_non_roster_layout_tables_require_inspected_coordinates(self):
+        combined = self.rosters[0]
+        with ZipFile(combined) as source:
+            root = ET.fromstring(source.read("Contents/section0.xml"))
+        ET.SubElement(root, packet.HP + "tbl")
+        with ZipFile(combined, "w") as target:
+            target.writestr("Contents/section0.xml", ET.tostring(root, encoding="utf-8"))
+        adapted = self.selected_signature_template()[:1]
+        adapted[0]["non_roster_tables"] = [{"section": "Contents/section0.xml", "table": 1,
+                                             "evidence": "inspected layout table"}]
+        self.assertEqual(packet.check_planned_rosters(adapted, self.artifacts), [])
+        adapted[0]["non_roster_tables"][0]["table"] = 2
+        problems = {i["problem"] for i in packet.check_planned_rosters(adapted, self.artifacts)}
+        self.assertIn("planned_roster_table_unaccounted", problems)
+        self.assertIn("planned_roster_table_inventory_mismatch", problems)
+
     def test_end_to_end_gate_fails_when_planned_roster_is_omitted(self):
         def checks(paths):
             return [{"path": str(p), "not_applicable": True, "master": str(self.template),
@@ -181,14 +281,25 @@ class PacketRoleTests(unittest.TestCase):
             "planned_rosters": copy.deepcopy(self.planned),
         }
         self.assertEqual(packet.audit(manifest, attachment_check=True, planned_roster_check=True)["status"], "PASS")
+        manifest["planned_rosters"] = self.selected_signature_template()
+        self.assertEqual(packet.audit(manifest, attachment_check=True, planned_roster_check=True)["status"], "PASS")
+        target = self.root / "inventory.json"
+        target.write_text(json.dumps(manifest), encoding="utf-8")
+        script = Path(packet.__file__)
+        cli = subprocess.run([sys.executable, str(script), str(target), "--attachment-check",
+                              "--planned-roster-check"], capture_output=True, text=True,
+                             encoding="utf-8", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        self.assertEqual(cli.returncode, 0, cli.stderr)
+        self.assertEqual(json.loads(cli.stdout)["status"], "PASS")
+        manifest["planned_rosters"][0].pop("user_template_selection")
+        self.assertEqual(packet.audit(manifest, attachment_check=True, planned_roster_check=True)["status"], "INCOMPLETE")
+        manifest["planned_rosters"] = self.selected_signature_template()
         manifest["planned_rosters"].pop()
         result = packet.audit(manifest, attachment_check=True, planned_roster_check=True)
         self.assertEqual(result["status"], "INCOMPLETE")
         self.assertEqual(result["planned_roster_issues"][0]["problem"],
                          "planned_roster_attachment_mapping_mismatch")
-        target = self.root / "inventory.json"
         target.write_text(json.dumps(manifest), encoding="utf-8")
-        script = Path(packet.__file__)
         cli = subprocess.run([sys.executable, str(script), str(target), "--attachment-check",
                               "--planned-roster-check"], capture_output=True, text=True,
                              encoding="utf-8", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))

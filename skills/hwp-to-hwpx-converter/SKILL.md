@@ -22,6 +22,7 @@ Use the bundled PowerShell scripts first. The runtime is open-source `hwp2hwpx==
 - OLE signature `D0 CF 11 E0 A1 B1 1A E1`: convert as legacy HWP, regardless of filename extension.
 - ZIP signature `50 4B 03 04`: validate as HWPX; copy only when source and output differ.
 - Other signatures: stop with a concrete error.
+- If a supplied or requested `.hwpx` file actually contains OLE HWP bytes, keep the original bytes separately and create a real HWPX at a clearly identified output path when HWPX is the user's desired format. Renaming the only accessible file to `.hwp` is not completion of an HWPX request. Verify the exact output's signature, content and page count against the source, and check native openability and a current rendering when layout matters.
 - HWPX validation checks the first `mimetype` entry, exact mimetype value, required package parts, and XML well-formedness.
 - Existing output is not overwritten unless `-Force` is explicitly supplied.
 

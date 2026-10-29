@@ -223,6 +223,19 @@ def check_attachment_list(check):
     return issues
 
 
+def selected_signature_template(roster):
+    """Validate a recorded selection, not the truth or meaning of its quoted evidence."""
+    selection = roster.get("user_template_selection")
+    if not isinstance(selection, dict) or selection.get("kind") != "explicit_user_instruction":
+        return False
+    template_id, quote, reference = (selection.get(k) for k in ("template_id", "quote", "reference"))
+    location = roster.get("source_location")
+    if not all(isinstance(value, str) and value.strip() for value in (template_id, quote, reference, location)):
+        return False
+    normalize = lambda value: re.sub(r"\s+", "", value).casefold()
+    return normalize(template_id) in normalize(quote) and normalize(template_id) in normalize(location)
+
+
 def check_planned_rosters(rosters, artifacts):
     """Check standalone advance rosters when the user prohibits signature fields."""
     if not isinstance(rosters, list) or not rosters:
@@ -230,7 +243,8 @@ def check_planned_rosters(rosters, artifacts):
     ready_paths = {Path(p).resolve() for item in artifacts if item.get("status") == "ready"
                    for p in item.get("paths", [])}
     issues = []
-    seen = set()
+    seen, adapted_paths = set(), set()
+    discovered_tables, auxiliary_tables = {}, {}
     for roster in rosters:
         if not isinstance(roster, dict):
             raise ValueError("Planned roster must be an object")
@@ -252,20 +266,39 @@ def check_planned_rosters(rosters, artifacts):
                 or len({c["col"] for c in columns}) != len(columns)):
             raise ValueError("Planned roster needs independently checked participant grid rows and columns")
         saved = Path(path).resolve()
-        if saved in seen:
-            raise ValueError("Duplicate planned roster")
-        seen.add(saved)
+        coordinate = (saved, section, table)
+        if coordinate in seen:
+            raise ValueError("Duplicate planned roster table")
+        seen.add(coordinate)
         if saved not in ready_paths:
             issues.append({"problem": "planned_roster_not_ready_artifact", "path": str(saved)})
-        if roster.get("template_role") != "planned_roster":
+        if roster.get("template_role") == "signature_sheet" and selected_signature_template(roster):
+            adapted_paths.add(saved)
+        elif roster.get("template_role") != "planned_roster":
             issues.append({"problem": "planned_roster_wrong_source_role", "path": str(saved)})
+        auxiliary = roster.get("non_roster_tables", [])
+        if not isinstance(auxiliary, list):
+            raise ValueError("non_roster_tables must be a list")
+        for item in auxiliary:
+            if (not isinstance(item, dict) or not isinstance(item.get("section"), str)
+                    or not SECTION.fullmatch(item["section"]) or type(item.get("table")) is not int
+                    or item["table"] < 0 or not isinstance(item.get("evidence"), str)
+                    or not item["evidence"].strip()):
+                raise ValueError("Each non-roster table needs coordinates and inspection evidence")
+            aux_coord = (saved, item["section"], item["table"])
+            if aux_coord in auxiliary_tables:
+                raise ValueError("Duplicate non-roster table")
+            auxiliary_tables[aux_coord] = item["evidence"]
         try:
             with ZipFile(saved) as package:
                 section_names = [name for name in package.namelist() if SECTION.fullmatch(name)]
-                all_text = "".join("".join(t.itertext()) for name in section_names
-                                   for t in ET.fromstring(package.read(name)).iter(HP + "t"))
-                root = ET.fromstring(package.read(section))
-            if re.search(r"서명|날인|\(인\)|사인|싸인|signature", all_text, re.I):
+                roots = {name: ET.fromstring(package.read(name)) for name in section_names}
+                all_text = "".join("".join(t.itertext()) for root in roots.values()
+                                   for t in root.iter(HP + "t"))
+                root = roots[section]
+            discovered_tables[saved] = {(saved, name, i) for name, item in roots.items()
+                                        for i, _ in enumerate(item.iter(HP + "tbl"))}
+            if re.search(r"서\s*명|날\s*인|\(\s*인\s*\)|사\s*인|싸\s*인|signature", all_text, re.I):
                 issues.append({"problem": "planned_roster_signature_text", "path": str(saved)})
             tables = list(root.iter(HP + "tbl"))
             target = tables[table]
@@ -298,6 +331,16 @@ def check_planned_rosters(rosters, artifacts):
                                    "path": str(saved), "row": grid_row})
         except (OSError, BadZipFile, ET.ParseError, KeyError, IndexError, TypeError) as error:
             issues.append({"problem": "planned_roster_unverifiable", "detail": str(error)})
+    for saved in adapted_paths:
+        actual = discovered_tables.get(saved, set())
+        targets = {item for item in seen if item[0] == saved}
+        other = {item for item in auxiliary_tables if item[0] == saved}
+        for _, section, table in sorted(actual - targets - other):
+            issues.append({"problem": "planned_roster_table_unaccounted", "path": str(saved),
+                           "section": section, "table": table})
+        for _, section, table in sorted((other - actual) | (other & targets)):
+            issues.append({"problem": "planned_roster_table_inventory_mismatch", "path": str(saved),
+                           "section": section, "table": table})
     return issues
 
 
