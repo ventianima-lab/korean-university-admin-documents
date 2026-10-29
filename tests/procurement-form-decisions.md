@@ -39,3 +39,7 @@ The entrypoints must route procurement work to the reference before filling and 
 ## Confirmed room without an unsolicited ownership suffix
 
 Given separate staff and learner meetings, the user resolves a staff-office reference to Building A room 202 and explicitly removes the office/owner wording. Learner meetings stay in room 201 and lectures in room 203. The passing saved forms use only the three activity-specific building/room values, including repeated meeting approvals and attendance sheets. A parenthetical office/owner suffix in any target venue cell or preview fails, even if its room number is correct. Independent expectations must be revised from the latest instruction before validation; unrelated participant names and source records remain unchanged.
+
+## Attachment naming follows the applicable precedent
+
+- A prior expense record uses numbered role-based attachment names; the current packet includes one scan containing several evidence roles and two separately named receipts. The user asks to follow the precedent and corrects opaque scanner-generated names. Prepare source-identical copies with numbered names that describe the combined scan and each receipt; preserve the originals and requested grouping. After an authorized upload, reopen the record and verify the exact names, order where the system supports it, and count. Fail if the names are misleading, the scan was silently split, or only local staging was verified.
