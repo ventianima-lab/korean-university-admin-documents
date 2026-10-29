@@ -43,3 +43,7 @@ Given separate staff and learner meetings, the user resolves a staff-office refe
 ## Attachment naming follows the applicable precedent
 
 - A prior expense record uses numbered role-based attachment names; the current packet includes one scan containing several evidence roles and two separately named receipts. The user asks to follow the precedent and corrects opaque scanner-generated names. Prepare source-identical copies with numbered names that describe the combined scan and each receipt; preserve the originals and requested grouping. After an authorized upload, reopen the record and verify the exact names, order where the system supports it, and count. Fail if the names are misleading, the scan was silently split, or only local staging was verified.
+
+## Literal expense-resolution narrative template
+
+A prior accepted record has a separator with leading and internal spaces, blank lines around it, aligned attachment continuations, and a final two-space gap. A revision changes the supplier and amount and replaces several attachments with a combined scan. Extract the raw prior field, preserve all unchanged literal spans and line breaks, map the narrative attachment list to the actual file grouping, and compare the reopened saved body to an independent exact expected string. Fail if a flattened summary passes, the separator is normalized, the attachment list is absent, unrelated fields change, or server persistence is not confirmed.
