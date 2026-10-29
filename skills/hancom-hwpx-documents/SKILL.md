@@ -95,6 +95,8 @@ Check a roster's inclusion rule: parking applicants and a single class schedule 
 
 A user correction authorizes a relevant skill improvement in the same task. Verify the failed behavior against the current source, correct the requested deliverable, and use `skill-creator` to encode its cause, prevention, and completion check. If a rule already exists, fix its invocation or validation path instead of merely repeating it. A skill-only request does not authorize resaving the user's corrected reference. Validate the skill and synchronize public-safe changes when the user's maintained document pack requires it.
 
+When removing a user-rejected annotation or excluded person from an HWPX, check the saved document body and `Preview/PrvText.txt`; editing section XML alone can leave stale preview text. For literal checks, run `scripts/verify_recipient_identity.py --require-name "<retained exact marker>" --forbid-name "<rejected exact phrase>" <final.hwpx>` with each rejected phrase as a separate `--forbid-name`. The helper also checks the filename and joins split runs; it does not detect paraphrases or image-only text, so inspect those separately. Refresh stale previews through a verified native save when needed, then reopen and check the exact final file without altering unrelated text, photos, or signatures.
+
 ## Workflow
 
 ### Cooperation-report narrative completion
