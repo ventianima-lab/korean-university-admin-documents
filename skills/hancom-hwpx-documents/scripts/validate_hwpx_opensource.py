@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import posixpath
+import re
 from pathlib import Path
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
@@ -13,6 +15,58 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+
+def verify_section_package(path: Path) -> dict:
+    """Check header secCnt against section parts registered in the package spine.
+
+    This detects a specific packaging mismatch; it does not repair a file or
+    establish that an extracted section retains its required controls or layout.
+    """
+    section_pattern = re.compile(r"Contents/section[0-9]+\.xml")
+    with ZipFile(path) as package:
+        names = package.namelist()
+        if len(names) != len(set(names)):
+            raise ValueError("Duplicate ZIP members prevent section verification")
+        header = ET.fromstring(package.read("Contents/header.xml"))
+        raw_count = header.get("secCnt")
+        if raw_count is None or not re.fullmatch(r"[0-9]+", raw_count):
+            raise ValueError("Header secCnt is absent or invalid")
+        manifest_root = ET.fromstring(package.read("Contents/content.hpf"))
+        items = {}
+        spine = []
+        for node in manifest_root.iter():
+            local = node.tag.rsplit("}", 1)[-1]
+            if local == "item":
+                identifier, href = node.get("id"), node.get("href")
+                if not identifier or not href or identifier in items:
+                    raise ValueError("Invalid or duplicate package manifest item")
+                raw_path = posixpath.normpath(href.lstrip("/"))
+                relative_path = posixpath.normpath(posixpath.join("Contents", href))
+                if section_pattern.fullmatch(raw_path):
+                    target = raw_path
+                elif section_pattern.fullmatch(relative_path):
+                    target = relative_path
+                else:
+                    target = None
+                items[identifier] = target
+            elif local == "spine":
+                spine.extend(child.get("idref") for child in node
+                             if child.tag.rsplit("}", 1)[-1] == "itemref")
+        if any(not reference or reference not in items for reference in spine):
+            raise ValueError("Package spine contains a missing manifest reference")
+        declared = [part for part in items.values() if part]
+        referenced = [items[reference] for reference in spine if items[reference]]
+        actual = [name for name in names if section_pattern.fullmatch(name)]
+        if (not referenced or len(declared) != len(set(declared))
+                or len(referenced) != len(set(referenced))
+                or set(declared) != set(referenced) or set(actual) != set(referenced)):
+            raise ValueError("Section parts, manifest and spine do not agree")
+        if int(raw_count) != len(referenced):
+            raise ValueError("Header secCnt does not match package section count")
+        return {"status": "PASS", "header_secCnt": int(raw_count),
+                "section_count": len(referenced)}
 
 
 def verify_section_opening(path: Path) -> dict:
@@ -130,11 +184,25 @@ def main() -> None:
     parser.add_argument("--roundtrip-dir", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--fields", type=Path, help="JSON cell/paragraph expectations with source/reason")
+    parser.add_argument("--sections-only", action="store_true",
+                        help="Check section count and package references only; no rendering")
     parser.add_argument("--fields-only", action="store_true",
                         help="Check saved XML text only; does not validate or render the document")
     args = parser.parse_args()
+    if args.sections_only and (args.fields_only or args.fields or args.roundtrip_dir):
+        parser.error("--sections-only cannot be combined with --fields, --fields-only or --roundtrip-dir")
     if args.fields_only and (not args.fields or args.roundtrip_dir):
         parser.error("--fields-only requires --fields and cannot be combined with --roundtrip-dir")
+    if args.sections_only:
+        rows = []
+        for source in args.inputs:
+            source = source.resolve()
+            rows.append({"file": str(source), "sha256": sha256(source),
+                         "section_package": verify_section_package(source)})
+        emit_report({"engine": "hwpx-xml-section-check",
+                     "scope": "Section metadata check only; native opening, layout and other package checks are separate.",
+                     "rows": rows}, args.report)
+        return
     expectations = json.loads(args.fields.read_text(encoding="utf-8-sig")) if args.fields else None
     if args.fields_only:
         rows = []
@@ -166,6 +234,7 @@ def main() -> None:
             "table_count": len(document.tables),
             "section_count": len(document.sections),
             "section_opening": verify_section_opening(source),
+            "section_package": verify_section_package(source),
         }
         if expectations is not None:
             row["form_fields"] = verify_form_fields(source, expectations)
@@ -183,6 +252,7 @@ def main() -> None:
                 "validation": str(reopened.validate()),
                 "text_equal": reopened.text.plain() == original_text,
                 "section_opening": verify_section_opening(output),
+                "section_package": verify_section_package(output),
             }
             if expectations is not None:
                 row["roundtrip"]["form_fields"] = verify_form_fields(output, expectations)

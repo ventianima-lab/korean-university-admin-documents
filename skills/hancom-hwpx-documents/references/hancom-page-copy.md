@@ -34,6 +34,8 @@ When an explicitly identified form requires removing a manual-only badge, remove
 
 ## Completion gates
 
+- For a standalone extracted form, run `scripts/validate_hwpx_opensource.py <candidate.hwpx> --sections-only`. It compares `Contents/header.xml` `secCnt` with the actual section parts and their manifest/spine references; a retained multi-section source count can make a one-section extraction fail to open. If those parts and references agree and only `secCnt` is stale after an authorized extraction, correct the count in a separate candidate, not the source. Do not change the count to the physical page count or blindly fix inconsistent references. Preserve section controls and other source content, then independently validate and reopen the exact candidate in Hancom and inspect its layout. Passing this metadata check alone is not an openability or layout guarantee.
+
 - The source remains byte-identical.
 - The output page count equals the copied physical-page count.
 - Hancom reopens the exact output and `GetPageText` contains the expected title.
