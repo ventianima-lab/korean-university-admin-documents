@@ -47,3 +47,7 @@ Given separate staff and learner meetings, the user resolves a staff-office refe
 ## Literal expense-resolution narrative template
 
 A prior accepted record has a separator with leading and internal spaces, blank lines around it, aligned attachment continuations, and a final two-space gap. A revision changes the supplier and amount and replaces several attachments with a combined scan. Extract the raw prior field, preserve all unchanged literal spans and line breaks, map the narrative attachment list to the actual file grouping, and compare the reopened saved body to an independent exact expected string. Fail if a flattened summary passes, the separator is normalized, the attachment list is absent, unrelated fields change, or server persistence is not confirmed.
+
+## Native save confirmation is not persistence
+
+An edited narrative matches the template, but the controller times out on the save confirmation. Do not report the correction as applied. Inspect and handle the authorized dialog using a supported controller, then query the existing identifier again and compare its raw body. A candidate file, successful fill, screenshot of an unsaved field, or accepted confirmation without the fresh query cannot pass. Treat CRLF and LF as equivalent logical newlines only; a removed blank line, indentation change, collapsed separator space, missing attachment, or changed punctuation must fail.
