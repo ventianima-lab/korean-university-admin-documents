@@ -3,9 +3,10 @@
 
 The JSON input has `requirements` (id, source) and `artifacts` (id, status,
 paths, verification). Status is ready, pending, user_action, or not_applicable.
-For each ready HWPX file, title_band_checks binds an independently selected
-official master to every applicable title area. Other authenticity, signatures,
-field correctness, visual layout, and institutional acceptance need review.
+expense_reviews maps each applicable cost category and its independently
+transcribed checklist items to requirement roles. For each ready HWPX file,
+title_band_checks binds an independently selected official master to each title
+area. Authenticity, visual layout and institutional acceptance need review.
 """
 import argparse
 import json
@@ -77,8 +78,43 @@ def audit(manifest):
     results = []
     for key in required:
         results.append(found.get(key, {'id': key, 'status': 'missing_role', 'missing_files': [], 'title_band_issues': []}))
-    complete = all(r['status'] in {'ready', 'not_applicable'} and not r['missing_files'] and not r['title_band_issues'] for r in results)
-    return {'status': 'PASS' if complete else 'INCOMPLETE', 'requirements': results}
+    expense_issues = []
+    reviews = manifest.get('expense_reviews')
+    if not isinstance(reviews, list) or not reviews:
+        expense_issues.append({'problem': 'expense_category_review_missing'})
+    else:
+        categories = set()
+        for review in reviews:
+            if not isinstance(review, dict):
+                raise ValueError('expense review must be an object')
+            category = review.get('category', '').strip()
+            source = review.get('source', '').strip()
+            items = review.get('items')
+            if not category or not source or category in categories or not isinstance(items, list) or not items:
+                raise ValueError('expense review needs unique category, source and checklist items')
+            categories.add(category)
+            labels = set()
+            for item in items:
+                if not isinstance(item, dict):
+                    raise ValueError('expense checklist item must be an object')
+                label = item.get('label', '').strip()
+                state = item.get('status')
+                if not label or label in labels or state not in {'required', 'pending', 'not_applicable'}:
+                    raise ValueError('expense checklist item needs unique label and valid status')
+                labels.add(label)
+                if state == 'pending':
+                    expense_issues.append({'category': category, 'item': label, 'problem': 'applicability_pending'})
+                elif state == 'not_applicable':
+                    if not item.get('reason', '').strip():
+                        expense_issues.append({'category': category, 'item': label, 'problem': 'exclusion_reason_missing'})
+                elif item.get('requirement_id') not in required:
+                    expense_issues.append({'category': category, 'item': label, 'problem': 'required_role_missing'})
+                elif found.get(item['requirement_id'], {}).get('status') == 'not_applicable':
+                    expense_issues.append({'category': category, 'item': label, 'problem': 'required_role_marked_not_applicable'})
+    complete = (not expense_issues and all(r['status'] in {'ready', 'not_applicable'} and
+                not r['missing_files'] and not r['title_band_issues'] for r in results))
+    return {'status': 'PASS' if complete else 'INCOMPLETE', 'requirements': results,
+            'expense_review_issues': expense_issues}
 
 
 def main():

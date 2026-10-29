@@ -24,11 +24,31 @@ class PacketAuditTest(unittest.TestCase):
                             'verification': 'exact saved file reviewed'}]}
         self.assertEqual(packet.audit(m)['status'], 'INCOMPLETE')
         m['artifacts'][0]['paths'] = [str(Path(__file__))]
+        m['expense_reviews'] = [{'category': 'expense', 'source': 'manual expense section',
+                                 'items': [{'label': 'form', 'status': 'required', 'requirement_id': 'form'}]}]
+        self.assertEqual(packet.audit(m)['status'], 'PASS')
+
+    def test_cost_checklist_is_mandatory_and_missing_required_form_blocks(self):
+        m = {'requirements': [{'id': 'photo', 'source': 'program guide'}],
+             'artifacts': [{'id': 'photo', 'status': 'ready', 'paths': [str(Path(__file__))],
+                            'verification': 'available'}]}
+        self.assertEqual(packet.audit(m)['expense_review_issues'][0]['problem'], 'expense_category_review_missing')
+        m['expense_reviews'] = [{'category': 'operating expense', 'source': 'budget rules',
+                                 'items': [{'label': 'inspection', 'status': 'required',
+                                            'requirement_id': 'inspection'}]}]
+        self.assertEqual(packet.audit(m)['expense_review_issues'][0]['problem'], 'required_role_missing')
+        m['expense_reviews'][0]['items'][0] = {'label': 'inspection', 'status': 'pending'}
+        self.assertEqual(packet.audit(m)['expense_review_issues'][0]['problem'], 'applicability_pending')
+        m['expense_reviews'][0]['items'][0] = {'label': 'inspection', 'status': 'not_applicable'}
+        self.assertEqual(packet.audit(m)['expense_review_issues'][0]['problem'], 'exclusion_reason_missing')
+        m['expense_reviews'][0]['items'][0] = {'label': 'photo', 'status': 'required', 'requirement_id': 'photo'}
         self.assertEqual(packet.audit(m)['status'], 'PASS')
 
     def test_duplicate_role_and_unexplained_status_fail(self):
         m = {'requirements': [{'id': 'x', 'source': 'manual'}],
              'artifacts': [{'id': 'x', 'status': 'not_applicable', 'paths': [], 'verification': 'not used'}]}
+        m['expense_reviews'] = [{'category': 'expense', 'source': 'manual expense section',
+                                 'items': [{'label': 'not used', 'status': 'not_applicable', 'reason': 'not triggered'}]}]
         self.assertEqual(packet.audit(m)['status'], 'PASS')
         m['artifacts'].append(dict(m['artifacts'][0]))
         with self.assertRaises(ValueError):

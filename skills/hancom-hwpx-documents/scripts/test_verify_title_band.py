@@ -38,7 +38,9 @@ class TitleBandTests(unittest.TestCase):
         if checks is not None:
             artifact["title_band_checks"] = checks
         return {"requirements": [{"id": "report", "source": "synthetic manual"}],
-                "artifacts": [artifact]}
+                "artifacts": [artifact],
+                "expense_reviews": [{"category": "synthetic expense", "source": "synthetic manual",
+                                     "items": [{"label": "report", "status": "required", "requirement_id": "report"}]}]}
 
     def test_unrequested_title_in_original_blank_is_rejected(self):
         create_sample(self.candidate, spacer="Event title")
