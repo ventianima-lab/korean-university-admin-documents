@@ -4,6 +4,8 @@ JSON: items[{roles:{role:count}, source, unit_price, servings, amount,
 bindings:[{path, section, table, row, col, paragraph}]}]. Indexes are zero-based;
 row/col use cellAddr. Populate roles from evidence, never from draft factors.
 Checks arithmetic and persisted factors, not policy eligibility or actual attendance.
+With --role-summary, JSON: {roles:{role:count}, total, text, source} checks that a
+user-facing confirmation explicitly shows each role count and the summed total.
 """
 import argparse
 import json
@@ -14,6 +16,27 @@ from xml.etree import ElementTree as ET
 
 NS = {"h": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
 
+
+def verify_role_summary(spec):
+    """Check the independently sourced roles appear in the confirmation itself."""
+    roles = spec.get("roles")
+    summary = spec.get("text")
+    total = spec.get("total")
+    if not isinstance(roles, dict) or not roles or not isinstance(summary, str) or not spec.get("source"):
+        raise ValueError("Confirmation text, independent role counts and source are required")
+    if type(total) is not int or total <= 0:
+        raise ValueError("A positive total count is required")
+    for role, count in roles.items():
+        if not isinstance(role, str) or not role or type(count) is not int or count <= 0:
+            raise ValueError("Role labels and counts must be explicit and positive")
+        pattern = re.escape(role) + r"\s*[:：]?\s*" + str(count) + r"\s*명"
+        if not re.search(pattern, summary):
+            raise ValueError(f"Role or count missing from confirmation: {role}")
+    if sum(roles.values()) != total:
+        raise ValueError("Role counts do not sum to the stated total")
+    if not re.search(r"(?<!\d)" + str(total) + r"\s*명", summary):
+        raise ValueError("Total count missing from confirmation")
+    return {"total": total, "roles": roles}
 
 def verify(spec):
     if not spec.get("items"):
@@ -52,5 +75,8 @@ def verify(spec):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inventory", type=Path)
+    parser.add_argument("--role-summary", action="store_true", help="Check a user-facing role/count confirmation before asking")
     args = parser.parse_args()
-    print(json.dumps({"ok": True, "checked": verify(json.loads(args.inventory.read_text(encoding="utf-8-sig")))}, ensure_ascii=False))
+    inventory = json.loads(args.inventory.read_text(encoding="utf-8-sig"))
+    checked = verify_role_summary(inventory) if args.role_summary else verify(inventory)
+    print(json.dumps({"ok": True, "checked": checked}, ensure_ascii=False))
