@@ -7,9 +7,6 @@ from pathlib import Path
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
-from hwpx import HwpxDocument
-
-
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -46,10 +43,11 @@ def verify_section_opening(path: Path) -> dict:
 
 
 def verify_form_fields(path: Path, expectations: dict) -> dict:
-    """Check values at exact cells; an occurrence elsewhere is insufficient."""
+    """Check exact table cells and top-level paragraph text, not preview text."""
     fields = expectations.get("fields", [])
-    if not fields:
-        raise ValueError("Field expectations must contain at least one field")
+    paragraphs = expectations.get("paragraphs", [])
+    if not isinstance(fields, list) or not isinstance(paragraphs, list) or not (fields or paragraphs):
+        raise ValueError("Expectations must contain at least one field or paragraph")
     ns = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
     seen = set()
     roots = {}
@@ -77,6 +75,23 @@ def verify_form_fields(path: Path, expectations: dict) -> dict:
             actual = "".join("".join(node.itertext()) for node in matches[0].findall(".//hp:t", ns))
             if actual.strip() != field["expected"].strip():
                 raise ValueError(f"Field {index}: saved cell differs from expected value")
+        seen_paragraphs = set()
+        for index, paragraph in enumerate(paragraphs):
+            section = paragraph["section"]
+            ordinal = paragraph["paragraph"]
+            key = (section, ordinal)
+            if (type(ordinal) is not int or ordinal < 0 or key in seen_paragraphs
+                    or not paragraph.get("source", "").strip()):
+                raise ValueError(f"Paragraph {index}: duplicate or invalid location or missing source/reason")
+            seen_paragraphs.add(key)
+            if section not in roots:
+                roots[section] = ET.fromstring(package.read(section))
+            top_level = roots[section].findall("./hp:p", ns)
+            if ordinal >= len(top_level):
+                raise ValueError(f"Paragraph {index}: invalid paragraph location")
+            actual = "".join("".join(node.itertext()) for node in top_level[ordinal].findall("./hp:run/hp:t", ns))
+            if actual.strip() != paragraph["expected"].strip():
+                raise ValueError(f"Paragraph {index}: saved paragraph differs from expected value")
         table_locations = set()
         for index, table in enumerate(expectations.get("tables", [])):
             section = table["section"]
@@ -97,7 +112,16 @@ def verify_form_fields(path: Path, expectations: dict) -> dict:
             if actual_rows != expected_rows or int(target.get("rowCnt", actual_rows)) != expected_rows:
                 raise ValueError(f"Table {index}: saved row grouping differs from expected structure")
             checked_tables += 1
-    return {"status": "PASS", "checked_fields": len(fields), "checked_tables": checked_tables}
+    return {"status": "PASS", "checked_fields": len(fields),
+            "checked_paragraphs": len(paragraphs), "checked_tables": checked_tables}
+
+
+def emit_report(payload: dict, report: Path | None) -> None:
+    rendered = json.dumps(payload, ensure_ascii=False, indent=2)
+    if report:
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(rendered, encoding="utf-8")
+    print(rendered)
 
 
 def main() -> None:
@@ -105,9 +129,26 @@ def main() -> None:
     parser.add_argument("inputs", nargs="+", type=Path)
     parser.add_argument("--roundtrip-dir", type=Path)
     parser.add_argument("--report", type=Path)
-    parser.add_argument("--fields", type=Path, help="JSON exact-cell expectations with source/reason")
+    parser.add_argument("--fields", type=Path, help="JSON cell/paragraph expectations with source/reason")
+    parser.add_argument("--fields-only", action="store_true",
+                        help="Check saved XML text only; does not validate or render the document")
     args = parser.parse_args()
+    if args.fields_only and (not args.fields or args.roundtrip_dir):
+        parser.error("--fields-only requires --fields and cannot be combined with --roundtrip-dir")
     expectations = json.loads(args.fields.read_text(encoding="utf-8-sig")) if args.fields else None
+    if args.fields_only:
+        rows = []
+        for source in args.inputs:
+            source = source.resolve()
+            rows.append({"file": str(source), "sha256": sha256(source), "size": source.stat().st_size,
+                         "form_fields": verify_form_fields(source, expectations)})
+        emit_report({"engine": "hwpx-xml-fields-only",
+                     "scope": "Text checks only; document validation and rendering are separate.",
+                     "rows": rows}, args.report)
+        return
+
+    from hwpx import HwpxDocument
+
     if args.roundtrip_dir:
         args.roundtrip_dir.mkdir(parents=True, exist_ok=True)
 
@@ -149,12 +190,7 @@ def main() -> None:
         rows.append(row)
         document.close()
 
-    payload = {"engine": "python-hwpx", "rows": rows}
-    rendered = json.dumps(payload, ensure_ascii=False, indent=2)
-    if args.report:
-        args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(rendered, encoding="utf-8")
-    print(rendered)
+    emit_report({"engine": "python-hwpx", "rows": rows}, args.report)
 
 
 if __name__ == "__main__":
