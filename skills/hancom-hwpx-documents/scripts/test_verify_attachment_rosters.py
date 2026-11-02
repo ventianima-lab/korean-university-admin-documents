@@ -53,7 +53,16 @@ class PacketRoleTests(unittest.TestCase):
                 {"col": 2, "text": "소속", "span": 1}],
             "grid": {"first_row": 1, "last_row": 1,
                      "columns": [{"col": 0, "span": 1}, {"col": 1, "span": 1},
-                                 {"col": 2, "span": 1}]}} for path in self.rosters]
+                                 {"col": 2, "span": 1}]},
+            "source_header": {"section": "Contents/section0.xml", "table": 0, "row": 0,
+                              "columns": [{"col": i, "source_col": i, "text": text}
+                                          for i, text in enumerate(("연번", "성명", "소속"))]},
+            "expected_cells": [{"row": 1, "col": i, "parts": [
+                {"kind": "value", "field": field, "text": value,
+                 "source": {"kind": "verified_reference", "reference": "synthetic independent record",
+                            "location": "field", "quote": value}}]}
+                for i, (field, value) in enumerate((("연번", "1"), ("성명", "학생"), ("소속", "학과")))]
+            } for path in self.rosters]
         self.artifacts = [{"status": "ready", "paths": [str(p) for p in self.rosters]}]
 
     def package_letter(self, text):
@@ -83,6 +92,24 @@ class PacketRoleTests(unittest.TestCase):
     def test_matching_packet_and_signature_free_roster_pass(self):
         self.assertEqual(self.issues(self.attachment), set())
         self.assertEqual(packet.check_planned_rosters(self.planned, self.artifacts), [])
+
+    def test_extra_grade_inside_an_id_cell_is_not_authorized_by_the_source_header(self):
+        headings = ("연번", "성명", "학번 또는 직급(위)")
+        self.package_roster(self.template, headers=headings)
+        self.package_roster(self.rosters[0], headers=headings)
+        with ZipFile(self.rosters[0]) as source:
+            root = ET.fromstring(source.read("Contents/section0.xml"))
+        cell = list(root.iter(packet.HP + "tr"))[1].findall(packet.HP + "tc")[2]
+        cell.find(".//" + packet.HP + "t").text = "A001 (2학년)"
+        with ZipFile(self.rosters[0], "w") as target:
+            target.writestr("Contents/section0.xml", ET.tostring(root, encoding="utf-8"))
+        planned = copy.deepcopy(self.planned[:1])
+        planned[0]["headers"][2]["text"] = headings[2]
+        planned[0]["source_header"]["columns"][2]["text"] = headings[2]
+        part = planned[0]["expected_cells"][2]["parts"][0]
+        part["field"], part["text"], part["source"]["quote"] = "학번", "A001 (2학년)", "A001 (2학년)"
+        issues = packet.check_planned_rosters(planned, self.artifacts)
+        self.assertIn("planned_roster_unrequested_field", {i["problem"] for i in issues})
 
     def test_count_mismatch_and_unlisted_extra_fail(self):
         wrong = copy.deepcopy(self.attachment)

@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 
 from verify_title_band import check_title_band
 from verify_role_expense import check_role_expense_review
+from verify_roster_fields import check_roster_fields
 
 
 def check_advance_sources(reviews):
@@ -330,6 +331,7 @@ def check_planned_rosters(rosters, artifacts):
                 if actual_columns != columns:
                     issues.append({"problem": "planned_roster_grid_mismatch",
                                    "path": str(saved), "row": grid_row})
+            issues.extend(check_roster_fields(roster))
         except (OSError, BadZipFile, ET.ParseError, KeyError, IndexError, TypeError) as error:
             issues.append({"problem": "planned_roster_unverifiable", "detail": str(error)})
     for saved in adapted_paths:
