@@ -21,7 +21,7 @@ class CaptureReviewTests(unittest.TestCase):
         for name in ('original.png', 'render.png'):
             (self.base / name).write_bytes(name.encode())
         entry = dict.fromkeys(CHECKS, True)
-        entry.update(picture_id='42', seller='Example Store', source_kind='product_detail')
+        entry.update(picture_id='42', seller='Example Store', seller_identity='Example Merchant', source_kind='product_detail')
         for kind in ('original', 'render'):
             entry[kind + '_file'] = kind + '.png'
             entry[kind + '_sha256'] = digest(self.base / (kind + '.png'))
@@ -56,6 +56,16 @@ class CaptureReviewTests(unittest.TestCase):
         m = copy.deepcopy(self.manifest)
         m['captures'][0]['seller_and_total_same_capture'] = False
         self.assertTrue(any('seller_and_total_same_capture' in s for s in self.check(m)))
+
+    def test_actual_seller_identity_is_required(self):
+        m = copy.deepcopy(self.manifest)
+        m['captures'][0]['seller_identity'] = ''
+        self.assertTrue(any('actual seller identity' in s for s in self.check(m)))
+
+    def test_unrelated_navigation_or_ads_prevent_clean_capture_pass(self):
+        m = copy.deepcopy(self.manifest)
+        m['captures'][0]['unrelated_page_chrome_excluded'] = False
+        self.assertTrue(any('unrelated_page_chrome_excluded' in s for s in self.check(m)))
 
     def test_other_cart_goods_and_mixed_totals_are_rejected(self):
         m = copy.deepcopy(self.manifest)

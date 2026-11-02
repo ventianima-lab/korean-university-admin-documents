@@ -25,7 +25,7 @@ def document(path,product='Model B',quantity='2개',total=30000,source='Store B'
   for index,root in enumerate(roots):z.writestr(f'Contents/section{index}.xml',E.tostring(root))
 def main():
  verifier=Path(__file__).with_name('verify_quote_hwpx.py')
- manifest={'authorization':'The user explicitly allowed similar products.','items':[{'item':'Item','main':{'product':'Model A','quantity':'2개','total':24000,'source':'Store A'},'comparisons':[{'product':'Model B','quantity':'2개','total':30000,'source':'Store B','kind':'similar','basis':'Same purpose and essential size, two physical units','differences':'브랜드와 모델이 다름.'}]}]}
+ manifest={'authorization':'The user explicitly allowed similar products.','items':[{'item':'Item','main':{'product':'Model A','quantity':'2개','total':24000,'source':'Store A','seller_identity':'Merchant A'},'comparisons':[{'product':'Model B','quantity':'2개','total':30000,'source':'Store B','seller_identity':'Merchant B','kind':'similar','basis':'Same purpose and essential size, two physical units','differences':'브랜드와 모델이 다름.'}]}]}
  with TemporaryDirectory()as tmp:
   root=Path(tmp);doc=root/'fixture.hwpx';spec=root/'scope.json'
   count=0
@@ -77,13 +77,17 @@ def main():
   check('unrequested comparison in later section',scope=None,product='Model A',total=30000,split_sections=True,required_comparisons=0)
   two_similar=deepcopy(manifest)
   first=two_similar['items'][0]['comparisons'][0];first.update(total=30000)
-  other=deepcopy(first);other.update(product='Model C',total=32000,source='Store C',differences='포장 구성이 다름.')
+  other=deepcopy(first);other.update(product='Model C',total=32000,source='Store C',seller_identity='Merchant C',differences='포장 구성이 다름.')
   two_similar['items'][0]['comparisons'].append(other)
   second_note={'number':2,'product':'Model C','total':32000,'source':'Store C','note':'유사제품: 브랜드와 모델이 다름. 포장 구성이 다름.'}
   check('difference on another comparison is insufficient',scope=two_similar,total=30000,note='유사제품',pictures=3,extra_comparisons=[second_note],required_comparisons=2)
-  consistent=deepcopy(manifest);other=deepcopy(consistent['items'][0]['comparisons'][0]);other.update(total=32000,source='Store C');consistent['items'][0]['comparisons'].append(other)
+  consistent=deepcopy(manifest);other=deepcopy(consistent['items'][0]['comparisons'][0]);other.update(total=32000,source='Store C',seller_identity='Merchant C');consistent['items'][0]['comparisons'].append(other)
   same_note={'number':2,'product':'Model B','total':32000,'source':'Store C','note':'유사제품: 브랜드와 모델이 다름.'}
   check('same substitute from different sellers passes',expected=0,scope=consistent,total=30000,pictures=3,extra_comparisons=[same_note],required_comparisons=2)
+  alias=deepcopy(consistent);alias['items'][0]['comparisons'][1]['seller_identity']='Merchant B'
+  check('different storefronts with same merchant fail',scope=alias,total=30000,pictures=3,extra_comparisons=[same_note],required_comparisons=2,expected_message='실제 거래업체 중복')
+  missing_identity=deepcopy(manifest);missing_identity['items'][0]['comparisons'][0].pop('seller_identity')
+  check('actual merchant identity is required',scope=missing_identity,expected_message='실제 거래업체 확인 누락')
   mismatch=deepcopy(consistent);mismatch['items'][0]['comparisons'][1].update(product='Model C')
   different_note=deepcopy(same_note);different_note['product']='Model C'
   check('different substitute product fails',scope=mismatch,total=30000,pictures=3,extra_comparisons=[different_note],required_comparisons=2,expected_message='비교견적 간 제품·수량 불일치')

@@ -63,6 +63,13 @@ def check_manifest_group(main_quote, comparisons, main_caption, comparison_capti
     sources = [caption_source(main_caption)] + [caption_source(s) for s in comparison_captions]
     if len(declared) != len(actual):
         return issues + ['명세의 비교견적 수 불일치']
+    identities = [entry.get('seller_identity') for entry in declared]
+    if any(not isinstance(identity, str) or not identity.strip() for identity in identities):
+        issues.append('명세의 실제 거래업체 확인 누락')
+    else:
+        normalized = [re.sub(r'\s+', '', identity).casefold() for identity in identities]
+        if len(set(normalized)) != len(normalized):
+            issues.append('명세의 실제 거래업체 중복')
     if len(comparisons) > 1 and any(entry.get('kind') == 'similar' for entry in declared[1:]):
         if len({(quote[1], quote[2]) for quote in comparisons}) != 1:
             issues.append('유사제품을 포함한 비교견적 간 제품·수량 불일치')

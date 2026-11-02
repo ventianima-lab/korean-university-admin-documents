@@ -13,10 +13,10 @@ from xml.etree import ElementTree as ET
 
 HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph'
 CHECKS = ('seller_and_total_same_capture', 'only_quoted_product_visible',
-          'seller_readable', 'product_photo_visible', 'product_name_readable',
+          'seller_readable', 'seller_identity_verified', 'product_photo_visible', 'product_name_readable',
           'options_visible', 'quantity_visible', 'total_visible',
           'shipping_verified', 'discount_verified', 'pointer_free',
-          'final_render_readable')
+          'unrelated_page_chrome_excluded', 'final_render_readable')
 
 
 def digest(path: Path) -> str:
@@ -55,6 +55,8 @@ def review_issues(document: Path, manifest: dict, base: Path, *, require_cart: b
             issues.append(f'{label}: required cart capture is missing')
         if not isinstance(entry.get('seller'), str) or not entry['seller'].strip():
             issues.append(f'{label}: readable seller identification is missing')
+        if not isinstance(entry.get('seller_identity'), str) or not entry['seller_identity'].strip():
+            issues.append(f'{label}: actual seller identity is missing')
         for check in CHECKS:
             if entry.get(check) is not True:
                 issues.append(f'{label}: {check} is not verified')
