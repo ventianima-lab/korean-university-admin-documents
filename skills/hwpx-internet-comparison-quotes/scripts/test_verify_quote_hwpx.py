@@ -13,7 +13,7 @@ def document(path,product='Model B',quantity='2개',total=30000,source='Store B'
  if split_sections:roots.append(E.Element(H+'sec'))
  texts=['Item | Model A | 수량 2개 | 총액 24,000원 | 출처 Store A',f'비교견적 {number} | Item | {product} | 수량 {quantity} | 총액 {total:,}원 | 출처 {source}',note]
  for extra in extra_comparisons:
-  texts += [f"비교견적 {extra['number']} | Item | {extra['product']} | 수량 2개 | 총액 {extra['total']:,}원 | 출처 {extra['source']}",extra.get('note','')]
+  texts += [f"비교견적 {extra['number']} | Item | {extra['product']} | 수량 {extra.get('quantity','2개')} | 총액 {extra['total']:,}원 | 출처 {extra['source']}",extra.get('note','')]
  for index,s in enumerate(texts):
   root=roots[1] if split_sections and index else roots[0]
   p=E.SubElement(root,H+'p');run=E.SubElement(p,H+'run');E.SubElement(run,H+'t').text=s
@@ -29,7 +29,7 @@ def main():
  with TemporaryDirectory()as tmp:
   root=Path(tmp);doc=root/'fixture.hwpx';spec=root/'scope.json'
   count=0
-  def check(name,expected=1,scope=manifest,required_comparisons=1,expected_main=1,**kwargs):
+  def check(name,expected=1,scope=manifest,required_comparisons=1,expected_main=1,expected_message=None,**kwargs):
    nonlocal count
    document(doc,**kwargs)
    args=[sys.executable,str(verifier),str(doc),'--expected-main',str(expected_main)]
@@ -39,6 +39,7 @@ def main():
    flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
    result=subprocess.run(args,capture_output=True,text=True,creationflags=flags)
    assert result.returncode==expected,(name,result.returncode,result.stdout,result.stderr)
+   if expected_message is not None:assert expected_message in result.stdout,(name,result.stdout)
    count+=1
   check('default rejects changed product',scope=None,total=30000)
   check('default accepts exact product',expected=0,scope=None,product='Model A',total=30000)
@@ -80,6 +81,15 @@ def main():
   two_similar['items'][0]['comparisons'].append(other)
   second_note={'number':2,'product':'Model C','total':32000,'source':'Store C','note':'유사제품: 브랜드와 모델이 다름. 포장 구성이 다름.'}
   check('difference on another comparison is insufficient',scope=two_similar,total=30000,note='유사제품',pictures=3,extra_comparisons=[second_note],required_comparisons=2)
+  consistent=deepcopy(manifest);other=deepcopy(consistent['items'][0]['comparisons'][0]);other.update(total=32000,source='Store C');consistent['items'][0]['comparisons'].append(other)
+  same_note={'number':2,'product':'Model B','total':32000,'source':'Store C','note':'유사제품: 브랜드와 모델이 다름.'}
+  check('same substitute from different sellers passes',expected=0,scope=consistent,total=30000,pictures=3,extra_comparisons=[same_note],required_comparisons=2)
+  mismatch=deepcopy(consistent);mismatch['items'][0]['comparisons'][1].update(product='Model C')
+  different_note=deepcopy(same_note);different_note['product']='Model C'
+  check('different substitute product fails',scope=mismatch,total=30000,pictures=3,extra_comparisons=[different_note],required_comparisons=2,expected_message='비교견적 간 제품·수량 불일치')
+  mismatch_qty=deepcopy(consistent);mismatch_qty['items'][0]['comparisons'][1]['quantity']='3개'
+  quantity_note=deepcopy(same_note);quantity_note['quantity']='3개'
+  check('different substitute quantity fails',scope=mismatch_qty,total=30000,pictures=3,extra_comparisons=[quantity_note],required_comparisons=2,expected_message='비교견적 간 제품·수량 불일치')
   check('invalid request count',expected=2,scope=None,expected_main=0)
   print(f'PASS: {count} behavioral cases')
 if __name__=='__main__':main()
