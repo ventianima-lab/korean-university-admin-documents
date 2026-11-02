@@ -18,6 +18,7 @@ from zipfile import BadZipFile, ZipFile
 import xml.etree.ElementTree as ET
 
 from verify_title_band import check_title_band
+from verify_role_expense import check_role_expense_review
 
 
 def check_advance_sources(reviews):
@@ -344,7 +345,8 @@ def check_planned_rosters(rosters, artifacts):
     return issues
 
 
-def audit(manifest, advance_source_check=False, attachment_check=False, planned_roster_check=False):
+def audit(manifest, advance_source_check=False, attachment_check=False, planned_roster_check=False,
+          role_expense_check=False):
     requirements = manifest.get('requirements')
     artifacts = manifest.get('artifacts')
     if not isinstance(requirements, list) or not requirements or not isinstance(artifacts, list):
@@ -441,6 +443,9 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
     source_issues = check_advance_sources(reviews) if advance_source_check else []
     attachment_issues = check_attachment_list(manifest.get('attachment_check')) if attachment_check else []
     roster_issues = check_planned_rosters(manifest.get('planned_rosters'), artifacts) if planned_roster_check else []
+    role_check_enabled = role_expense_check or 'role_expense_review' in manifest
+    role_issues = (check_role_expense_review(manifest.get('role_expense_review'), reviews, required, found)
+                   if role_check_enabled else [])
     if attachment_check and planned_roster_check and not attachment_issues and not roster_issues:
         planned_paths = {Path(m['path']).resolve() for entry in manifest['attachment_check']['entries']
                          if entry['role'] == 'planned_roster' for m in entry['members']}
@@ -448,6 +453,7 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
         if planned_paths != roster_paths:
             roster_issues.append({'problem': 'planned_roster_attachment_mapping_mismatch'})
     complete = (not source_issues and not expense_issues and not attachment_issues and not roster_issues
+                and not role_issues
                 and all(r['status'] in {'ready', 'not_applicable'} and
                         not r['missing_files'] and not r['title_band_issues'] for r in results))
     result = {'status': 'PASS' if complete else 'INCOMPLETE', 'requirements': results,
@@ -456,6 +462,8 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
         result['attachment_check_issues'] = attachment_issues
     if planned_roster_check:
         result['planned_roster_issues'] = roster_issues
+    if role_check_enabled:
+        result['role_expense_issues'] = role_issues
     return result
 
 
@@ -468,10 +476,12 @@ def main():
                    help='reconcile exact covering-list paragraphs, named units and actual packet files')
     p.add_argument('--planned-roster-check', action='store_true',
                    help='check standalone advance rosters have the expected headers and no signature text')
+    p.add_argument('--role-expense-check', action='store_true',
+                   help='independently reconcile role conditions, payment triggers, and saved role labels')
     args = p.parse_args()
     try:
         result = audit(json.loads(args.manifest.read_text(encoding='utf-8-sig')), args.advance_source_check,
-                       args.attachment_check, args.planned_roster_check)
+                       args.attachment_check, args.planned_roster_check, args.role_expense_check)
     except (OSError, ValueError, KeyError, TypeError, BadZipFile, ET.ParseError, IndexError) as error:
         p.exit(2, f'PACKET_INVENTORY_ERROR: {error}\n')
     print(json.dumps(result, ensure_ascii=False))

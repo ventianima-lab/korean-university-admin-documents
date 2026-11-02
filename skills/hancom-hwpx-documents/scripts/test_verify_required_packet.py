@@ -140,7 +140,8 @@ class AdvanceSourceCheckTest(unittest.TestCase):
         target = Path(self.temp.name) / 'audit.json'
         target.write_text(json.dumps(missing), encoding='utf-8')
         result = subprocess.run([sys.executable, str(module_path), str(target), '--advance-source-check'],
-                                capture_output=True, text=True, encoding='utf-8')
+                                capture_output=True, text=True, encoding='utf-8',
+                                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn('source_cells_missing', result.stdout)
 
