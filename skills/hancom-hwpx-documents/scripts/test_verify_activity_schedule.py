@@ -1,5 +1,9 @@
 """Synthetic tests for activity-to-date, time and place associations."""
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 from tempfile import TemporaryDirectory
 from xml.sax.saxutils import escape
 from zipfile import ZipFile
@@ -70,6 +74,152 @@ class ScheduleTests(unittest.TestCase):
         self.spec['activities'][0]['source'] = ''
         with self.assertRaisesRegex(ValueError, 'source'):
             verify(self.path, self.spec)
+
+    def test_weekday_gate_cannot_be_skipped_by_a_table_only_pass(self):
+        self.package(self.rows)
+        with self.assertRaisesRegex(ValueError, 'weekday constraint'):
+            verify(self.path, self.spec, require_weekday=True)
+
+    def test_misspelled_constraint_is_not_silently_ignored(self):
+        self.package(self.rows)
+        self.spec['weekly_constraint'] = []
+        with self.assertRaisesRegex(ValueError, 'Unknown inventory'):
+            verify(self.path, self.spec)
+
+
+class WeekdayTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.path = Path(self.tmp.name) / 'narrative.hwpx'
+        self.texts = ['Schedule', '2027-05-04', '5월 11일 (화)', '5.18.', '2027.05.25.(화)']
+        self.tokens = ['2027-05-04', '5월 11일', '5.18.', '2027.05.25.']
+        self.rule = {
+            'weekday': 2, 'source': 'synthetic weekday instruction',
+            'year': 2027, 'year_source': 'synthetic year authority',
+            'scope_paragraphs': [1, 2, 3, 4],
+            'sessions': [{'paragraph': i, 'date_text': token, 'source': 'synthetic session'}
+                         for i, token in enumerate(self.tokens, 1)],
+        }
+        self.spec = {'section': 'Contents/section0.xml', 'source': 'synthetic plan',
+                     'weekly_constraints': [self.rule]}
+
+    def package(self, texts=None):
+        paragraphs = []
+        for value in texts if texts is not None else self.texts:
+            split = len(value) // 2
+            paragraphs.append('<hp:p><hp:run><hp:t>' + escape(value[:split]) +
+                              '</hp:t></hp:run><hp:run><hp:t>' + escape(value[split:]) +
+                              '</hp:t></hp:run></hp:p>')
+        with ZipFile(self.path, 'w') as z:
+            z.writestr('Contents/section0.xml', f'<sec xmlns:hp="{HP}">' + ''.join(paragraphs) + '</sec>')
+
+    def test_sourced_tuesdays_in_split_narrative_pass(self):
+        self.package()
+        result = verify(self.path, self.spec, require_weekday=True)
+        self.assertEqual((result['weekday_constraints_checked'], result['session_dates_checked']), (1, 4))
+
+    def test_matching_inventory_of_wrong_weekdays_fails(self):
+        texts = ['Schedule', '2027-05-05', '5월 12일', '5.19.', '2027.05.26.']
+        self.package(texts)
+        for session, token in zip(self.rule['sessions'], texts[1:]):
+            session['date_text'] = token
+        with self.assertRaisesRegex(ValueError, 'weekday conflicts'):
+            verify(self.path, self.spec, require_weekday=True)
+
+    def test_correct_date_with_wrong_printed_weekday_fails(self):
+        texts = self.texts[:]
+        texts[2] = '5월 11일 (수)'
+        self.package(texts)
+        with self.assertRaisesRegex(ValueError, 'Printed weekday'):
+            verify(self.path, self.spec)
+
+    def test_unlisted_date_in_selected_paragraph_fails(self):
+        texts = self.texts[:]
+        texts[1] += ', 5월 11일'
+        self.package(texts)
+        with self.assertRaisesRegex(ValueError, 'date coverage'):
+            verify(self.path, self.spec)
+
+    def test_selected_paragraph_without_session_fails(self):
+        self.package()
+        self.rule['sessions'].pop()
+        with self.assertRaisesRegex(ValueError, 'date coverage'):
+            verify(self.path, self.spec)
+
+    def test_wrong_date_text_does_not_match_a_document_substring(self):
+        self.package()
+        self.rule['sessions'][0]['date_text'] = '05-04'
+        with self.assertRaisesRegex(ValueError, 'date coverage'):
+            verify(self.path, self.spec)
+
+    def test_trailing_year_or_abbreviated_day_cannot_hide_in_scope(self):
+        texts = self.texts[:]
+        texts[1] = '05/04/2027'
+        self.package(texts)
+        self.rule['sessions'][0]['date_text'] = '05/04'
+        with self.assertRaisesRegex(ValueError, 'date coverage'):
+            verify(self.path, self.spec)
+        texts[1] = '5월 4일, 12일'
+        self.package(texts)
+        self.rule['sessions'][0]['date_text'] = '5월 4일'
+        with self.assertRaisesRegex(ValueError, 'Unsupported abbreviated date'):
+            verify(self.path, self.spec)
+
+    def test_command_line_weekday_gate_returns_failure_and_success(self):
+        self.package()
+        inventory = Path(self.tmp.name) / 'inventory.json'
+        inventory.write_text(json.dumps(self.spec, ensure_ascii=False), encoding='utf-8')
+        command = [sys.executable, '-B', str(Path(__file__).with_name('verify_activity_schedule.py')),
+                   str(self.path), str(inventory), '--require-weekday']
+        options = {'capture_output': True, 'text': True, 'encoding': 'utf-8'}
+        if os.name == 'nt':
+            options['creationflags'] = subprocess.CREATE_NO_WINDOW
+        passed = subprocess.run(command, **options)
+        self.assertEqual(passed.returncode, 0, passed.stderr)
+        self.assertEqual(json.loads(passed.stdout)['session_dates_checked'], 4)
+        self.rule['weekday'] = 3
+        inventory.write_text(json.dumps(self.spec, ensure_ascii=False), encoding='utf-8')
+        failed = subprocess.run(command, **options)
+        self.assertEqual(failed.returncode, 1, failed.stderr)
+        self.assertEqual(json.loads(failed.stdout)['status'], 'VERIFICATION_FAILED')
+
+    def test_missing_weekday_or_year_authority_fails(self):
+        self.package()
+        for key in ('source', 'year_source'):
+            with self.subTest(key=key):
+                value = self.rule[key]
+                self.rule[key] = ''
+                with self.assertRaisesRegex(ValueError, 'source'):
+                    verify(self.path, self.spec)
+                self.rule[key] = value
+
+    def test_invalid_or_conflicting_year_and_date_fail(self):
+        self.package()
+        self.rule['year'] = 2028
+        with self.assertRaisesRegex(ValueError, 'year mismatch'):
+            verify(self.path, self.spec)
+        self.rule['year'] = 2027
+        texts = self.texts[:]
+        texts[1] = '2027-02-30'
+        self.package(texts)
+        self.rule['sessions'][0]['date_text'] = texts[1]
+        with self.assertRaisesRegex(ValueError, 'Invalid schedule date'):
+            verify(self.path, self.spec)
+
+    def test_nested_table_paragraph_is_not_counted_as_parent_text(self):
+        xml = (f'<sec xmlns:hp="{HP}"><hp:p><hp:run><hp:tbl><hp:tr><hp:tc>'
+               '<hp:subList><hp:p><hp:run><hp:t>5월 4일</hp:t></hp:run></hp:p>'
+               '</hp:subList></hp:tc></hp:tr></hp:tbl></hp:run></hp:p></sec>')
+        with ZipFile(self.path, 'w') as z:
+            z.writestr('Contents/section0.xml', xml)
+        self.rule['scope_paragraphs'] = [0]
+        self.rule['sessions'] = [{'paragraph': 0, 'date_text': '5월 4일', 'source': 'synthetic session'}]
+        with self.assertRaisesRegex(ValueError, 'date coverage'):
+            verify(self.path, self.spec)
+        self.rule['scope_paragraphs'] = [1]
+        self.rule['sessions'][0]['paragraph'] = 1
+        self.assertEqual(verify(self.path, self.spec)['session_dates_checked'], 1)
 
 
 if __name__ == '__main__':
