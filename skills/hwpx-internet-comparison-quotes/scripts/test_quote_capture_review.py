@@ -71,6 +71,24 @@ class CaptureReviewTests(unittest.TestCase):
                 self.assertTrue(any(kind + ' file' in s for s in self.check()))
                 p.write_bytes(old)
 
+    def test_required_cart_accepts_cart_and_rejects_other_source_types(self):
+        for kind in ('product_detail', 'vendor_quote'):
+            with self.subTest(kind=kind):
+                m = copy.deepcopy(self.manifest)
+                m['captures'][0]['source_kind'] = kind
+                self.assertTrue(any('required cart capture' in s for s in review_issues(self.doc, m, self.base, require_cart=True)))
+        m = copy.deepcopy(self.manifest)
+        m['captures'][0]['source_kind'] = 'cart'
+        self.assertEqual(review_issues(self.doc, m, self.base, require_cart=True), [])
+
+    def test_required_cart_picture_ids_are_checked(self):
+        self.assertTrue(any('required cart capture' in s for s in review_issues(self.doc, self.manifest, self.base, cart_picture_ids=('42',))))
+        self.assertTrue(any('missing from document' in s for s in review_issues(self.doc, self.manifest, self.base, cart_picture_ids=('unknown',))))
+        self.assertTrue(any('duplicates' in s for s in review_issues(self.doc, self.manifest, self.base, cart_picture_ids=('42','42'))))
+        m = copy.deepcopy(self.manifest)
+        m['captures'][0]['source_kind'] = 'cart'
+        self.assertEqual(review_issues(self.doc, m, self.base, cart_picture_ids=('42',)), [])
+
     def test_document_change_invalidates_review(self):
         self.manifest['document_sha256'] = 'stale'
         self.assertTrue(any('hash mismatch' in s for s in self.check()))

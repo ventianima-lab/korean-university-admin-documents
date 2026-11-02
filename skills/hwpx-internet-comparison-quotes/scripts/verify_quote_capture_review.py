@@ -23,7 +23,7 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def review_issues(document: Path, manifest: dict, base: Path) -> list[str]:
+def review_issues(document: Path, manifest: dict, base: Path, *, require_cart: bool = False, cart_picture_ids: tuple[str, ...] = ()) -> list[str]:
     issues = []
     if manifest.get('document_sha256') != digest(document):
         issues.append('document hash mismatch: review is missing or stale')
@@ -39,6 +39,11 @@ def review_issues(document: Path, manifest: dict, base: Path) -> list[str]:
         issues.append('document has duplicate picture ids')
     if [entry.get('picture_id') for entry in entries if isinstance(entry, dict)] != expected_ids:
         issues.append('picture ids or order do not match the document')
+    if len(set(cart_picture_ids)) != len(cart_picture_ids):
+        issues.append('cart picture ids contain duplicates')
+    if any(pid not in expected_ids for pid in cart_picture_ids):
+        issues.append('required cart picture id is missing from document')
+    required_cart_ids = set(expected_ids) if require_cart else set(cart_picture_ids)
     for index, entry in enumerate(entries, 1):
         if not isinstance(entry, dict):
             issues.append(f'capture {index}: invalid review entry')
@@ -46,6 +51,8 @@ def review_issues(document: Path, manifest: dict, base: Path) -> list[str]:
         label = f'capture {index}'
         if entry.get('source_kind') not in ('product_detail', 'cart', 'vendor_quote'):
             issues.append(f'{label}: search/list/unknown source is insufficient')
+        if entry.get('picture_id') in required_cart_ids and entry.get('source_kind') != 'cart':
+            issues.append(f'{label}: required cart capture is missing')
         if not isinstance(entry.get('seller'), str) or not entry['seller'].strip():
             issues.append(f'{label}: readable seller identification is missing')
         for check in CHECKS:
@@ -64,12 +71,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('document', type=Path)
     parser.add_argument('review', type=Path)
+    parser.add_argument('--require-cart', action='store_true', help='모든 그림에 장바구니 원본을 요구')
+    parser.add_argument('--cart-picture-id', action='append', default=[], help='장바구니가 필요한 그림 ID; 그림마다 반복')
     args = parser.parse_args()
     try:
         manifest = json.loads(args.review.read_text(encoding='utf-8-sig'))
         if not isinstance(manifest, dict):
             raise ValueError('review must be a JSON object')
-        issues = review_issues(args.document, manifest, args.review.parent)
+        issues = review_issues(args.document, manifest, args.review.parent, require_cart=args.require_cart, cart_picture_ids=tuple(args.cart_picture_id))
     except (OSError, ValueError, KeyError, ET.ParseError, zipfile.BadZipFile) as error:
         print(f'FAIL: {error}')
         return 2
