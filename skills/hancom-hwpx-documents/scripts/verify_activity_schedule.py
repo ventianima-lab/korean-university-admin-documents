@@ -14,12 +14,33 @@ Weekdays are ISO 1=Monday through 7=Sunday; paragraph indexes are zero-based
 within the section, including paragraphs in tables. The caller must enumerate
 all relevant paragraphs independently, including repeat dates elsewhere. The
 check reads selected paragraph text only and never suggests replacement dates.
+
+For a confirmed correction across independently enumerated surfaces, use
+--reconcile INVENTORY.json instead of the two positional arguments. Its shape is::
+
+  {"event": {"id": "event-a", "start": "09:20", "end": "11:20",
+             "source": "explicit confirmation"},
+   "required_surfaces": [{"id": "document-a", "kind": "document"}],
+   "surfaces": [{"id": "document-a", "kind": "document",
+     "target_record_ids": ["field-1"],
+     "before": {"path": "before.json", "sha256": "<64 hex>", "source": "capture"},
+     "after": {"path": "after.json", "sha256": "<64 hex>", "source": "capture"},
+     "conflict_corrections": [{"stale": "time unconfirmed", "replacement": ""}]}]}
+
+Each UTF-8 snapshot has a surface_id and a records list. Every record has a
+unique record_id and an event_id. Target records additionally have normalized
+24-hour start/end and conflict_display strings. Include all other records in
+the independently inventoried scope. Snapshot hashes bind the supplied capture,
+not the live document, API, or page. This helper cannot establish capture
+freshness, source fidelity, inventory completeness, or rendered layout; check
+those directly and independently before claiming cross-surface completion.
 """
 from __future__ import annotations
 
 import argparse
 from collections import Counter
 from datetime import date
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -184,15 +205,128 @@ def verify(path, spec, require_weekday=False):
     return result
 
 
+def _snapshot_records(snapshot, base_dir, surface_id):
+    if not isinstance(snapshot, dict):
+        raise ValueError('Every snapshot needs a path, SHA-256, and source')
+    path, digest, source = snapshot.get('path'), snapshot.get('sha256'), snapshot.get('source')
+    if not nonempty(path) or not nonempty(source) or not isinstance(digest, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', digest):
+        raise ValueError('Every snapshot needs a path, SHA-256, and source')
+    path = Path(path)
+    raw = (path if path.is_absolute() else base_dir / path).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != digest.lower():
+        raise ValueError('Snapshot hash mismatch')
+    data = json.loads(raw.decode('utf-8-sig'))
+    if not isinstance(data, dict) or data.get('surface_id') != surface_id or not isinstance(data.get('records'), list):
+        raise ValueError('Snapshot surface identity or records are invalid')
+    records = {}
+    for record in data['records']:
+        if not isinstance(record, dict) or not nonempty(record.get('record_id')) or not nonempty(record.get('event_id')):
+            raise ValueError('Every snapshot record needs stable record and event identities')
+        record_id = record['record_id']
+        if record_id in records:
+            raise ValueError('Duplicate snapshot record identity')
+        records[record_id] = record
+    return records
+
+
+def _valid_clock(value):
+    return isinstance(value, str) and re.fullmatch(r'(?:[01][0-9]|2[0-3]):[0-5][0-9]', value) is not None
+
+
+def verify_reconciliation(spec, base_dir):
+    """Check independently captured records; never change a source or snapshot."""
+    if not isinstance(spec, dict) or set(spec) != {'event', 'required_surfaces', 'surfaces'}:
+        raise ValueError('A reconciliation event, required surfaces, and surfaces are required')
+    event = spec['event']
+    if (not isinstance(event, dict) or not nonempty(event.get('id')) or
+            not nonempty(event.get('source')) or not _valid_clock(event.get('start')) or
+            not _valid_clock(event.get('end')) or event['start'] == event['end']):
+        raise ValueError('An independently confirmed event identity and exact interval are required')
+    required, surfaces = spec['required_surfaces'], spec['surfaces']
+    if not isinstance(required, list) or not required or not isinstance(surfaces, list) or not surfaces:
+        raise ValueError('Independently enumerated required surfaces are required')
+    required_by_id = {}
+    for item in required:
+        if not isinstance(item, dict) or not nonempty(item.get('id')) or item.get('kind') not in {'document', 'calendar', 'page'}:
+            raise ValueError('Each required surface needs an identity and kind')
+        if item['id'] in required_by_id:
+            raise ValueError('Duplicate required surface identity')
+        required_by_id[item['id']] = item['kind']
+    seen, target_count, unrelated_count = set(), 0, 0
+    for surface in surfaces:
+        if not isinstance(surface, dict) or not nonempty(surface.get('id')):
+            raise ValueError('Every surface needs an identity')
+        surface_id = surface['id']
+        if surface_id in seen or required_by_id.get(surface_id) != surface.get('kind'):
+            raise ValueError('Unexpected, duplicated, or mismatched surface')
+        seen.add(surface_id)
+        ids = surface.get('target_record_ids')
+        if not isinstance(ids, list) or not ids or not all(nonempty(value) for value in ids) or len(set(ids)) != len(ids):
+            raise ValueError('Every surface needs unique independently inventoried target records')
+        corrections = surface.get('conflict_corrections')
+        if not isinstance(corrections, list) or not corrections:
+            raise ValueError('Every surface needs an independently identified stale-conflict check')
+        markers = set()
+        for correction in corrections:
+            if (not isinstance(correction, dict) or not nonempty(correction.get('stale')) or
+                    not isinstance(correction.get('replacement'), str) or
+                    correction['stale'] in correction['replacement'] or correction['stale'] in markers):
+                raise ValueError('Invalid or duplicate stale-conflict correction')
+            markers.add(correction['stale'])
+        before = _snapshot_records(surface.get('before'), base_dir, surface_id)
+        after = _snapshot_records(surface.get('after'), base_dir, surface_id)
+        if set(before) != set(after):
+            raise ValueError('Snapshot record inventory changed')
+        targets = set(ids)
+        for records in (before, after):
+            if {key for key, record in records.items() if record['event_id'] == event['id']} != targets:
+                raise ValueError('Target event identity or occurrence coverage mismatch')
+        for key, old in before.items():
+            new = after[key]
+            if key not in targets:
+                if old != new:
+                    raise ValueError('An unrelated record changed')
+                unrelated_count += 1
+                continue
+            if any(field not in old or field not in new for field in ('start', 'end', 'conflict_display')):
+                raise ValueError('Target time and conflict-display fields are required')
+            if not isinstance(old['conflict_display'], str) or not isinstance(new['conflict_display'], str):
+                raise ValueError('Conflict displays must be text')
+            expected = dict(old)
+            expected['start'], expected['end'] = event['start'], event['end']
+            for correction in corrections:
+                stale, replacement = correction['stale'], correction['replacement']
+                if expected['conflict_display'].count(stale) > 1:
+                    raise ValueError('Ambiguous stale-conflict marker requires a narrower scope')
+                expected['conflict_display'] = expected['conflict_display'].replace(stale, replacement)
+                if stale in new['conflict_display']:
+                    raise ValueError('A superseded conflict display remains')
+            if new != expected:
+                raise ValueError('Target interval or protected fields differ from the confirmed correction')
+            target_count += 1
+    if seen != set(required_by_id):
+        raise ValueError('A required surface is missing')
+    return {'status': 'PASS', 'surfaces_checked': len(seen),
+            'target_records_checked': target_count, 'unrelated_records_checked': unrelated_count}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('document', type=Path)
-    parser.add_argument('inventory', type=Path)
+    parser.add_argument('document', type=Path, nargs='?')
+    parser.add_argument('inventory', type=Path, nargs='?')
     parser.add_argument('--require-weekday', action='store_true', help='fail if no weekday constraint is provided')
+    parser.add_argument('--reconcile', type=Path, metavar='INVENTORY', help='verify independently captured cross-surface correction snapshots')
     args = parser.parse_args()
+    if args.reconcile:
+        if args.document is not None or args.inventory is not None or args.require_weekday:
+            parser.error('--reconcile cannot be combined with document, inventory, or --require-weekday')
+    elif args.document is None or args.inventory is None:
+        parser.error('document and inventory are required unless --reconcile is used')
     try:
-        spec = json.loads(args.inventory.read_text(encoding='utf-8-sig'))
-        print(json.dumps(verify(args.document, spec, require_weekday=args.require_weekday), ensure_ascii=False))
+        inventory = args.reconcile or args.inventory
+        spec = json.loads(inventory.read_text(encoding='utf-8-sig'))
+        result = verify_reconciliation(spec, inventory.resolve().parent) if args.reconcile else verify(args.document, spec, require_weekday=args.require_weekday)
+        print(json.dumps(result, ensure_ascii=False))
         return 0
     except (OSError, BadZipFile, ValueError, KeyError, IndexError, ET.ParseError) as exc:
         print(json.dumps({'status': 'VERIFICATION_FAILED', 'reason': str(exc)}, ensure_ascii=False))

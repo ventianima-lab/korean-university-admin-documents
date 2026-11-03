@@ -112,6 +112,8 @@ Assume the user wants a new image unless they clearly ask to change an existing 
 17. If the user explicitly chooses or confirms the CLI fallback, then use the fallback-only docs for model, quality, size, `input_fidelity`, masks, output format, output paths, and network setup.
 18. Always report the final saved path(s) for any workspace-bound asset(s), plus the final prompt or prompt set and whether the built-in tool or fallback CLI mode was used.
 
+For event or article photos, inventory every image selected or specifically named for correction. Check each image individually for the requested improvements, keep the source, and map each selected image to a verified corrected output or a clearly stated unresolved issue. A correction to one image does not complete another selected image. Compare documentary details, including people and displayed text, against the source and disclose any generative changes before publication.
+
 ## Collaborative variants and typography review
 
 - When multiple collaborators plan concepts but the user chooses one final rendering method, keep collaborator work to art direction, copy, and critique; route every final asset through the chosen method. Record a brief per-asset plan with motif, palette, composition, typography, exact copy, and renderer before production. A request for additional variants requires that many new complete images; earlier outputs and contact sheets do not count.

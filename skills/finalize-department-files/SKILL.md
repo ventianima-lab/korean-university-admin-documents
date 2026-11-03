@@ -7,6 +7,8 @@ description: Finalize completed university department-file work by identifying a
 
 Treat archiving as verified records closeout, not a simple move.
 
+Do not broaden the cleanup to unrelated files merely because they share the same work folder.
+
 ## 1. Establish the archive policy
 
 1. Read the workspace's records root, control/index root, taxonomy, latest index report, and relevant earlier manifests.
