@@ -1,5 +1,13 @@
 # Document skill synchronization review — 2026-09-08
 
+## Event-date reconciliation gate
+
+The reconciliation helper previously compared event identity, interval, conflict display, and protected fields but could pass when both snapshots carried the same incorrect date. When an independently confirmed `event.date` is supplied, the helper now validates its strict calendar date and requires that same date on every target record in both snapshots. Legacy inputs without an event date remain accepted and explicitly do not establish date verification. The guidance requires date-bound input whenever the date is confirmed and retains separate live-source and capture-fidelity checks.
+
+Compared all 45 files in the installed and public Hancom folders, including scripts, references, and invocation metadata, plus all available installed counterparts in the public pack. Three Hancom text differences retain portable versus local paths, generalized versus institution-specific examples, or equivalent wording. Other differences are a locally tailored archive policy and metadata, user-specific prose wording, and a quote-evidence preference differing from the public adapter. Public-only adapters and the existing public quote-evidence correction are retained; private and institution-specific details are excluded. No other related public-safe pending delta was identified.
+
+Both copies pass 21 synthetic reconciliation and 19 existing schedule tests, including matched and inconsistent dates in both captures, missing dates, invalid calendar dates, multiple occurrences, legacy input, wrong times, and command-line pass/fail. The complete public release scan, all public skill validations and installed Hancom validation pass. Captured snapshots do not independently prove source fidelity, freshness, completeness, or layout.
+
 ## 2026-10-21 resolved venue labels and removed suffixes
 
 A person-associated office reference was treated as display wording after the user supplied an exact building and room. The preparation route now separates that lookup clue from the requested room-only venue value, updates exact-cell expectations from the latest correction, and checks all activity-specific repeats and previews for the removed suffix without altering unrelated names or source records. Added a synthetic decision case. The complete twenty-one-file installed/public comparison retains the six reviewed private/institution adaptations and whitespace differences; no related pending reusable change is omitted. No executable helper or invocation policy changed. Public release scanning and skill validation precede publication; no real locations or identities are published.

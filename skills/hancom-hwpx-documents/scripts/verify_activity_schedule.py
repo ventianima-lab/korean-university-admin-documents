@@ -18,7 +18,7 @@ check reads selected paragraph text only and never suggests replacement dates.
 For a confirmed correction across independently enumerated surfaces, use
 --reconcile INVENTORY.json instead of the two positional arguments. Its shape is::
 
-  {"event": {"id": "event-a", "start": "09:20", "end": "11:20",
+  {"event": {"id": "event-a", "date": "2027-05-04", "start": "09:20", "end": "11:20",
              "source": "explicit confirmation"},
    "required_surfaces": [{"id": "document-a", "kind": "document"}],
    "surfaces": [{"id": "document-a", "kind": "document",
@@ -29,8 +29,11 @@ For a confirmed correction across independently enumerated surfaces, use
 
 Each UTF-8 snapshot has a surface_id and a records list. Every record has a
 unique record_id and an event_id. Target records additionally have normalized
-24-hour start/end and conflict_display strings. Include all other records in
-the independently inventoried scope. Snapshot hashes bind the supplied capture,
+24-hour start/end and conflict_display strings. When the confirmed event has
+a date, supply it in strict YYYY-MM-DD form and include the same date in every
+target record in both snapshots. Omitting event.date retains the legacy format
+and does not verify dates. Include all other records in the independently
+inventoried scope. Snapshot hashes bind the supplied capture,
 not the live document, API, or page. This helper cannot establish capture
 freshness, source fidelity, inventory completeness, or rendered layout; check
 those directly and independently before claiming cross-surface completion.
@@ -242,6 +245,14 @@ def verify_reconciliation(spec, base_dir):
             not nonempty(event.get('source')) or not _valid_clock(event.get('start')) or
             not _valid_clock(event.get('end')) or event['start'] == event['end']):
         raise ValueError('An independently confirmed event identity and exact interval are required')
+    if 'date' in event:
+        confirmed_date = event['date']
+        if not isinstance(confirmed_date, str) or not re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', confirmed_date):
+            raise ValueError('A confirmed date must use YYYY-MM-DD')
+        try:
+            date.fromisoformat(confirmed_date)
+        except ValueError as exc:
+            raise ValueError('A confirmed date must be a valid calendar date') from exc
     required, surfaces = spec['required_surfaces'], spec['surfaces']
     if not isinstance(required, list) or not required or not isinstance(surfaces, list) or not surfaces:
         raise ValueError('Independently enumerated required surfaces are required')
@@ -288,6 +299,8 @@ def verify_reconciliation(spec, base_dir):
                     raise ValueError('An unrelated record changed')
                 unrelated_count += 1
                 continue
+            if 'date' in event and (old.get('date') != event['date'] or new.get('date') != event['date']):
+                raise ValueError('Target date missing or differs from the confirmed date')
             if any(field not in old or field not in new for field in ('start', 'end', 'conflict_display')):
                 raise ValueError('Target time and conflict-display fields are required')
             if not isinstance(old['conflict_display'], str) or not isinstance(new['conflict_display'], str):

@@ -66,6 +66,84 @@ class ReconciliationTests(unittest.TestCase):
                           result['unrelated_records_checked']), (4, 4, 4))
         self.assertEqual(before, {path: path.read_bytes() for path in files})
 
+    def set_confirmed_date(self, value='2027-05-04'):
+        self.spec['event']['date'] = value
+        for surface_index in range(len(self.spec['surfaces'])):
+            for phase in ('before', 'after'):
+                self.edit(surface_index, phase, lambda d: d['records'][0].update(date='2027-05-04'))
+
+    def test_confirmed_date_matches_every_target_in_both_snapshots(self):
+        self.set_confirmed_date()
+        self.assertEqual(self.verify()['target_records_checked'], 4)
+
+    def test_confirmed_date_mismatch_or_missing_fails_on_each_surface_and_phase(self):
+        for index in range(4):
+            for phase in ('before', 'after'):
+                for bad_date in ('2027-05-05', None):
+                    with self.subTest(index=index, phase=phase, bad_date=bad_date):
+                        self.set_confirmed_date()
+                        def change(d):
+                            record = d['records'][0]
+                            if bad_date is None:
+                                record.pop('date')
+                            else:
+                                record['date'] = bad_date
+                        self.edit(index, phase, change)
+                        with self.assertRaisesRegex(ValueError, 'Target date'):
+                            self.verify()
+
+    def test_same_incorrect_date_before_and_after_fails(self):
+        self.set_confirmed_date()
+        for phase in ('before', 'after'):
+            self.edit(2, phase, lambda d: d['records'][0].update(date='2027-05-05'))
+        with self.assertRaisesRegex(ValueError, 'Target date'):
+            self.verify()
+
+    def test_confirmed_date_applies_to_each_occurrence(self):
+        self.set_confirmed_date()
+        for phase in ('before', 'after'):
+            self.edit(0, phase, lambda d: d['records'].append(
+                {'record_id': 'second-target', 'event_id': 'event-a', 'date': '2027-05-05',
+                 'start': '09:20', 'end': '11:20', 'conflict_display': ''}))
+        self.spec['surfaces'][0]['target_record_ids'].append('second-target')
+        with self.assertRaisesRegex(ValueError, 'Target date'):
+            self.verify()
+
+    def test_invalid_confirmed_dates_fail_closed(self):
+        for value in ('', None, '2027-2-03', '2027-02-29', '20270504', 20270504):
+            with self.subTest(value=value):
+                self.spec['event']['date'] = value
+                with self.assertRaisesRegex(ValueError, 'confirmed date'):
+                    self.verify()
+
+    def test_date_omitted_preserves_legacy_format(self):
+        self.edit(0, 'before', lambda d: d['records'][0].update(date='legacy notation'))
+        self.edit(0, 'after', lambda d: d['records'][0].update(date='legacy notation'))
+        self.assertEqual(self.verify()['status'], 'PASS')
+
+    def test_wrong_time_still_fails_with_confirmed_date(self):
+        self.set_confirmed_date()
+        self.edit(1, 'after', lambda d: d['records'][0].update(start='14:10'))
+        with self.assertRaisesRegex(ValueError, 'Target interval'):
+            self.verify()
+
+    def test_cli_confirmed_date_mismatch_fails(self):
+        self.set_confirmed_date()
+        inventory = self.root / 'inventory-date.json'
+        inventory.write_text(json.dumps(self.spec), encoding='utf-8')
+        options = {'capture_output': True, 'text': True, 'encoding': 'utf-8'}
+        if os.name == 'nt':
+            options['creationflags'] = subprocess.CREATE_NO_WINDOW
+        cmd = [sys.executable, '-B', str(Path(__file__).with_name('verify_activity_schedule.py')),
+               '--reconcile', str(inventory)]
+        passed = subprocess.run(cmd, **options)
+        self.assertEqual(passed.returncode, 0, passed.stderr)
+        self.edit(3, 'after', lambda d: d['records'][0].update(date='2027-05-05'))
+        inventory.write_text(json.dumps(self.spec), encoding='utf-8')
+        result = subprocess.run(cmd, **options)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(json.loads(result.stdout)['status'], 'VERIFICATION_FAILED')
+
     def test_wrong_target_time_in_one_document_fails(self):
         self.edit(1, 'after', lambda d: d['records'][0].update(start='14:10', end='16:10'))
         with self.assertRaisesRegex(ValueError, 'Target interval'):
