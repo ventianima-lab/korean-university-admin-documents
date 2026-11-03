@@ -1,5 +1,13 @@
 # Document skill synchronization review — 2026-09-08
 
+## Shared calendar evidence hash gate
+
+A single modified document can be linked as evidence by several events. A file-level scan/finish decision can advance even when only one of those links has the current hash. Added a read-only verifier that accepts a separately captured complete versioned calendar response and selected absolute document paths, hashes each current file, and checks every matching event/source link. Missing, malformed or stale link hashes, missing files and selected documents with no links fail. The shared-source check runs after an authorized save and before advancing the affected finish decision; callers must independently establish API-response completeness and freshness and rerun after concurrent changes. It does not update any calendar field or document and cannot establish semantic file integrity.
+
+Reviewed both complete Hancom skill folders, including invocation metadata, references and scripts, and all available installed counterparts in the public pack. The three Hancom text differences remain reviewed private-path, local institutional example, and portability adaptations. Public-only adapters and the newer public quotation-evidence correction remain unchanged. The locally tailored archive and quotation preferences are not blindly published; the calendar-specific installed skill has no same-name public counterpart, so only portable guidance was added to the public Hancom reference. No real records, paths, event data, or proprietary plugin material are included.
+
+Synthetic tests cover 13 shared links with one stale and with only one updated, all-current success, multiple links per event and selected documents, missing/invalid hashes, changed or missing files, unrelated links, aliases, malformed snapshots, and read-only command-line pass/fail. Both changed skills are validated; public release scanning and existing schedule and reconciliation regression tests also run before publication.
+
 ## Event-date reconciliation gate
 
 The reconciliation helper previously compared event identity, interval, conflict display, and protected fields but could pass when both snapshots carried the same incorrect date. When an independently confirmed `event.date` is supplied, the helper now validates its strict calendar date and requires that same date on every target record in both snapshots. Legacy inputs without an event date remain accepted and explicitly do not establish date verification. The guidance requires date-bound input whenever the date is confirmed and retains separate live-source and capture-fidelity checks.
