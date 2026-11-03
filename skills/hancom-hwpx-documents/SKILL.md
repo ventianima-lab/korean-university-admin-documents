@@ -29,6 +29,8 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 - Treat `TemplateMatch=false` or a missing `TemplateSearch` record as a hard completion failure for a newly drafted Korean public document.
 - When an official letter and its operating-plan attachment share one supplied master, retain the requested pages as one editable file unless the user asks for separate files. Naming two document roles does not specify two output files. For a later consolidation request, merge the current working finals, preserve their page order and content, and verify one active deliverable with the expected physical pages before moving superseded copies into verified technical backup.
 
+For survey result forms whose fields combine counts and percentages, use the mandatory template-to-output coverage and arithmetic gate in [references/survey-count-percent.md](references/survey-count-percent.md). Counts without the template-required unit and percentage are incomplete.
+
 ## Follow-up edits start from the current working final
 
 - For post-event programme expense or result packets, read the applicable current manual and apply the packet inventory gate in [references/procurement-forms.md](references/procurement-forms.md) before reporting completion. A few validated forms do not establish that the required packet is complete. For every ready HWPX, the gate also checks each selected title band against its authoritative master; a missing check or unauthorized text in an originally blank title cell prevents a pass. A prefilled intermediate is not proof that a decorative blank is a title field.
