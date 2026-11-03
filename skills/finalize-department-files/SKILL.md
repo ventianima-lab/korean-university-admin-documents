@@ -1,13 +1,23 @@
 ---
 name: finalize-department-files
-description: Finalize completed university department-file work by identifying authoritative records, classifying each file from its content and business packet, applying a March-to-February academic-year boundary, standardizing evidence-backed filenames and destinations, preserving originals and unresolved items, verifying SHA-256, recording manifests, refreshing the local index, and confirming no task residue remains. Use for requests to archive, close out, organize, or permanently file completed department records.
+description: Finalize completed university department-file work and archive incoming department scans by identifying business packets, preserving active work and unresolved evidence, standardizing names, verifying moves and hashes, recording manifests, and refreshing the local index. Use for completed task cleanup or incoming scans for ongoing or archived department work.
 ---
 
 # Finalize Department Files
 
-Treat archiving as verified records closeout, not a simple move.
+Treat completed-work archiving as verified records closeout. Handle incoming scans for ongoing work using the scoped path below.
 
 Do not broaden the cleanup to unrelated files merely because they share the same work folder.
+
+## Incoming scans for an existing business packet
+
+Use this scoped path when asked to archive incoming scans, even if the underlying work is ongoing. Establish the packet and its current status from current evidence. Put the authoritative scan in the existing business folder inside `00_작업중` when the work is ongoing; if the work is already archived, put it directly in the existing permanent business packet. Scan arrival alone does not complete the work or authorize moving editable sources, closing the task, or clearing its working folder. Apply closeout-only residue and completion checks only to an actual authorized closeout.
+
+Before treating scans as duplicates, compare every page and all signatures, stamps, handwriting, approvals, and attachments. The same title or a different compression or hash does not establish identity; retain materially different evidence. Establish which scan is newest from reliable scan metadata, supported filename timestamps, or the actual record revisions; a copied file's modification time alone is insufficient. If identity or recency remains uncertain, preserve the candidates and record the uncertainty rather than selecting or removing one.
+
+For verified scans of the same actual content, keep the verified newest authoritative scan in the business packet. Where the current instruction and workspace policy authorize a deletion-review move, move superseded scans to the designated deletion-review area with meaningful, normalized filenames reflecting their verified content and role; do not overwrite collisions. Otherwise preserve candidates in place. A review move is not deletion authorization: permanently delete only when separately and explicitly authorized by the latest instruction. Preserve materially different evidence with the packet.
+
+For each reviewed older scan, record its original and current paths and the retained latest scan's original and current paths, plus identity and recency evidence, disposition, size and before/after hashes for the reviewed scan and the retained scan’s hash. Verify both the review copy and retained scan exist and match the manifest, the move hashes match, the filenames are meaningful, and any active editable sources remain in place; refresh the applicable index after authorized moves. Report unresolved identity, recency, or placement rather than claiming completion.
 
 ## 1. Establish the archive policy
 
