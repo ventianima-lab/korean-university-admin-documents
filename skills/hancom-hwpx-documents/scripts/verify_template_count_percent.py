@@ -73,6 +73,24 @@ def verify(template_path, output_path, expected):
     seen_output = set()
     checked_counts = {}
     checked_denominators = {}
+    checked_percentages = {}
+    groups = expected.get('groups', [])
+    if not isinstance(groups, list):
+        raise ValueError('groups must be a list')
+    balanced_cells = set()
+    group_membership = {}
+    for group in groups:
+        method = group.get('rounding', 'individual')
+        if method not in {'individual', 'largest_remainder'}:
+            raise ValueError('Unknown group rounding method')
+        members = [address(item) for item in group['output_cells']]
+        for member in members:
+            previous = group_membership.get(member)
+            if previous and (method == 'largest_remainder' or previous == 'largest_remainder'):
+                raise ValueError('Balanced groups cannot overlap another group')
+            group_membership[member] = method
+        if method == 'largest_remainder':
+            balanced_cells.update(members)
     for entry in entries:
         src, dst = address(entry['template']), address(entry['output'])
         if src in seen_template or dst in seen_output:
@@ -93,14 +111,15 @@ def verify(template_path, output_path, expected):
             raise ValueError(f'Missing count unit or percentage at {dst}: {output[dst]!r}')
         actual_count, actual_pct = int(match.group(1)), Decimal(match.group(2))
         correct_pct = (Decimal(count) * 100 / Decimal(denominator)).quantize(quantum, rounding=ROUND_HALF_UP)
-        if actual_count != count or actual_pct != correct_pct:
+        if actual_count != count or (dst not in balanced_cells and actual_pct != correct_pct):
             raise ValueError(f'Count or percentage mismatch at {dst}: got {output[dst]!r}, expected {count} and {correct_pct}%')
         checked_counts[dst] = count
         checked_denominators[dst] = denominator
+        checked_percentages[dst] = actual_pct
     missing = set(relevant) - seen_template
     if missing:
         raise ValueError(f'Template fields not covered by independent expectations: {sorted(missing)}')
-    for group in expected.get('groups', []):
+    for group in groups:
         members = [address(item) for item in group['output_cells']]
         if not members or len(members) != len(set(members)) or not set(members).issubset(checked_counts):
             raise ValueError('A group is empty, duplicated, or includes unchecked output fields')
@@ -109,7 +128,26 @@ def verify(template_path, output_path, expected):
                 or any(checked_denominators[c] != denominator for c in members)
                 or sum(checked_counts[c] for c in members) != denominator):
             raise ValueError(f'Count total does not reconcile for group {group.get("name", "unnamed")}')
-    return {'status': 'PASS', 'template_fields': len(relevant), 'verified_fields': len(entries), 'groups': len(expected.get('groups', []))}
+        if group.get('rounding', 'individual') == 'largest_remainder':
+            scale = 10 ** places
+            units = []
+            remainders = []
+            deltas = []
+            for member in members:
+                floor, remainder = divmod(checked_counts[member] * 100 * scale, denominator)
+                actual_units = checked_percentages[member] * scale
+                if actual_units != actual_units.to_integral_value():
+                    raise ValueError('Balanced percentage exceeds selected precision')
+                units.append(int(actual_units))
+                remainders.append(remainder)
+                deltas.append(int(actual_units) - floor)
+            if sum(units) != 100 * scale or any(delta not in (0, 1) for delta in deltas):
+                raise ValueError(f'Balanced percentages do not reconcile for group {group.get("name", "unnamed")}')
+            selected = [r for r, delta in zip(remainders, deltas) if delta == 1]
+            unselected = [r for r, delta in zip(remainders, deltas) if delta == 0]
+            if selected and unselected and min(selected) < max(unselected):
+                raise ValueError(f'Balanced percentage remainder allocation is invalid for group {group.get("name", "unnamed")}')
+    return {'status': 'PASS', 'template_fields': len(relevant), 'verified_fields': len(entries), 'groups': len(groups)}
 
 
 def main():

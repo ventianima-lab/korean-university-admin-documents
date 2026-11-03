@@ -91,6 +91,41 @@ class TemplateCountPercentTest(unittest.TestCase):
         self.save()
         self.check_fails('Unsupported template field shape')
 
+    def configure_balanced_case(self, counts, values):
+        self.manifest['rounding_decimals'] = 0
+        self.manifest['groups'][0]['rounding'] = 'largest_remainder'
+        for entry, count, value in zip(self.manifest['fields'], counts, values):
+            entry['count'] = count
+            entry['denominator'] = 15
+            self.ocells[tuple(entry['output'])] = value
+        self.manifest['groups'][0]['denominator'] = 15
+        self.save()
+
+    def test_balanced_tied_remainders_can_total_100(self):
+        self.configure_balanced_case([13, 1, 1], ['13명(87%)', '1명(7%)', '1명(6%)'])
+        self.assertEqual(verify(self.template, self.output, self.manifest)['status'], 'PASS')
+        self.ocells[(8, 5)], self.ocells[(8, 6)] = '1명(6%)', '1명(7%)'
+        self.save()
+        self.assertEqual(verify(self.template, self.output, self.manifest)['status'], 'PASS')
+
+    def test_balanced_percentages_must_total_100(self):
+        self.configure_balanced_case([12, 2, 1], ['12명(80%)', '2명(13%)', '1명(6%)'])
+        self.check_fails('Balanced percentages do not reconcile')
+
+    def test_balanced_allocation_must_respect_remainders(self):
+        self.configure_balanced_case([11, 3, 1], ['11명(74%)', '3명(20%)', '1명(6%)'])
+        self.check_fails('remainder allocation is invalid')
+
+    def test_balanced_group_cannot_overlap_an_individual_group(self):
+        self.configure_balanced_case([13, 1, 1], ['13명(87%)', '1명(7%)', '1명(6%)'])
+        self.manifest['groups'].append({'name': 'overlap', 'output_cells': [[8, 6]], 'denominator': 15})
+        self.check_fails('cannot overlap')
+
+    def test_balanced_mode_must_be_explicit(self):
+        self.configure_balanced_case([13, 1, 1], ['13명(87%)', '1명(7%)', '1명(6%)'])
+        del self.manifest['groups'][0]['rounding']
+        self.check_fails('mismatch')
+
     def test_non_count_percent_table_cannot_pass(self):
         self.tcells = {(3, 1): '만족도 00%'}
         self.save()
