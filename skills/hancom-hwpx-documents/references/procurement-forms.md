@@ -232,6 +232,9 @@ Treat a weekday conflict as `VERIFICATION_FAILED`; do not choose an adjacent dat
 
 ## Expanded claim tables and evidence-page verification
 
+When both a payment-portal viewport capture and its downloaded original receipt PDF are available, inspect both for completeness before selecting submission evidence. Prefer the original PDF as the authoritative receipt; when a page image is needed in HWPX, render that PDF and remove only empty margins if needed for legibility. Retain the original PDF and compare the embedded image with its rendered source, checking the transaction fields, total and footer. A viewport screenshot that stops above the receipt footer is not a complete substitute.
+
+
 - When expanding a claim table, rebuild the text in a vertically merged label as separate source-styled paragraphs if the narrow cell cannot fit the phrase. Remove stale line-segment caches from every changed paragraph, mark the cell dirty, and check the exact final native render for overlapping glyphs. Populate a formerly empty payment or payee cell by creating a text node in its existing styled run; a blank run is not evidence that the field is inapplicable. Preserve the verified card identifier as an intact unit and distinguish the payee from an agent-written process note.
 - After assembling repeated evidence pages, reopen and render the exact final HWPX in the native application. Independently inspect every physical page, especially the last page and both cells of each evidence grid, for truly blank or overflow pages, lost images, legibility and source-image identity. A page-count, extracted text, package validation, or an earlier PDF does not establish the final visual result. Match every required image against the embedded bytes and report any image-only or print-legibility uncertainty.
 
