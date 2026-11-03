@@ -61,6 +61,85 @@ class PacketAuditTest(unittest.TestCase):
             packet.audit(m)
 
 
+class UserManagedPreparationTest(unittest.TestCase):
+    def manifest(self):
+        return {
+            'requirements': [{'id': 'form', 'source': 'synthetic manual'},
+                             {'id': 'voucher', 'source': 'synthetic manual'}],
+            'artifacts': [
+                {'id': 'form', 'status': 'ready', 'paths': [str(Path(__file__))],
+                 'verification': 'Synthetic prepared file reviewed'},
+                {'id': 'voucher', 'status': 'user_managed', 'paths': [],
+                 'verification': 'Blank attachment area preserved',
+                 'user_management': {'kind': 'explicit_user_instruction',
+                                     'medium': 'physical', 'action': 'attach',
+                                     'reference': 'Synthetic conversation',
+                                     'quote': 'I will attach my own voucher.'}}
+            ],
+            'expense_reviews': [{'category': 'synthetic expense', 'source': 'synthetic manual',
+                                 'items': [{'label': 'form', 'status': 'required', 'requirement_id': 'form'},
+                                           {'label': 'voucher', 'status': 'required', 'requirement_id': 'voucher'}]}]
+        }
+
+    def test_user_managed_is_pass_only_for_authorized_preparation(self):
+        manifest = self.manifest()
+        self.assertEqual(packet.audit(manifest)['status'], 'INCOMPLETE')
+        scoped = packet.audit(manifest, preparation_scope=True)
+        self.assertEqual(scoped['status'], 'PASS')
+        self.assertEqual(scoped['scope'], 'authorized_preparation')
+        self.assertIn('not verified as attached', scoped['scope_note'])
+        self.assertEqual(scoped['requirements'][1]['status'], 'user_managed')
+        self.assertEqual(scoped['requirements'][1]['missing_files'], [])
+
+    def test_user_management_needs_exact_instruction_and_no_agent_path(self):
+        for mutation in ('absent', 'wrong_kind', 'wrong_medium', 'wrong_action', 'blank_reference', 'blank_quote', 'path'):
+            manifest = self.manifest()
+            voucher = manifest['artifacts'][1]
+            if mutation == 'absent':
+                del voucher['user_management']
+            elif mutation == 'wrong_kind':
+                voucher['user_management']['kind'] = 'inferred'
+            elif mutation == 'wrong_medium':
+                voucher['user_management']['medium'] = 'electronic'
+            elif mutation == 'wrong_action':
+                voucher['user_management']['action'] = 'unspecified'
+            elif mutation == 'blank_reference':
+                voucher['user_management']['reference'] = ''
+            elif mutation == 'blank_quote':
+                voucher['user_management']['quote'] = ' '
+            else:
+                voucher['paths'] = ['unseen-synthetic-voucher']
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                packet.audit(manifest, preparation_scope=True)
+
+    def test_real_pending_missing_and_user_action_still_block_preparation(self):
+        for status in ('pending', 'user_action'):
+            manifest = self.manifest()
+            manifest['artifacts'][0]['status'] = status
+            manifest['artifacts'][0]['paths'] = []
+            with self.subTest(status=status):
+                self.assertEqual(packet.audit(manifest, preparation_scope=True)['status'], 'INCOMPLETE')
+        missing = self.manifest()
+        del missing['artifacts'][0]
+        self.assertEqual(packet.audit(missing, preparation_scope=True)['status'], 'INCOMPLETE')
+        unresolved = self.manifest()
+        unresolved['expense_reviews'][0]['items'][0]['status'] = 'pending'
+        self.assertEqual(packet.audit(unresolved, preparation_scope=True)['status'], 'INCOMPLETE')
+
+    def test_cli_scope_is_explicit(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'manifest.json'
+            path.write_text(json.dumps(self.manifest()), encoding='utf-8')
+            def run(*args):
+                return subprocess.run([sys.executable, str(module_path), str(path), *args],
+                                      capture_output=True, text=True, encoding='utf-8',
+                                      creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            self.assertEqual(run().returncode, 1)
+            result = run('--preparation-scope')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['scope'], 'authorized_preparation')
+
+
 class AdvanceSourceCheckTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

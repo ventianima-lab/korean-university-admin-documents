@@ -2,7 +2,10 @@
 """Reconcile independently listed document requirements with prepared files.
 
 The JSON input has `requirements` (id, source) and `artifacts` (id, status,
-paths, verification). Status is ready, pending, user_action, or not_applicable.
+paths, verification). Status is ready, pending, user_action, user_managed,
+or not_applicable. A user_managed role needs a quoted explicit instruction and
+can pass only an explicitly requested preparation-scope audit; it never proves
+that a physical item is attached, submitted, or exempt.
 expense_reviews maps each applicable cost category and its independently
 transcribed checklist items to requirement roles. For each ready HWPX file,
 title_band_checks binds an independently selected official master to each title
@@ -348,7 +351,7 @@ def check_planned_rosters(rosters, artifacts):
 
 
 def audit(manifest, advance_source_check=False, attachment_check=False, planned_roster_check=False,
-          role_expense_check=False):
+          role_expense_check=False, preparation_scope=False):
     requirements = manifest.get('requirements')
     artifacts = manifest.get('artifacts')
     if not isinstance(requirements, list) or not requirements or not isinstance(artifacts, list):
@@ -365,13 +368,25 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
         if key not in required or key in found:
             raise ValueError('artifact role is duplicate or absent from requirements')
         state = item.get('status')
-        if state not in {'ready', 'pending', 'user_action', 'not_applicable'}:
+        if state not in {'ready', 'pending', 'user_action', 'user_managed', 'not_applicable'}:
             raise ValueError('invalid artifact status')
         if not item.get('verification', '').strip():
             raise ValueError('every role needs evidence or a specific outstanding action')
         paths = item.get('paths', [])
         if not isinstance(paths, list) or (state == 'ready' and not paths):
             raise ValueError('ready roles need at least one file path')
+        if state == 'user_managed':
+            instruction = item.get('user_management')
+            if (not isinstance(instruction, dict)
+                    or instruction.get('kind') != 'explicit_user_instruction'
+                    or instruction.get('medium') != 'physical'
+                    or instruction.get('action') not in {'retain', 'attach'}
+                    or not isinstance(instruction.get('reference'), str)
+                    or not instruction['reference'].strip()
+                    or not isinstance(instruction.get('quote'), str)
+                    or not instruction['quote'].strip()
+                    or paths):
+                raise ValueError('user-managed role needs physical retain/attach instruction, reference and quote, and no agent file paths')
         bad = [str(p) for p in paths if not Path(p).is_file() or Path(p).stat().st_size == 0]
         title_issues = []
         checks = item.get('title_band_checks', [])
@@ -454,12 +469,19 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
         roster_paths = {Path(roster['path']).resolve() for roster in manifest['planned_rosters']}
         if planned_paths != roster_paths:
             roster_issues.append({'problem': 'planned_roster_attachment_mapping_mismatch'})
+    acceptable = {'ready', 'not_applicable'}
+    if preparation_scope:
+        acceptable.add('user_managed')
     complete = (not source_issues and not expense_issues and not attachment_issues and not roster_issues
                 and not role_issues
-                and all(r['status'] in {'ready', 'not_applicable'} and
+                and all(r['status'] in acceptable and
                         not r['missing_files'] and not r['title_band_issues'] for r in results))
     result = {'status': 'PASS' if complete else 'INCOMPLETE', 'requirements': results,
               'expense_review_issues': expense_issues, 'source_check_issues': source_issues}
+    if preparation_scope:
+        result['scope'] = 'authorized_preparation'
+        result['scope_note'] = ('User-managed roles are not verified as attached, submitted, or exempt; '
+                                'the instruction and applicability still need independent review.')
     if attachment_check:
         result['attachment_check_issues'] = attachment_issues
     if planned_roster_check:
@@ -480,10 +502,13 @@ def main():
                    help='check standalone advance rosters have the expected headers and no signature text')
     p.add_argument('--role-expense-check', action='store_true',
                    help='independently reconcile role conditions, payment triggers, and saved role labels')
+    p.add_argument('--preparation-scope', action='store_true',
+                   help='check authorized preparation; user-managed roles do not imply attachment or submission')
     args = p.parse_args()
     try:
         result = audit(json.loads(args.manifest.read_text(encoding='utf-8-sig')), args.advance_source_check,
-                       args.attachment_check, args.planned_roster_check, args.role_expense_check)
+                       args.attachment_check, args.planned_roster_check, args.role_expense_check,
+                       args.preparation_scope)
     except (OSError, ValueError, KeyError, TypeError, BadZipFile, ET.ParseError, IndexError) as error:
         p.exit(2, f'PACKET_INVENTORY_ERROR: {error}\n')
     print(json.dumps(result, ensure_ascii=False))
