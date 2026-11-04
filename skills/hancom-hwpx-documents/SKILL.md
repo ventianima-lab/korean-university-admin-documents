@@ -32,6 +32,8 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 
 For survey result forms whose fields combine counts and percentages, use the mandatory template-to-output coverage and arithmetic gate in [references/survey-count-percent.md](references/survey-count-percent.md). Counts without the template-required unit and percentage are incomplete.
 
+- When restoring the order of a form split across pages, compare section-heading count and placement with the authoritative form as well as checking the content order. A heading stranded at the end of one page and duplicated at the start of the next is not automatically a required repeating header. Preserve an intentional repeat only when the template or instructions support it; otherwise remove only the authorized redundant heading, preserve protected cells and text, and reopen/render every affected page to verify the resulting count and placement.
+
 ## Follow-up edits start from the current working final
 
 - For post-event programme expense or result packets, read the applicable current manual and apply the packet inventory gate in [references/procurement-forms.md](references/procurement-forms.md) before reporting completion. A few validated forms do not establish that the required packet is complete. For every ready HWPX, the gate also checks each selected title band against its authoritative master; a missing check or unauthorized text in an originally blank title cell prevents a pass. A prefilled intermediate is not proof that a decorative blank is a title field.
