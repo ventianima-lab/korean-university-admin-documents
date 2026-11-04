@@ -70,9 +70,18 @@ def check_manifest_group(main_quote, comparisons, main_caption, comparison_capti
         normalized = [re.sub(r'\s+', '', identity).casefold() for identity in identities]
         if len(set(normalized)) != len(normalized):
             issues.append('명세의 실제 거래업체 중복')
+    exception = spec.get('comparison_identity_exception')
+    exception_valid = isinstance(exception, dict) and all(
+        isinstance(exception.get(key), str) and exception[key].strip()
+        for key in ('unverified_identity_report', 'explicit_instruction', 'reference')
+    )
+    if exception is not None and not exception_valid:
+        issues.append('비교품 동일성 예외의 미확인 보고·명시 지시·대화 위치 누락')
     if len(comparisons) > 1 and any(entry.get('kind') == 'similar' for entry in declared[1:]):
-        if len({(quote[1], quote[2]) for quote in comparisons}) != 1:
+        if len({(quote[1], quote[2]) for quote in comparisons}) != 1 and not exception_valid:
             issues.append('유사제품을 포함한 비교견적 간 제품·수량 불일치')
+    if exception_valid and any(entry.get('kind') != 'similar' for entry in declared[1:]):
+        issues.append('비교품 동일성 예외에서는 각 비교견적을 유사제품으로 구분해야 함')
     for n, (quote, source, expected) in enumerate(zip(actual, sources, declared)):
         expected_values = (spec.get('item'), expected.get('product'), expected.get('quantity'), expected.get('total'))
         if quote != expected_values or source != expected.get('source'):

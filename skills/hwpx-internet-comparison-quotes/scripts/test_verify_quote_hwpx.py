@@ -91,6 +91,14 @@ def main():
   mismatch=deepcopy(consistent);mismatch['items'][0]['comparisons'][1].update(product='Model C')
   different_note=deepcopy(same_note);different_note['product']='Model C'
   check('different substitute product fails',scope=mismatch,total=30000,pictures=3,extra_comparisons=[different_note],required_comparisons=2,expected_message='비교견적 간 제품·수량 불일치')
+  exception=deepcopy(mismatch);exception['items'][0]['comparison_identity_exception']={'unverified_identity_report':'Reported unverified identity','explicit_instruction':'Use separate similar products despite unverified identity','reference':'conversation'}
+  check('explicit item exception allows different substitutes',expected=0,scope=exception,total=30000,pictures=3,extra_comparisons=[different_note],required_comparisons=2)
+  incomplete=deepcopy(exception);incomplete['items'][0]['comparison_identity_exception']['explicit_instruction']=' '
+  check('exception requires separate instruction',scope=incomplete,total=30000,pictures=3,extra_comparisons=[different_note],required_comparisons=2,expected_message='명시 지시')
+  lower_exception=deepcopy(exception);lower_exception['items'][0]['comparisons'][1]['total']=24000
+  low_note=deepcopy(different_note);low_note['total']=24000
+  check('exception does not waive strictly higher price',scope=lower_exception,total=30000,pictures=3,extra_comparisons=[low_note],required_comparisons=2,expected_message='보다 높지 않음')
+  check('exception still requires each visible difference',scope=exception,total=30000,note='유사제품',pictures=3,extra_comparisons=[different_note],required_comparisons=2,expected_message='실제 차이가 문서에 표시되지 않음')
   mismatch_qty=deepcopy(consistent);mismatch_qty['items'][0]['comparisons'][1]['quantity']='3개'
   quantity_note=deepcopy(same_note);quantity_note['quantity']='3개'
   check('different substitute quantity fails',scope=mismatch_qty,total=30000,pictures=3,extra_comparisons=[quantity_note],required_comparisons=2,expected_message='비교견적 간 제품·수량 불일치')
