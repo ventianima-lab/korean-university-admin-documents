@@ -9,15 +9,149 @@ user-facing confirmation explicitly shows each role count and the approved total
 When named_people is supplied, role-summary uses total as its approved total;
 approved_total may be included only when it agrees with total. Costing items use
 their own approved_total field.
+With --carry-forward-check, JSON stages prior_authorized, prior_actual and
+current_planned each contain source_total:{amount,source}, rows:[{id,amount,
+basis,source,bindings:[...]}], and total_bindings:[...]. Bindings locate saved
+HWPX paragraphs. Optional future_evidence_blanks:[{path,section,table,row,col,
+paragraph,reason}] verifies deliberately blank unsupported evidence separately.
 """
 import argparse
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 from xml.etree import ElementTree as ET
 
 NS = {"h": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
+
+STAGE_BASIS = {
+    "prior_authorized": {"approved_budget"},
+    "prior_actual": {"receipt", "settlement_record"},
+    "current_planned": {"approved_plan"},
+}
+
+
+def _bound_paragraph(binding):
+    with ZipFile(binding["path"]) as package:
+        root = ET.fromstring(package.read(binding.get("section", "Contents/section0.xml")))
+    table = root.findall(".//h:tbl", NS)[binding["table"]]
+    cells = [c for c in table.findall("h:tr/h:tc", NS)
+             if (int(c.find("h:cellAddr", NS).get("rowAddr")),
+                 int(c.find("h:cellAddr", NS).get("colAddr"))) ==
+             (binding["row"], binding["col"])]
+    if len(cells) != 1:
+        raise ValueError("Bound cell not unique")
+    return cells[0].findall("h:subList/h:p", NS)[binding["paragraph"]]
+
+
+def _bound_text(binding):
+    para = _bound_paragraph(binding)
+    return "".join(t.text or "" for t in para.findall(".//h:t", NS))
+
+
+def _parse_amount(text, context):
+    normalized = re.sub(r"\s+", "", text)
+    match = re.fullmatch(r"((?:\d+|\d{1,3}(?:,\d{3})+))원?", normalized)
+    if not match:
+        raise ValueError(f"{context} must contain only one monetary amount: {text}")
+    digits = match.group(1)
+    ungrouped = digits.replace(",", "")
+    if len(ungrouped) == 8 and "," not in digits:
+        try:
+            parsed = datetime.strptime(ungrouped, "%Y%m%d")
+        except ValueError:
+            parsed = None
+        if parsed is not None and parsed.strftime("%Y%m%d") == ungrouped:
+            raise ValueError(f"{context} looks like a date, not an amount: {text}")
+    return int(ungrouped)
+
+
+def _saved_amount(binding):
+    paragraph = _bound_paragraph(binding)
+    text = "".join(t.text or "" for t in paragraph.findall(".//h:t", NS))
+    visible = _parse_amount(text, "Saved financial field")
+    for field in paragraph.findall(".//h:fieldBegin", NS):
+        if field.get("type", "").upper() != "FORMULA":
+            continue
+        params = {node.get("name"): "".join(node.itertext())
+                  for node in field.iter() if node.get("name")}
+        last_result = params.get("LastResult")
+        if last_result is not None:
+            cached = _parse_amount(last_result, "FORMULA LastResult")
+            if cached != visible:
+                raise ValueError(f"Visible amount {visible} disagrees with FORMULA LastResult {cached}")
+        command = params.get("Command", "")
+        if ";;" in command:
+            suffix = command.rsplit(";;", 1)[1]
+            try:
+                cached = _parse_amount(suffix, "FORMULA Command cached result")
+            except ValueError:
+                cached = None  # Only compare a recognized numeric result suffix.
+            if cached is not None and cached != visible:
+                raise ValueError(f"Visible amount {visible} disagrees with FORMULA Command cached result {cached}")
+    return visible, text
+
+
+def verify_carry_forward(spec):
+    """Reconcile independently sourced historical and planned financial stages."""
+    stages = spec.get("stages")
+    if not isinstance(stages, dict) or set(stages) != set(STAGE_BASIS):
+        raise ValueError("All three financial stages are required: prior_authorized, prior_actual, current_planned")
+    checked = {}
+    for stage, required_basis in STAGE_BASIS.items():
+        entry = stages[stage]
+        source_total = entry.get("source_total")
+        rows = entry.get("rows")
+        if not isinstance(source_total, dict) or not source_total.get("source"):
+            raise ValueError(f"Independent source total required for {stage}")
+        total = source_total.get("amount")
+        if type(total) is not int or total < 0:
+            raise ValueError(f"Source total must be a nonnegative integer for {stage}")
+        if not isinstance(rows, list) or not rows:
+            raise ValueError(f"Source-backed financial rows required for {stage}")
+        row_ids = set()
+        row_sum = 0
+        for row in rows:
+            row_id = row.get("id")
+            amount = row.get("amount")
+            if not isinstance(row_id, str) or not row_id.strip() or row_id in row_ids:
+                raise ValueError(f"Financial row IDs must be unique and nonempty for {stage}")
+            row_ids.add(row_id)
+            if type(amount) is not int or amount < 0 or not row.get("source"):
+                raise ValueError(f"Each financial row needs a nonnegative amount and independent source for {stage}")
+            if row.get("basis") not in required_basis:
+                raise ValueError(f"Wrong financial basis for {stage}: expected one of {sorted(required_basis)}")
+            bindings = row.get("bindings")
+            if not isinstance(bindings, list) or not bindings:
+                raise ValueError(f"Saved row bindings are required for {stage}/{row_id}")
+            row_sum += amount
+            for binding in bindings:
+                saved, text = _saved_amount(binding)
+                if saved != amount:
+                    raise ValueError(f"Saved {stage}/{row_id} amount {saved} disagrees with source amount {amount}: {text}")
+        if row_sum != total:
+            raise ValueError(f"{stage} source rows sum to {row_sum}, not independently stated total {total}")
+        total_bindings = entry.get("total_bindings")
+        if not isinstance(total_bindings, list) or not total_bindings:
+            raise ValueError(f"Saved total bindings are required for {stage}")
+        for binding in total_bindings:
+            saved, text = _saved_amount(binding)
+            if saved != total:
+                raise ValueError(f"Saved {stage} total {saved} disagrees with source total {total}: {text}")
+        checked[stage] = {"row_count": len(rows), "total": total,
+                          "saved_rows": sum(len(row["bindings"]) for row in rows),
+                          "saved_totals": len(total_bindings)}
+
+    blank_count = 0
+    for binding in spec.get("future_evidence_blanks", []):
+        if not binding.get("reason"):
+            raise ValueError("Each future evidence blank needs a source-based reason")
+        text = _bound_text(binding)
+        if text.strip():
+            raise ValueError(f"Unsupported future evidence field must remain blank: {text}")
+        blank_count += 1
+    return {"stages": checked, "future_evidence_blanks": blank_count}
 
 
 def verify_role_summary(spec):
@@ -92,17 +226,7 @@ def verify(spec):
         if min(factors) <= 0 or count * item["unit_price"] * item["servings"] != item["amount"]:
             raise ValueError("Role-based costing amount mismatch")
         for binding in item["bindings"]:
-            with ZipFile(binding["path"]) as package:
-                root = ET.fromstring(package.read(binding.get("section", "Contents/section0.xml")))
-            table = root.findall(".//h:tbl", NS)[binding["table"]]
-            cells = [c for c in table.findall("h:tr/h:tc", NS)
-                     if (int(c.find("h:cellAddr", NS).get("rowAddr")),
-                         int(c.find("h:cellAddr", NS).get("colAddr"))) ==
-                     (binding["row"], binding["col"])]
-            if len(cells) != 1:
-                raise ValueError("Costing cell not unique")
-            para = cells[0].findall("h:subList/h:p", NS)[binding["paragraph"]]
-            text = "".join(t.text or "" for t in para.findall(".//h:t", NS))
+            text = _bound_text(binding)
             normalized = re.sub(r"[\s,]", "", text)
             matches = re.findall(r"(\d+)명[×xX*](\d+)원[×xX*](\d+)회", normalized)
             if len(matches) != 1 or tuple(map(int, matches[0])) != factors:
@@ -114,8 +238,11 @@ def verify(spec):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inventory", type=Path)
-    parser.add_argument("--role-summary", action="store_true", help="Check a user-facing role/count confirmation before asking")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--role-summary", action="store_true", help="Check a user-facing role/count confirmation before asking")
+    modes.add_argument("--carry-forward-check", action="store_true", help="Reconcile prior finance and current planned amounts with saved fields")
     args = parser.parse_args()
     inventory = json.loads(args.inventory.read_text(encoding="utf-8-sig"))
-    checked = verify_role_summary(inventory) if args.role_summary else verify(inventory)
+    checked = (verify_role_summary(inventory) if args.role_summary else
+               verify_carry_forward(inventory) if args.carry_forward_check else verify(inventory))
     print(json.dumps({"ok": True, "checked": checked}, ensure_ascii=False))
