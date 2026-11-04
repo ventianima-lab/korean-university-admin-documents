@@ -8,6 +8,14 @@ Read this reference before proposing a programme budget, including a chat estima
 - Treat dates, amounts, and party instructions supplied by the user as source facts. Distinguish missing business data from permission; inspect context and files before asking only for a value necessary to finish. Do not infer missing approval states or create an absent signature image.
 - Use an existing supplied stamp or signature image when requested. Preserve its identity and proportions; do not draw, generate, or substitute a new seal. Preparation does not authorize sending or submission.
 
+## Requested quotation revisions
+
+When asked to change amounts or tax wording on an issuer's quotation, preserve the latest original and distinguish the user's requested revision as a draft or confirmation proposal; do not present the altered document as a quotation issued or confirmed by the vendor. Keep explicit user instructions separate from facts unverified in the original, including whether the issuer has accepted the changes.
+
+For each directed row, independently calculate unit price from the specified row amount divided by the specified quantity. Check the quantity and multiplication back to the row amount, then independently sum all applicable rows and reconcile the displayed total and any explicitly supported tax, discount or delivery conditions. If division or rounding prevents an exact reconciliation, preserve the instructed amounts and report the unresolved discrepancy instead of inventing a rounding rule or changing a value silently.
+
+Before reporting the revision complete, reopen the exact saved output and compare each directed row, quantity, unit price and row amount with an independently prepared instruction-to-row map. Verify the requested VAT wording, such as `부가세 포함`, is actually present in the correct saved location and visible in its current rendering. Independently recalculate the complete total from the saved row amounts and supported conditions; check the original is preserved and the proposal is clearly distinguishable from issuer confirmation. Missing text, a mismatched calculation, an unverified issuer assertion or an unresolved rounding discrepancy blocks a completion claim for that part. A successful save or an input-only calculation does not pass this check.
+
 ## Preapproval packet completeness
 
 For a continuing same-programme preapproval, before drafting, inspect the actual preapproval-stage files, form headings and grouping in the nearest comparable prior periods, including two preceding periods when available. Independently inventory each companion role, its source file and period, its stage and whether it recurs; also inspect each letter’s actual attachment line, the current request and applicable current instructions. A previous letter’s attachment list is not an exhaustive inventory of separately maintained forms.
