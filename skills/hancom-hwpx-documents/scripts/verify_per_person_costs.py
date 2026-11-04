@@ -5,7 +5,10 @@ bindings:[{path, section, table, row, col, paragraph}]}]. Indexes are zero-based
 row/col use cellAddr. Populate roles from evidence, never from draft factors.
 Checks arithmetic and persisted factors, not policy eligibility or actual attendance.
 With --role-summary, JSON: {roles:{role:count}, total, text, source} checks that a
-user-facing confirmation explicitly shows each role count and the summed total.
+user-facing confirmation explicitly shows each role count and the approved total.
+When named_people is supplied, role-summary uses total as its approved total;
+approved_total may be included only when it agrees with total. Costing items use
+their own approved_total field.
 """
 import argparse
 import json
@@ -26,6 +29,10 @@ def verify_role_summary(spec):
         raise ValueError("Confirmation text, independent role counts and source are required")
     if type(total) is not int or total <= 0:
         raise ValueError("A positive total count is required")
+    if "approved_total" in spec and spec["approved_total"] != total:
+        raise ValueError("approved_total disagrees with role-summary total")
+    _verify_named_people(roles, spec.get("named_people"), total,
+                         spec.get("people_source"), required=False)
     for role, count in roles.items():
         if not isinstance(role, str) or not role or type(count) is not int or count <= 0:
             raise ValueError("Role labels and counts must be explicit and positive")
@@ -38,6 +45,34 @@ def verify_role_summary(spec):
         raise ValueError("Total count missing from confirmation")
     return {"total": total, "roles": roles}
 
+
+def _verify_named_people(roles, people, approved_total, people_source, required=True):
+    """Ground role counts in a distinct named inventory when one is supplied."""
+    if people is None:
+        if required:
+            raise ValueError("Independent named_people inventory is required")
+        return None
+    if not isinstance(people, list) or not people or not people_source:
+        raise ValueError("Named people and their independent source are required")
+    names = []
+    grouped = {}
+    for person in people:
+        if not isinstance(person, dict):
+            raise ValueError("Each named person must have name and role")
+        name, role = person.get("name"), person.get("role")
+        if not isinstance(name, str) or not name.strip() or not isinstance(role, str) or not role.strip():
+            raise ValueError("Each named person must have a nonempty name and role")
+        name = name.strip()
+        if name in names:
+            raise ValueError(f"Duplicate name in named_people: {name}")
+        names.append(name)
+        grouped[role] = grouped.get(role, 0) + 1
+    if type(approved_total) is not int or approved_total <= 0 or len(names) != approved_total:
+        raise ValueError("Named roster count disagrees with independently approved total")
+    if grouped != roles:
+        raise ValueError("Named roster role grouping disagrees with independent role counts")
+    return {"total": len(names), "roles": grouped}
+
 def verify(spec):
     if not spec.get("items"):
         raise ValueError("No independent costing items")
@@ -49,6 +84,10 @@ def verify(spec):
         if any(type(v) is not int or v < 0 for v in values):
             raise ValueError("Counts and amounts must be nonnegative integers")
         count = sum(item["roles"].values())
+        _verify_named_people(item["roles"], item.get("named_people"),
+                             item.get("approved_total"), item.get("people_source"), required=False)
+        if item.get("named_people") is not None and item["approved_total"] != count:
+            raise ValueError("Independent approved total disagrees with costing role count")
         factors = (count, item["unit_price"], item["servings"])
         if min(factors) <= 0 or count * item["unit_price"] * item["servings"] != item["amount"]:
             raise ValueError("Role-based costing amount mismatch")
