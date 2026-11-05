@@ -235,14 +235,66 @@ def verify(spec):
     return result
 
 
+
+
+def verify_uniform_divisibility(spec):
+    """Check a source-backed total against a uniform whole-won unit cost.
+
+    A divisible total does not itself establish a price. Return an unresolved
+    status unless an independently supported unit price is also supplied.
+    """
+    trusted = {'user_confirmed', 'verified_fact', 'verified_calculation'}
+    if not isinstance(spec, dict) or set(spec) - {'total','quantity','quantity_unit','frequency','unit_price'}:
+        raise ValueError('Uniform costing cannot accept invented or extra components')
+    def field(name, expected_unit, optional=False):
+        entry = spec.get(name)
+        if entry is None and optional:
+            return None
+        if (not isinstance(entry, dict) or set(entry) != {'value','unit','provenance','source'} or type(entry.get('value')) is not int or
+                entry['value'] <= 0 or entry.get('unit') != expected_unit or
+                entry.get('provenance') not in trusted or
+                not isinstance(entry.get('source'), str) or not entry['source'].strip()):
+            raise ValueError('Independent source, trusted provenance, positive integer and exact unit are required for ' + name)
+        return entry['value']
+    total = field('total', '원')
+    quantity = field('quantity', spec.get('quantity_unit'))
+    if not isinstance(spec.get('quantity_unit'), str) or not spec['quantity_unit'].strip() or spec['quantity_unit'] in ('원', '회', '회차'):
+        raise ValueError('A distinct non-session quantity unit is required')
+    frequency = field('frequency', '회')
+    price = field('unit_price', '원', optional=True)
+    units = quantity * frequency
+    remainder = total % units
+    if remainder:
+        result = {'status':'UNRESOLVED', 'reason':'non_integer_won_unit_price',
+                  'units':units, 'remainder':remainder}
+        if price is not None:
+            result['source_price_total'] = price * units
+            result['target_difference'] = total - price * units
+        return result
+    if price is None:
+        return {'status':'UNRESOLVED', 'reason':'unit_price_source_needed',
+                'units':units, 'remainder':0}
+    if price * units != total:
+        return {'status':'UNRESOLVED', 'reason':'source_unit_price_disagrees',
+                'units':units, 'remainder':0, 'source_price_total':price * units,
+                'target_difference':total - price * units}
+    return {'status':'PASS', 'units':units, 'remainder':0,
+            'scope':'integer arithmetic only; source authority, budget eligibility and approval require independent review'}
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inventory", type=Path)
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--role-summary", action="store_true", help="Check a user-facing role/count confirmation before asking")
     modes.add_argument("--carry-forward-check", action="store_true", help="Reconcile prior finance and current planned amounts with saved fields")
+    modes.add_argument("--unit-divisibility-check", action="store_true", help="Check source-backed total and whole-won uniform unit cost without inventing items")
     args = parser.parse_args()
     inventory = json.loads(args.inventory.read_text(encoding="utf-8-sig"))
     checked = (verify_role_summary(inventory) if args.role_summary else
-               verify_carry_forward(inventory) if args.carry_forward_check else verify(inventory))
-    print(json.dumps({"ok": True, "checked": checked}, ensure_ascii=False))
+               verify_carry_forward(inventory) if args.carry_forward_check else
+               verify_uniform_divisibility(inventory) if args.unit_divisibility_check else verify(inventory))
+    ok = not args.unit_divisibility_check or checked['status'] == 'PASS'
+    print(json.dumps({"ok": ok, "checked": checked}, ensure_ascii=False))
+    if not ok:
+        raise SystemExit(1)
