@@ -10,7 +10,7 @@ nested tables or pictures are excluded. This proves coverage, not source authori
 or correct human classification; review the inventory independently.
 """
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import BadZipFile,ZipFile
 import argparse,json,xml.etree.ElementTree as ET
 NS={'hp':'http://www.hancom.co.kr/hwpml/2011/paragraph'}
 
@@ -50,8 +50,109 @@ def verify(path, inventory):
     if found!=set(listed):raise ValueError('Inventory contains absent or non-input cells')
     return {'status':'PASS','blank_cells':blanks,'inventoried_cells':len(found)}
 
+def verify_template_inventory(path, inventory):
+    """Map an independently selected template cell range to exact saved inputs.
+
+    Scope defines source rows and input columns before output review. Every actual
+    source cell in that scope must have one mapping. Hashes and coordinates are
+    checked, but the human must establish source authority, scope completeness,
+    evidence meaning, identity and whether a planned value is not an outcome.
+    """
+    import hashlib, re
+    if not isinstance(inventory, dict): raise ValueError('Inventory must be an object')
+    template=inventory.get('template');scope=inventory.get('scope');fields=inventory.get('fields')
+    if not isinstance(template,dict) or not isinstance(scope,list) or not scope or not isinstance(fields,list):
+        raise ValueError('Template, scope and fields are required')
+    source=Path(template['path'])
+    if source.resolve()==Path(path).resolve(): raise ValueError('Template and output must differ')
+    expected_hash=template.get('sha256')
+    if not isinstance(expected_hash,str) or not re.fullmatch(r'[a-fA-F0-9]{64}',expected_hash): raise ValueError('Invalid template hash')
+    if hashlib.sha256(source.read_bytes()).hexdigest()!=expected_hash.lower(): raise ValueError('Template hash mismatch')
+    target_hash=hashlib.sha256(Path(path).read_bytes()).hexdigest();evidence_hashes={}
+    section=template.get('section');table_index=template.get('table')
+    if not isinstance(section,str) or not re.fullmatch(r'Contents/section[0-9]+\.xml',section) or type(table_index) is not int or table_index<0:
+        raise ValueError('Invalid template location')
+    def read_table(package,part,index):
+        if not isinstance(part,str) or not re.fullmatch(r'Contents/section[0-9]+\.xml',part) or type(index) is not int or index<0: raise ValueError('Invalid section or table')
+        root=ET.fromstring(package.read(part));tables=root.findall('.//hp:tbl',NS)
+        if index>=len(tables):raise ValueError('Table missing')
+        result={}
+        for cell in tables[index].findall('./hp:tr/hp:tc',NS):
+            a=cell.find('hp:cellAddr',NS)
+            if a is None:raise ValueError('Cell address missing')
+            key=(int(a.get('rowAddr')),int(a.get('colAddr')))
+            if key in result:raise ValueError('Duplicate cell coordinates')
+            if cell.find('.//hp:tbl',NS) is not None or cell.find('.//hp:pic',NS) is not None:
+                result[key]=None
+            else:result[key]=''.join(''.join(t.itertext()) for t in cell.findall('.//hp:t',NS))
+        return result
+    def required_text(v): return isinstance(v,str) and bool(v.strip())
+    def verify_evidence(evidence):
+        if not isinstance(evidence,list) or not evidence:raise ValueError('Independent evidence is required')
+        for item in evidence:
+            if not isinstance(item,dict):raise ValueError('Invalid evidence')
+            if item.get('kind')=='document':
+                h=item.get('sha256');p=item.get('path');loc=item.get('location')
+                if not required_text(p) or not required_text(loc) or not isinstance(h,str) or not re.fullmatch(r'[a-fA-F0-9]{64}',h): raise ValueError('Document evidence needs path, hash and location')
+                if Path(p).resolve()==Path(path).resolve():raise ValueError('Output cannot serve as its own independent evidence')
+                if hashlib.sha256(Path(p).read_bytes()).hexdigest()!=h.lower():raise ValueError('Document evidence hash mismatch')
+                evidence_hashes[Path(p).resolve()]=h.lower()
+            elif item.get('kind')=='user_instruction':
+                if not required_text(item.get('reference')) or not required_text(item.get('quote')):raise ValueError('Instruction needs reference and quote')
+            else:raise ValueError('Invalid evidence kind')
+    with ZipFile(source) as src, ZipFile(path) as out:
+        source_cells=read_table(src,section,table_index); selected=set()
+        for rule in scope:
+            if not isinstance(rule,dict) or type(rule.get('row_start')) is not int or type(rule.get('row_end')) is not int or rule['row_start']<0 or rule['row_end']<rule['row_start']:
+                raise ValueError('Invalid scope row range')
+            cols=rule.get('input_cols')
+            if not isinstance(cols,list) or not cols or any(type(c) is not int or c<0 for c in cols) or len(set(cols))!=len(cols):raise ValueError('Invalid scope input columns')
+            for row in range(rule['row_start'],rule['row_end']+1):
+                found={(row,col) for col in cols if (row,col) in source_cells}
+                if not found:raise ValueError('Scoped template row has no input cell')
+                if selected & found:raise ValueError('Overlapping source scope')
+                selected |= found
+        mapped=set();destinations=set();cache={}
+        for field in fields:
+            if not isinstance(field,dict) or not isinstance(field.get('source'),dict) or not isinstance(field.get('target'),dict):raise ValueError('Invalid field mapping')
+            origin=field['source'];target=field['target'];row,col=origin.get('row'),origin.get('col')
+            if type(row) is not int or type(col) is not int or (row,col) not in selected or (row,col) in mapped:raise ValueError('Unscoped or duplicate source input')
+            mapped.add((row,col));label_col=origin.get('label_col');label_row=origin.get('label_row',row)
+            if type(label_col) is not int or type(label_row) is not int or not required_text(origin.get('label')) or source_cells.get((label_row,label_col)) is None or source_cells[(label_row,label_col)].strip()!=origin['label'].strip():raise ValueError('Source label mismatch')
+            if source_cells[(row,col)] is None:raise ValueError('Complex source field requires separate review')
+            dest=(target.get('section'),target.get('table'),target.get('row'),target.get('col'))
+            if not isinstance(dest[0],str) or any(type(n) is not int or n<0 for n in dest[1:]) or dest in destinations:raise ValueError('Invalid or duplicate target input')
+            destinations.add(dest);tk=dest[:2]
+            if tk not in cache:cache[tk]=read_table(out,*tk)
+            target_cells=cache[tk];actual=target_cells.get(dest[2:])
+            if actual is None:raise ValueError('Target cell missing or complex')
+            lr=target.get('label_row',dest[2]);lc=target.get('label_col')
+            if type(lr) is not int or type(lc) is not int or not required_text(target.get('label')) or target_cells.get((lr,lc)) is None or target_cells[(lr,lc)].strip()!=target['label'].strip():raise ValueError('Target label mismatch')
+            status=field.get('status');reason=field.get('reason')
+            if not required_text(reason) or status not in {'known','preserved','controlled','unconfirmed','unused'}:raise ValueError('Disposition and reason required')
+            if status in {'known','preserved'}:
+                if field.get('value_kind') not in {'plan','fact','actual','user_preserved'}:raise ValueError('Value kind must distinguish plans, facts and actuals')
+                expected=field.get('expected')
+                if not required_text(expected):raise ValueError('Expected value required')
+                verify_evidence(field.get('evidence'))
+                if actual.strip()!=expected.strip():raise ValueError('Known or preserved field mismatch at '+str(dest))
+            else:
+                if actual.strip():raise ValueError('Controlled, unconfirmed or unused field not blank')
+                if status=='unconfirmed':
+                    lookups=field.get('lookups')
+                    if not isinstance(lookups,list) or len({v.strip() for v in lookups if required_text(v)})<2:raise ValueError('Unconfirmed needs two checked sources')
+        if mapped!=selected:raise ValueError('Template input omitted from inventory')
+    if hashlib.sha256(Path(path).read_bytes()).hexdigest()!=target_hash:raise ValueError('Output changed during verification')
+    if hashlib.sha256(source.read_bytes()).hexdigest()!=expected_hash.lower():raise ValueError('Template changed during verification')
+    for evidence_path,expected in evidence_hashes.items():
+        if hashlib.sha256(evidence_path.read_bytes()).hexdigest()!=expected:raise ValueError('Evidence changed during verification')
+    return {'status':'PASS','scoped_template_fields':len(selected),'mapped_fields':len(mapped),'target_fields':len(destinations),'target_sha256':target_hash,'scope':'Selected source cells only; authority, complete scope, evidence meaning and render require independent review'}
+
+
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('hwpx',type=Path);p.add_argument('inventory',type=Path);a=p.parse_args()
-    try:print(json.dumps(verify(a.hwpx,json.loads(a.inventory.read_text(encoding='utf-8')))))
-    except (ValueError,KeyError) as error:p.exit(1,f'INPUT_COVERAGE_FAILED: {error}\n')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('hwpx',type=Path);p.add_argument('inventory',type=Path);p.add_argument('--template-inventory',action='store_true',help='compare a selected source-form input scope to an independently sourced saved-field inventory');a=p.parse_args()
+    try:
+        data=json.loads(a.inventory.read_text(encoding='utf-8-sig'));result=verify_template_inventory(a.hwpx,data) if a.template_inventory else verify(a.hwpx,data)
+        print(json.dumps(result))
+    except (ValueError,KeyError,OSError,BadZipFile,ET.ParseError) as error:p.exit(1,f'INPUT_COVERAGE_FAILED: {error}\n')
 if __name__=='__main__':main()
