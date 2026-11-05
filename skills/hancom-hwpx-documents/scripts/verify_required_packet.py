@@ -297,6 +297,118 @@ def check_attachment_list(check):
     return issues
 
 
+def check_attachment_order(check, order):
+    """Compare saved attachment roles with an independent, hash-bound packet order.
+
+    The caller must establish the authority and completeness of the packet order
+    and inspect each named unit. A filename prefix is authoritative only when the
+    separately recorded source says it is; the helper cannot authenticate that.
+    """
+    if not isinstance(check, dict) or not isinstance(order, dict):
+        raise ValueError('attachment order needs both attachment and order inventories')
+    authority = order.get('authority')
+    if (not isinstance(authority, dict) or authority.get('kind') not in {'numbered_files','explicit'}
+            or not isinstance(authority.get('reference'), str) or not authority['reference'].strip()):
+        raise ValueError('independent attachment order authority is required')
+    letter = check.get('letter')
+    letter_hash = order.get('letter_sha256')
+    if (not isinstance(letter, str) or not isinstance(letter_hash, str)
+            or not re.fullmatch(r'[0-9a-fA-F]{64}', letter_hash)):
+        raise ValueError('exact saved letter and SHA-256 required')
+    if hashlib.sha256(Path(letter).read_bytes()).hexdigest().lower() != letter_hash.lower():
+        return [{'problem':'attachment_order_letter_hash_mismatch'}]
+    files = order.get('packet_files')
+    units = order.get('units')
+    if not isinstance(files, list) or not files or not isinstance(units, list) or not units:
+        raise ValueError('ordered packet files and document units are required')
+    issues = []
+    paths = []
+    for item in files:
+        if (not isinstance(item, dict) or not isinstance(item.get('path'), str) or not item['path'].strip()
+                or not isinstance(item.get('sha256'), str) or not re.fullmatch(r'[0-9a-fA-F]{64}', item['sha256'])
+                or not isinstance(item.get('evidence'), str) or not item['evidence'].strip()):
+            raise ValueError('each ordered packet file needs path, SHA-256 and evidence')
+        path = Path(item['path']).resolve()
+        if path in paths:
+            raise ValueError('ordered packet file repeated')
+        paths.append(path)
+        if not path.is_file() or not path.stat().st_size:
+            issues.append({'problem':'attachment_order_file_missing'})
+        elif hashlib.sha256(path.read_bytes()).hexdigest().lower() != item['sha256'].lower():
+            issues.append({'problem':'attachment_order_file_hash_mismatch'})
+    if authority['kind'] == 'numbered_files':
+        numbers = []
+        for path in paths:
+            match = re.match(r'^([0-9]+)(?:[_ .-]|$)', path.name)
+            if not match:
+                raise ValueError('numbered-file order requires a leading numeric file prefix')
+            numbers.append(int(match.group(1)))
+        if len(set(numbers)) != len(numbers) or numbers != sorted(numbers):
+            issues.append({'problem':'attachment_numbered_file_order_mismatch'})
+    actual = check.get('actual_files')
+    if not isinstance(actual, list) or not all(isinstance(x,str) and x.strip() for x in actual):
+        raise ValueError('actual_files must be an independently reviewed file sequence')
+    if [Path(x).resolve() for x in actual] != paths:
+        issues.append({'problem':'attachment_actual_file_order_mismatch'})
+    entries = check.get('entries')
+    if not isinstance(entries, list) or not entries:
+        raise ValueError('attachment entries required')
+    declared = {}
+    for entry in entries:
+        key=entry.get('id')
+        if not isinstance(key,str) or not key.strip() or key in declared:
+            raise ValueError('unique attachment entry id required')
+        declared[key]=[]
+        for member in entry.get('members',[]):
+            for location in member.get('locations',[]):
+                declared[key].append((key,Path(member['path']).resolve(),location.strip()))
+    expected=[]
+    for unit in units:
+        if (not isinstance(unit,dict) or unit.get('entry') not in declared
+                or not isinstance(unit.get('path'),str) or not unit['path'].strip()
+                or not isinstance(unit.get('location'),str) or not unit['location'].strip()
+                or not isinstance(unit.get('evidence'),str) or not unit['evidence'].strip()):
+            raise ValueError('each ordered unit needs entry, path, location and independent evidence')
+        expected.append((unit['entry'],Path(unit['path']).resolve(),unit['location'].strip()))
+    if len(set(expected)) != len(expected):
+        raise ValueError('ordered document unit repeated')
+    declared_flat=[unit for group in declared.values() for unit in group]
+    if len(set(declared_flat)) != len(declared_flat) or set(declared_flat) != set(expected):
+        issues.append({'problem':'attachment_order_unit_mapping_mismatch'})
+    for key, group in declared.items():
+        if group != [u for u in expected if u[0] == key]:
+            issues.append({'problem':'attachment_bundle_member_order_mismatch','entry':key})
+    position={path:i for i,path in enumerate(paths)}
+    if any(u[1] not in position for u in expected):
+        issues.append({'problem':'attachment_order_unit_file_missing'})
+    else:
+        indexes=[position[u[1]] for u in expected]
+        if indexes != sorted(indexes) or set(indexes) != set(range(len(paths))):
+            issues.append({'problem':'attachment_unit_order_differs_from_files'})
+    expected_roles=[]
+    for key,_,_ in expected:
+        if not expected_roles or expected_roles[-1] != key:
+            expected_roles.append(key)
+    if len(set(expected_roles)) != len(expected_roles):
+        issues.append({'problem':'attachment_order_bundle_noncontiguous'})
+    observed=[]
+    for paragraph in check.get('paragraphs',[]):
+        for segment in paragraph.get('segments',[]):
+            if segment.get('kind') == 'item':
+                observed.extend(segment.get('entries',[]))
+    if observed != expected_roles:
+        issues.append({'problem':'attachment_role_order_mismatch'})
+    # A concurrent edit after the first digest must also block the result.
+    if hashlib.sha256(Path(letter).read_bytes()).hexdigest().lower() != letter_hash.lower():
+        issues.append({'problem':'attachment_order_letter_hash_mismatch'})
+    for item,path in zip(files,paths):
+        if not path.is_file():
+            issues.append({'problem':'attachment_order_file_missing'})
+        elif hashlib.sha256(path.read_bytes()).hexdigest().lower() != item['sha256'].lower():
+            issues.append({'problem':'attachment_order_file_hash_mismatch'})
+    return issues
+
+
 def selected_signature_template(roster):
     """Validate a recorded selection, not the truth or meaning of its quoted evidence."""
     selection = roster.get("user_template_selection")
@@ -420,7 +532,8 @@ def check_planned_rosters(rosters, artifacts):
 
 
 def audit(manifest, advance_source_check=False, attachment_check=False, planned_roster_check=False,
-          role_expense_check=False, preparation_scope=False, attachment_template_check=False):
+          role_expense_check=False, preparation_scope=False, attachment_template_check=False,
+          attachment_order_check=False):
     requirements = manifest.get('requirements')
     artifacts = manifest.get('artifacts')
     if not isinstance(requirements, list) or not requirements or not isinstance(artifacts, list):
@@ -527,7 +640,12 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
                 elif found.get(item['requirement_id'], {}).get('status') == 'not_applicable':
                     expense_issues.append({'category': category, 'item': label, 'problem': 'required_role_marked_not_applicable'})
     source_issues = check_advance_sources(reviews) if advance_source_check else []
+    if attachment_order_check and not attachment_check:
+        raise ValueError('attachment order check requires attachment check')
     attachment_issues = check_attachment_list(manifest.get('attachment_check')) if attachment_check else []
+    order_enabled = attachment_order_check or (attachment_check and 'attachment_order_check' in manifest)
+    order_issues = (check_attachment_order(manifest.get('attachment_check'), manifest.get('attachment_order_check'))
+                    if order_enabled else [])
     template_issues = check_attachment_template(manifest.get('attachment_template_check')) if attachment_template_check else []
     if attachment_template_check and attachment_check and Path(manifest['attachment_template_check']['target']).resolve() != Path(manifest['attachment_check']['letter']).resolve():
         template_issues.append({'problem': 'attachment_template_target_mismatch'})
@@ -544,7 +662,7 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
     acceptable = {'ready', 'not_applicable'}
     if preparation_scope:
         acceptable.add('user_managed')
-    complete = (not source_issues and not expense_issues and not attachment_issues and not template_issues and not roster_issues
+    complete = (not source_issues and not expense_issues and not attachment_issues and not order_issues and not template_issues and not roster_issues
                 and not role_issues
                 and all(r['status'] in acceptable and
                         not r['missing_files'] and not r['title_band_issues'] for r in results))
@@ -556,6 +674,8 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
                                 'the instruction and applicability still need independent review.')
     if attachment_check:
         result['attachment_check_issues'] = attachment_issues
+    if order_enabled:
+        result['attachment_order_issues'] = order_issues
     if attachment_template_check:
         result['attachment_template_issues'] = template_issues
     if planned_roster_check:
@@ -572,6 +692,8 @@ def main():
                    help='check advance checklist source-cell transcription and mapped rows')
     p.add_argument('--attachment-check', action='store_true',
                    help='reconcile exact covering-list paragraphs, named units and actual packet files')
+    p.add_argument('--attachment-order-check', action='store_true',
+                   help='require the independent packet file and document-unit order; also use --attachment-check')
     p.add_argument('--attachment-template-check', action='store_true',
                    help='compare selected attachment paragraphs to a hashed source, allowing only authorized title spans')
     p.add_argument('--planned-roster-check', action='store_true',
@@ -584,7 +706,7 @@ def main():
     try:
         result = audit(json.loads(args.manifest.read_text(encoding='utf-8-sig')), args.advance_source_check,
                        args.attachment_check, args.planned_roster_check, args.role_expense_check,
-                       args.preparation_scope, args.attachment_template_check)
+                       args.preparation_scope, args.attachment_template_check, args.attachment_order_check)
     except (OSError, ValueError, KeyError, TypeError, BadZipFile, ET.ParseError, IndexError) as error:
         p.exit(2, f'PACKET_INVENTORY_ERROR: {error}\n')
     print(json.dumps(result, ensure_ascii=False))
