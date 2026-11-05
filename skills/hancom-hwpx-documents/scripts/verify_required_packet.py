@@ -14,6 +14,7 @@ and mapped rows. Applicability, source scope, authenticity, layout and
 institutional acceptance still require independent review.
 """
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -101,6 +102,74 @@ SECTION = re.compile(r"Contents/section[0-9]+\.xml")
 def _paragraph_text(paragraph):
     return "".join("".join(t.itertext()) for run in paragraph.findall(HP + "run")
                    for t in run.findall(HP + "t"))
+
+
+def check_attachment_template(check):
+    """Compare selected attachment paragraphs against an independently frozen source.
+
+    Title offsets are zero-based Python Unicode code-point offsets into each complete
+    source paragraph. The caller must independently verify each span is a title and
+    its replacement is authorized; layout and completeness need separate checks.
+    """
+    if not isinstance(check, dict):
+        raise ValueError("attachment template check is required")
+    source, target = check.get("source"), check.get("target")
+    expected_hash = check.get("source_sha256")
+    mappings = check.get("paragraphs")
+    if not isinstance(source, str) or not isinstance(target, str) or Path(source).resolve() == Path(target).resolve():
+        raise ValueError("distinct source snapshot and target are required")
+    if not isinstance(expected_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", expected_hash):
+        raise ValueError("source_sha256 must be a SHA-256")
+    if hashlib.sha256(Path(source).read_bytes()).hexdigest().lower() != expected_hash.lower():
+        raise ValueError("attachment source snapshot hash mismatch")
+    if not isinstance(mappings, list) or not mappings:
+        raise ValueError("attachment paragraph mappings required")
+    issues = []
+    seen_source, seen_target = set(), set()
+    previous_source, previous_target = None, None
+    with ZipFile(source) as before, ZipFile(target) as after:
+        for mapping in mappings:
+            if not isinstance(mapping, dict):
+                raise ValueError("paragraph mapping must be an object")
+            locations = []
+            for key in ("source", "target"):
+                loc = mapping.get(key)
+                if not isinstance(loc, dict) or not isinstance(loc.get("section"), str) or not SECTION.fullmatch(loc["section"]) or type(loc.get("paragraph")) is not int or loc["paragraph"] < 0:
+                    raise ValueError("invalid source or target paragraph location")
+                locations.append((loc["section"], loc["paragraph"]))
+            sloc, tloc = locations
+            order = lambda loc: (int(re.search(r"[0-9]+", loc[0]).group()), loc[1])
+            if sloc in seen_source or tloc in seen_target or (previous_source is not None and order(sloc) <= order(previous_source)) or (previous_target is not None and order(tloc) <= order(previous_target)):
+                raise ValueError("paragraph mappings must be unique and in document order")
+            seen_source.add(sloc); seen_target.add(tloc)
+            previous_source, previous_target = sloc, tloc
+            texts = []
+            for package, (part, index) in ((before, sloc), (after, tloc)):
+                root = ET.fromstring(package.read(part))
+                pars = root.findall("./" + HP + "p")
+                if index >= len(pars):
+                    raise ValueError("attachment paragraph location does not exist")
+                texts.append(_paragraph_text(pars[index]))
+            original, actual = texts
+            replacements = mapping.get("titles")
+            if not isinstance(replacements, list):
+                raise ValueError("titles must be a list; use [] for unchanged paragraphs")
+            cursor, pieces = 0, []
+            for item in replacements:
+                if not isinstance(item, dict):
+                    raise ValueError("title mapping must be an object")
+                start, end, old, new = (item.get(k) for k in ("start", "end", "old", "new"))
+                evidence = item.get("authorization")
+                if (type(start) is not int or type(end) is not int or start < cursor or end <= start or end > len(original)
+                        or not isinstance(old, str) or not old or old != old.strip() or '---' in old
+                        or not isinstance(new, str) or not new or new != new.strip()
+                        or original[start:end] != old or not isinstance(evidence, str) or not evidence.strip()):
+                    raise ValueError("invalid title span or missing authorization")
+                pieces.extend((original[cursor:start], new)); cursor = end
+            pieces.append(original[cursor:])
+            if ''.join(pieces) != actual:
+                issues.append({"problem": "attachment_template_text_changed", "source": sloc, "target": tloc})
+    return issues
 
 
 def check_attachment_list(check):
@@ -351,7 +420,7 @@ def check_planned_rosters(rosters, artifacts):
 
 
 def audit(manifest, advance_source_check=False, attachment_check=False, planned_roster_check=False,
-          role_expense_check=False, preparation_scope=False):
+          role_expense_check=False, preparation_scope=False, attachment_template_check=False):
     requirements = manifest.get('requirements')
     artifacts = manifest.get('artifacts')
     if not isinstance(requirements, list) or not requirements or not isinstance(artifacts, list):
@@ -459,6 +528,9 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
                     expense_issues.append({'category': category, 'item': label, 'problem': 'required_role_marked_not_applicable'})
     source_issues = check_advance_sources(reviews) if advance_source_check else []
     attachment_issues = check_attachment_list(manifest.get('attachment_check')) if attachment_check else []
+    template_issues = check_attachment_template(manifest.get('attachment_template_check')) if attachment_template_check else []
+    if attachment_template_check and attachment_check and Path(manifest['attachment_template_check']['target']).resolve() != Path(manifest['attachment_check']['letter']).resolve():
+        template_issues.append({'problem': 'attachment_template_target_mismatch'})
     roster_issues = check_planned_rosters(manifest.get('planned_rosters'), artifacts) if planned_roster_check else []
     role_check_enabled = role_expense_check or 'role_expense_review' in manifest
     role_issues = (check_role_expense_review(manifest.get('role_expense_review'), reviews, required, found)
@@ -472,7 +544,7 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
     acceptable = {'ready', 'not_applicable'}
     if preparation_scope:
         acceptable.add('user_managed')
-    complete = (not source_issues and not expense_issues and not attachment_issues and not roster_issues
+    complete = (not source_issues and not expense_issues and not attachment_issues and not template_issues and not roster_issues
                 and not role_issues
                 and all(r['status'] in acceptable and
                         not r['missing_files'] and not r['title_band_issues'] for r in results))
@@ -484,6 +556,8 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
                                 'the instruction and applicability still need independent review.')
     if attachment_check:
         result['attachment_check_issues'] = attachment_issues
+    if attachment_template_check:
+        result['attachment_template_issues'] = template_issues
     if planned_roster_check:
         result['planned_roster_issues'] = roster_issues
     if role_check_enabled:
@@ -498,6 +572,8 @@ def main():
                    help='check advance checklist source-cell transcription and mapped rows')
     p.add_argument('--attachment-check', action='store_true',
                    help='reconcile exact covering-list paragraphs, named units and actual packet files')
+    p.add_argument('--attachment-template-check', action='store_true',
+                   help='compare selected attachment paragraphs to a hashed source, allowing only authorized title spans')
     p.add_argument('--planned-roster-check', action='store_true',
                    help='check standalone advance rosters have the expected headers and no signature text')
     p.add_argument('--role-expense-check', action='store_true',
@@ -508,7 +584,7 @@ def main():
     try:
         result = audit(json.loads(args.manifest.read_text(encoding='utf-8-sig')), args.advance_source_check,
                        args.attachment_check, args.planned_roster_check, args.role_expense_check,
-                       args.preparation_scope)
+                       args.preparation_scope, args.attachment_template_check)
     except (OSError, ValueError, KeyError, TypeError, BadZipFile, ET.ParseError, IndexError) as error:
         p.exit(2, f'PACKET_INVENTORY_ERROR: {error}\n')
     print(json.dumps(result, ensure_ascii=False))
