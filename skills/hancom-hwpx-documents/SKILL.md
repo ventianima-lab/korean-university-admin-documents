@@ -235,6 +235,10 @@ When consecutive rectangular sections share the same overall width and alignment
 - Prefer one coherent table for headings, information rows, and roster grids when their outer left and right edges align. Use separate objects only when geometry, wrapping, pagination, or the user’s explicit instruction requires them.
 - Verify structurally that the intended region is represented by one table element and visually that it remains indistinguishable from the reference.
 
+### Existing-files-only consolidation
+
+When the user directs consolidation of existing files only, inventory the current authoritative editable HWP/HWPX sources by business role, record included and excluded candidates, chosen order and source hashes, then concatenate the selected files into an editable HWPX in that order. Preserve content already embedded in those sources. Do not supplement the merge with separate scans, PDFs, seals, signatures or evidence images, or invent missing content; this restriction applies to this instruction, not other merges the user authorizes. Verify every selected source is complete in the output, its text remains editable, its layout and page order are correct, and the original source hashes remain unchanged. Report any missing source or failed check rather than claiming a complete merge.
+
 ## Guardrail
 
 Comments about shade density, sizing, or visual mistakes are not automatically edit requests. When the user identifies a corrected file as the reference, record and follow that reference; do not generate a “cleaned,” “normalized,” or “corrected” HWPX unless explicitly asked.
