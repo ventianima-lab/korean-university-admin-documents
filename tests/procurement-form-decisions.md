@@ -61,3 +61,7 @@ A prior accepted record has a separator with leading and internal spaces, blank 
 ## Native save confirmation is not persistence
 
 An edited narrative matches the template, but the controller times out on the save confirmation. Do not report the correction as applied. Inspect and handle the authorized dialog using a supported controller, then query the existing identifier again and compare its raw body. A candidate file, successful fill, screenshot of an unsaved field, or accepted confirmation without the fresh query cannot pass. Treat CRLF and LF as equivalent logical newlines only; a removed blank line, indentation change, collapsed separator space, missing attachment, or changed punctuation must fail.
+
+## Project-wide name correction scope
+
+When a user explicitly includes existing authored copies throughout a project folder, inspect both the project root and the submission folder. An older populated working plan with the superseded name must be corrected from its own current bytes even if a newer submission plan is already correct. A blank form, supplier-issued evidence, and an expressly excluded submission document remain unchanged. Confirm the field and preview of each included copy and report any locked file. A request limited to one named file does not authorize editing other copies.
