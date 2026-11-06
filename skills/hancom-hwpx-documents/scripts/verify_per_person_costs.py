@@ -4,6 +4,12 @@ JSON: items[{roles:{role:count}, source, unit_price, servings, amount,
 bindings:[{path, section, table, row, col, paragraph}]}]. Indexes are zero-based;
 row/col use cellAddr. Populate roles from evidence, never from draft factors.
 Checks arithmetic and persisted factors, not policy eligibility or actual attendance.
+With --scope-check, require expense_scope:{revision,source,rows:[{id,roles,source}],
+restrictions:[{role,only_item_ids:[id],source}]}. Each costing item must have a
+unique id and scope_revision matching the independently prepared latest map.
+An only-item restriction forbids that role in every other mapped costing row;
+it does not require attendance in an allowed row. All supplied rows/items must
+match exactly. The map does not authenticate instructions or discover omissions.
 With --role-summary, JSON: {roles:{role:count}, total, text, source} checks that a
 user-facing confirmation explicitly shows each role count and the approved total.
 When named_people is supplied, role-summary uses total as its approved total;
@@ -207,7 +213,59 @@ def _verify_named_people(roles, people, approved_total, people_source, required=
         raise ValueError("Named roster role grouping disagrees with independent role counts")
     return {"total": len(names), "roles": grouped}
 
-def verify(spec):
+def verify_expense_scope(spec):
+    """Reject stale item scopes and explicit only-item exclusions before costing."""
+    scope = spec.get("expense_scope")
+    def text(value):
+        return isinstance(value, str) and bool(value.strip())
+    if not isinstance(scope, dict) or not text(scope.get("revision")) or not text(scope.get("source")):
+        raise ValueError("Latest independent expense scope and revision are required")
+    rows, restrictions = scope.get("rows"), scope.get("restrictions")
+    if not isinstance(rows, list) or not rows or not isinstance(restrictions, list) or not restrictions:
+        raise ValueError("Scope rows and explicit only-item restrictions are required")
+    expected = {}
+    for row in rows:
+        if not isinstance(row, dict) or not text(row.get("id")) or row["id"] in expected or not text(row.get("source")):
+            raise ValueError("Scope row IDs must be unique and independently sourced")
+        roles = row.get("roles")
+        if (not isinstance(roles, dict) or not roles or
+                any(not text(role) or type(count) is not int or count <= 0 for role, count in roles.items())):
+            raise ValueError("Scope roles require positive independent counts; omit excluded roles")
+        expected[row["id"]] = roles
+    restricted = set()
+    for rule in restrictions:
+        if not isinstance(rule, dict) or not text(rule.get("role")) or not text(rule.get("source")):
+            raise ValueError("Only-item restrictions require a role and latest instruction source")
+        role, allowed = rule["role"], rule.get("only_item_ids")
+        if (role in restricted or not isinstance(allowed, list) or
+                any(not text(key) for key in allowed) or len(allowed) != len(set(allowed)) or
+                not set(allowed) <= set(expected)):
+            raise ValueError("Only-item restrictions have duplicate roles or unknown item IDs")
+        restricted.add(role)
+        for key, roles in expected.items():
+            if key not in allowed and roles.get(role, 0):
+                raise ValueError(f"Only-item exclusion violated in independent scope: {key}/{role}")
+    items = spec.get("items")
+    if not isinstance(items, list) or not items:
+        raise ValueError("Scoped costing items are required")
+    seen = set()
+    for item in items:
+        key = item.get("id") if isinstance(item, dict) else None
+        if not text(key) or key in seen or key not in expected:
+            raise ValueError("Costing item IDs must match the complete independent scope")
+        seen.add(key)
+        if item.get("scope_revision") != scope["revision"]:
+            raise ValueError(f"Stale expense scope revision: {key}")
+        if item.get("roles") != expected[key]:
+            raise ValueError(f"Costing roles disagree with latest expense scope: {key}")
+    if seen != set(expected):
+        raise ValueError("Costing items omit independent scope rows")
+    return {"revision": scope["revision"], "rows": len(seen), "restrictions": len(restricted)}
+
+
+def verify(spec, require_scope=False):
+    if require_scope or "expense_scope" in spec:
+        verify_expense_scope(spec)
     if not spec.get("items"):
         raise ValueError("No independent costing items")
     result = []
@@ -289,11 +347,14 @@ if __name__ == "__main__":
     modes.add_argument("--role-summary", action="store_true", help="Check a user-facing role/count confirmation before asking")
     modes.add_argument("--carry-forward-check", action="store_true", help="Reconcile prior finance and current planned amounts with saved fields")
     modes.add_argument("--unit-divisibility-check", action="store_true", help="Check source-backed total and whole-won uniform unit cost without inventing items")
+    parser.add_argument("--scope-check", action="store_true", help="Require latest independent item scope and only-item restrictions before costing")
     args = parser.parse_args()
+    if args.scope_check and (args.role_summary or args.carry_forward_check or args.unit_divisibility_check):
+        parser.error("--scope-check applies only to saved per-person costing items")
     inventory = json.loads(args.inventory.read_text(encoding="utf-8-sig"))
     checked = (verify_role_summary(inventory) if args.role_summary else
                verify_carry_forward(inventory) if args.carry_forward_check else
-               verify_uniform_divisibility(inventory) if args.unit_divisibility_check else verify(inventory))
+               verify_uniform_divisibility(inventory) if args.unit_divisibility_check else verify(inventory, require_scope=args.scope_check))
     ok = not args.unit_divisibility_check or checked['status'] == 'PASS'
     print(json.dumps({"ok": ok, "checked": checked}, ensure_ascii=False))
     if not ok:
