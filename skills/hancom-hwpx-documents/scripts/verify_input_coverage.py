@@ -11,7 +11,7 @@ or correct human classification; review the inventory independently.
 """
 from pathlib import Path
 from zipfile import BadZipFile,ZipFile
-import argparse,json,xml.etree.ElementTree as ET
+import argparse,json,hashlib,re,xml.etree.ElementTree as ET
 NS={'hp':'http://www.hancom.co.kr/hwpml/2011/paragraph'}
 
 def verify(path, inventory):
@@ -149,10 +149,81 @@ def verify_template_inventory(path, inventory):
     return {'status':'PASS','scoped_template_fields':len(selected),'mapped_fields':len(mapped),'target_fields':len(destinations),'target_sha256':target_hash,'scope':'Selected source cells only; authority, complete scope, evidence meaning and render require independent review'}
 
 
+TOTAL_LABELS = {'계', '합계', '총계'}
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def table_cells(path, spec):
+    section, index = spec.get('section'), spec.get('table')
+    if not isinstance(section, str) or not re.fullmatch(r'Contents/section[0-9]+\.xml', section) or type(index) is not int or index < 0:
+        raise ValueError('Invalid section or table')
+    with ZipFile(path) as z:
+        tables = ET.fromstring(z.read(section)).findall('.//hp:tbl', NS)
+        if index >= len(tables):
+            raise ValueError('Table missing')
+        result = {}
+        for cell in tables[index].findall('./hp:tr/hp:tc', NS):
+            addr, span = cell.find('hp:cellAddr', NS), cell.find('hp:cellSpan', NS)
+            if addr is None or span is None:
+                raise ValueError('Cell address or span missing')
+            key = (int(addr.attrib['rowAddr']), int(addr.attrib['colAddr']))
+            if key in result:
+                raise ValueError('Duplicate cell address')
+            if cell.find('.//hp:tbl', NS) is not None or cell.find('.//hp:pic', NS) is not None:
+                raise ValueError('Complex cell requires separate review')
+            text = ''.join(''.join(t.itertext()) for t in cell.findall('.//hp:t', NS))
+            result[key] = (''.join(text.split()), (int(span.attrib['rowSpan']), int(span.attrib['colSpan'])))
+        return result
+
+
+def verify_total_labels(output, data):
+    source_spec, output_spec, mappings = data['source'], data['output'], data['mappings']
+    source = Path(source_spec['path'])
+    output = Path(output)
+    if source.resolve() == output.resolve():
+        raise ValueError('Source and output must differ')
+    expected_hash = source_spec.get('sha256', '')
+    if not re.fullmatch(r'[a-fA-F0-9]{64}', expected_hash) or digest(source) != expected_hash.lower():
+        raise ValueError('Source hash mismatch')
+    output_hash = digest(output)
+    src, dst = table_cells(source, source_spec), table_cells(output, output_spec)
+    totals = {k for k, v in src.items() if v[0] in TOTAL_LABELS}
+    if not totals:
+        raise ValueError('No total labels found in selected source table; review scope')
+    seen_source, seen_target = set(), set()
+    if not isinstance(mappings, list):
+        raise ValueError('Mappings must be a list')
+    for mapping in mappings:
+        coords = []
+        for field in ('source', 'target'):
+            pos = mapping.get(field)
+            if not isinstance(pos, list) or len(pos) != 2 or any(type(n) is not int or n < 0 for n in pos):
+                raise ValueError('Invalid mapping coordinate')
+            coords.append(tuple(pos))
+        origin, target = coords
+        if origin not in totals or origin in seen_source or target in seen_target:
+            raise ValueError('Unselected or duplicate total mapping')
+        seen_source.add(origin)
+        seen_target.add(target)
+        if dst.get(target) != src[origin]:
+            raise ValueError(f'Total label or merged-cell span mismatch: {origin} -> {target}')
+    if seen_source != totals:
+        raise ValueError(f'Unmapped source total labels: {sorted(totals - seen_source)}')
+    if digest(source) != expected_hash.lower() or digest(output) != output_hash:
+        raise ValueError('File changed during verification')
+    return {'status': 'PASS', 'total_cells': len(totals), 'output_sha256': output_hash,
+            'scope': 'Selected table and mapped total labels only; review mapping, amounts and render independently'}
+
+
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('hwpx',type=Path);p.add_argument('inventory',type=Path);p.add_argument('--template-inventory',action='store_true',help='compare a selected source-form input scope to an independently sourced saved-field inventory');a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('hwpx',type=Path);p.add_argument('inventory',type=Path);p.add_argument('--template-inventory',action='store_true',help='compare a selected source-form input scope to an independently sourced saved-field inventory');p.add_argument('--total-labels',action='store_true',help='verify mapped fixed total labels in a selected source table');a=p.parse_args()
     try:
-        data=json.loads(a.inventory.read_text(encoding='utf-8-sig'));result=verify_template_inventory(a.hwpx,data) if a.template_inventory else verify(a.hwpx,data)
+        data=json.loads(a.inventory.read_text(encoding='utf-8-sig'))
+        if a.template_inventory and a.total_labels: raise ValueError('Choose one verification mode')
+        result=verify_total_labels(a.hwpx,data) if a.total_labels else verify_template_inventory(a.hwpx,data) if a.template_inventory else verify(a.hwpx,data)
         print(json.dumps(result))
     except (ValueError,KeyError,OSError,BadZipFile,ET.ParseError) as error:p.exit(1,f'INPUT_COVERAGE_FAILED: {error}\n')
 if __name__=='__main__':main()
