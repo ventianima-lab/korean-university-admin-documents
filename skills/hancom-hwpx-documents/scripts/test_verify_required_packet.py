@@ -61,6 +61,38 @@ class PacketAuditTest(unittest.TestCase):
             packet.audit(m)
 
 
+class EventOutputGroupingTest(unittest.TestCase):
+    def test_shared_event_requirement_and_separate_earlier_event(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            current, earlier = root / 'event-alpha-signin.txt', root / 'earlier-event-beta-signin.txt'
+            current.write_text('Synthetic event-alpha sign-in', encoding='utf-8')
+            earlier.write_text('Synthetic earlier event-beta sign-in', encoding='utf-8')
+            source = ('Synthetic user instruction: one event-alpha sign-in covers the meal and entry '
+                      'associations; retain separate evidence for earlier event-beta.')
+            manifest = {
+                'requirements': [{'id': key, 'source': source} for key in ('event_alpha', 'event_beta')],
+                'artifacts': [{'id': key, 'status': 'ready', 'paths': [str(path)],
+                               'verification': 'Synthetic saved event and output grouping reviewed'}
+                              for key, path in (('event_alpha', current), ('event_beta', earlier))],
+                'expense_reviews': [
+                    {'category': category, 'source': source,
+                     'items': [{'label': 'event sign-in', 'status': 'required',
+                                'requirement_id': 'event_alpha'}]}
+                    for category in ('meal', 'entry')
+                ] + [{'category': 'earlier event', 'source': source,
+                      'items': [{'label': 'earlier event evidence', 'status': 'required',
+                                 'requirement_id': 'event_beta'}]}]
+            }
+            self.assertEqual(packet.audit(manifest)['status'], 'PASS')
+            self.assertEqual(len(manifest['artifacts'][0]['paths']), 1)
+            split = copy.deepcopy(manifest)
+            split['artifacts'].append({'id': 'unrequested_meal_signin', 'status': 'ready',
+                                       'paths': [str(current)], 'verification': 'Unrequested split'})
+            with self.assertRaisesRegex(ValueError, 'absent from requirements'):
+                packet.audit(split)
+
+
 class UserManagedPreparationTest(unittest.TestCase):
     def manifest(self):
         return {
