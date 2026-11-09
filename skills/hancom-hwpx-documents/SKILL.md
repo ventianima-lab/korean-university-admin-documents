@@ -17,6 +17,7 @@ Use a reusable tool directory outside the records tree, such as `$CODEX_HOME/too
 - Every PowerShell helper and every ad hoc COM command must dot-source `scripts/hancom_com_guard.ps1` and create each COM object with `New-HancomGuardedObject`. Do not instantiate `HWPFrame.HwpObject` directly outside that guard.
 - The guard fixes the module name to `FilePathCheckerModuleExample` and requires `RegisterModule('FilePathCheckDLL', 'FilePathCheckerModuleExample') == true` before visibility changes, `SetMessageBoxMode`, `Open`, `Save`, or `SaveAs`. Do not expose a caller override for the module name.
 - `SetMessageBoxMode` may be enabled only by the guarded constructor after successful registration. Close objects with `Close-HancomGuardedObject` so message-box mode is reset and only the current COM object is released.
+- Before native access, on a sharing violation, and after final native verification, apply [references/hancom-lock-ownership.md](references/hancom-lock-ownership.md). Establish actual lock/object ownership before a user close request; an automation flag or attempted `Quit()` is not ownership or release evidence. Recheck task-attributable locks after cleanup while preserving pre-existing objects.
 - After adding or changing a Hancom PowerShell helper, run `scripts/test_hancom_guard_contract.ps1`. Direct COM construction, direct registration, shortened module names, or file access without the shared guard are hard failures.
 
 ## Mandatory template-first routing for Korean public documents

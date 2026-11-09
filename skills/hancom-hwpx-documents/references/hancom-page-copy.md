@@ -42,3 +42,4 @@ When an explicitly identified form requires removing a manual-only badge, remove
 - `python-hwpx` and Kordoc validation pass.
 - A current render shows the copied layout and all edits without overflow.
 - Record the final SHA-256 and leave pre-existing user-owned Hwp windows open.
+- After the last native verification, apply [the lock-ownership and cleanup gate](hancom-lock-ownership.md); require evidence that the current run left no attributable new file lock, or report the exact unresolved cleanup check.
