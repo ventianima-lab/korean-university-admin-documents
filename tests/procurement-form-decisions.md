@@ -65,3 +65,10 @@ An edited narrative matches the template, but the controller times out on the sa
 ## Project-wide name correction scope
 
 When a user explicitly includes existing authored copies throughout a project folder, inspect both the project root and the submission folder. An older populated working plan with the superseded name must be corrected from its own current bytes even if a newer submission plan is already correct. A blank form, supplier-issued evidence, and an expressly excluded submission document remain unchanged. Confirm the field and preview of each included copy and report any locked file. A request limited to one named file does not authorize editing other copies.
+
+
+## Corrected annotations and separate teaching-material slots
+
+A fictional packet contains an optional attachment for an inapplicable service, a mandatory safety question with an official inapplicable choice, and a protected legal parenthesis. The user excludes the optional item and rejects a repeated explanatory aside. Remove the optional attachment line completely, select the supported official inapplicable choice, retain the protected wording, and inspect every current document and attachment list for the rejected explanation and its paraphrases. Fail if an explanation replaces the omitted item, a rejected aside survives in another document, or all parenthetical text is removed.
+
+A teaching report has a requested activity photograph and a separate requested teaching-material slot. The plan has a generic topic, while the current slides include relevant concrete teaching content. A classroom photograph showing a projected screen in both slots and a generic one-line educational field must fail, even if both slots contain an image. Use the activity photo for its own role, legible relevant current slide images for the materials role, and source-supported detail in the actual educational field. Independently check both roles and the saved final render; do not invent content when no eligible source exists.
