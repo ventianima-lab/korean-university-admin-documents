@@ -43,6 +43,15 @@ class ExactFieldMixedContentTests(unittest.TestCase):
         self.package("<hp:fwSpace/>")
         self.assertEqual(verify_form_fields(self.path, self.field(""))["status"], "PASS")
 
+    def test_telephone_field_cannot_use_independent_source_fax(self):
+        expected = self.field("Telephone: 000-111-2222")
+        expected["fields"][0]["source"] = "Synthetic source TEL label: 000-111-2222; FAX label: 000-333-4444"
+        self.package("Telephone: 000-333-4444")
+        with self.assertRaisesRegex(ValueError, "differs from expected"):
+            verify_form_fields(self.path, expected)
+        self.package("Telephone: 000-111-2222")
+        self.assertEqual(verify_form_fields(self.path, expected)["status"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()

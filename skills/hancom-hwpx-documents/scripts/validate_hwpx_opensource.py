@@ -69,6 +69,59 @@ def verify_section_package(path: Path) -> dict:
                 "section_count": len(referenced)}
 
 
+def verify_embedded_images(path: Path) -> dict:
+    """Check referenced picture items' local bytes and Hancom embed metadata.
+
+    Read-only: a pass does not prove native visibility, placement or image count
+    against the user's request. An image-free file reports zero checked images.
+    """
+    with ZipFile(path) as package:
+        names = package.namelist()
+        if len(names) != len(set(names)):
+            raise ValueError("Duplicate ZIP members prevent image verification")
+        manifest = ET.fromstring(package.read("Contents/content.hpf"))
+        items = {}
+        for node in manifest.iter():
+            if node.tag.rsplit("}", 1)[-1] != "item":
+                continue
+            key = node.get("id")
+            if not key or key in items:
+                raise ValueError("Invalid or duplicate image manifest item ID")
+            items[key] = node
+        references = []
+        for name in names:
+            if name != "Contents/header.xml" and not re.fullmatch(r"Contents/section[0-9]+\.xml", name):
+                continue
+            root = ET.fromstring(package.read(name))
+            for node in root.iter():
+                if node.tag.rsplit("}", 1)[-1] == "img":
+                    key = node.get("binaryItemIDRef")
+                    if not key:
+                        raise ValueError(f"{name}: image binaryItemIDRef is missing")
+                    references.append(key)
+        checked = []
+        for key in sorted(set(references)):
+            if key not in items:
+                raise ValueError(f"Image reference has no manifest item: {key}")
+            item = items[key]
+            if not item.get("media-type", "").lower().startswith("image/"):
+                raise ValueError(f"Referenced image item has no image media type: {key}")
+            href = item.get("href", "")
+            candidates = [posixpath.normpath(href.lstrip("/")),
+                          posixpath.normpath(posixpath.join("Contents", href))]
+            targets = set(candidate for candidate in candidates if candidate in names)
+            if len(targets) != 1:
+                raise ValueError(f"Referenced image has no unique local package part: {key}")
+            if item.get("isEmbeded") != "1":
+                raise ValueError(f"Image manifest item {key} requires isEmbeded=1")
+            target = targets.pop()
+            if not package.read(target):
+                raise ValueError(f"Embedded image part is empty: {key}")
+            checked.append({"id": key, "part": target})
+    return {"status": "PASS", "checked_images": len(checked),
+            "image_references": len(references), "items": checked}
+
+
 def verify_section_opening(path: Path) -> dict:
     """Reject late first-paragraph column controls before native layout testing."""
     ns = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
@@ -188,11 +241,22 @@ def main() -> None:
                         help="Check section count and package references only; no rendering")
     parser.add_argument("--fields-only", action="store_true",
                         help="Check saved XML text only; does not validate or render the document")
+    parser.add_argument("--images-only", action="store_true",
+                        help="Check embedded image references and Hancom manifest metadata; no rendering")
     args = parser.parse_args()
+    if args.images_only and (args.sections_only or args.fields_only or args.fields or args.roundtrip_dir):
+        parser.error("--images-only cannot be combined with other validation modes or roundtrip")
     if args.sections_only and (args.fields_only or args.fields or args.roundtrip_dir):
         parser.error("--sections-only cannot be combined with --fields, --fields-only or --roundtrip-dir")
     if args.fields_only and (not args.fields or args.roundtrip_dir):
         parser.error("--fields-only requires --fields and cannot be combined with --roundtrip-dir")
+    if args.images_only:
+        rows = [{"file": str(source.resolve()), "sha256": sha256(source),
+                 "embedded_images": verify_embedded_images(source)} for source in args.inputs]
+        emit_report({"engine": "hwpx-xml-embedded-image-check",
+                     "scope": "Image references and embed metadata only; native visibility and layout are separate.",
+                     "rows": rows}, args.report)
+        return
     if args.sections_only:
         rows = []
         for source in args.inputs:
@@ -235,6 +299,7 @@ def main() -> None:
             "section_count": len(document.sections),
             "section_opening": verify_section_opening(source),
             "section_package": verify_section_package(source),
+            "embedded_images": verify_embedded_images(source),
         }
         if expectations is not None:
             row["form_fields"] = verify_form_fields(source, expectations)
@@ -253,6 +318,7 @@ def main() -> None:
                 "text_equal": reopened.text.plain() == original_text,
                 "section_opening": verify_section_opening(output),
                 "section_package": verify_section_package(output),
+                "embedded_images": verify_embedded_images(output),
             }
             if expectations is not None:
                 row["roundtrip"]["form_fields"] = verify_form_fields(output, expectations)
