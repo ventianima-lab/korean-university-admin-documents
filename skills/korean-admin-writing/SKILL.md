@@ -5,6 +5,8 @@ description: Draft and polish Korean university administrative prose while prese
 
 # Korean administrative writing
 
+For requested document artifacts, first apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md). Preserve its provenance classes, exact authorized red spans and existing normal colors through every prose pass; a writing or grammar pass does not authorize new external facts.
+
 Apply the following route only to prose that is not protected by a supplied form, quotation, legal basis, evidence record or exact user wording.
 
 1. Use `fluent-korean` as the drafting baseline.
@@ -14,4 +16,4 @@ Apply the following route only to prose that is not protected by a supplied form
 
 Do not normalize numbers, units, dates, list markers or links without an explicit governing rule. When rules conflict, preserve the source and report `UNIT_RULE_CONFLICT`. Return the polished result directly unless the user requests a detailed language audit.
 
-Apply `fluent-korean`'s prohibition on unsolicited administrative annotations: leave unsupported form fields blank, and do not insert workflow explanations into remarks or attachment fields. Apply `style-guide`'s item/quantity checks across related purchase documents, including package versus unit counts, specification subtotals, and stale prices or quantities after revisions.
+Apply `fluent-korean`'s prohibition on unsolicited administrative annotations: keep unavailable external facts unasserted, use the shared policy for authorized drafting choices, and do not insert workflow explanations into remarks or attachment fields. Apply `style-guide`'s item/quantity checks across related purchase documents, including package versus unit counts, specification subtotals, and stale prices or quantities after revisions.

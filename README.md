@@ -16,6 +16,7 @@
 | 스킬 | 역할 |
 |---|---|
 | `korean-university-admin-documents` | 전체 문서 작업의 통합 진입점 |
+| `submission-ready-authoring` | 입력·첨부 완결성과 사용자가 선택한 임의 작성값의 정확한 빨간색 표시를 검증 |
 | `hancom-hwpx-documents` | HWPX 양식 보존 편집, 한컴 자동화와 최종 재열기 검증 |
 | `hwp-to-hwpx-converter` | 실제 파일 시그니처 기반 HWP→HWPX 변환 |
 | `hwpx-internet-comparison-quotes` | 동일 제품·옵션·수량의 인터넷 견적 캡처, 편집 가능한 출처 설명문과 검증 |

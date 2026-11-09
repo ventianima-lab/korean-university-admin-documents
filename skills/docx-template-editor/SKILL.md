@@ -5,6 +5,8 @@ description: Fill, revise, compare, and verify DOCX or Microsoft Word templates 
 
 # DOCX template editor
 
+For creation or completion, apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md) for full writable-field and attachment coverage. A current or standing user choice can authorize exact red assumption spans; preserve existing normal colors and verify run-level colors against a source-bound pre-color baseline, with rollback on preservation failure. Do not use a draft label to skip inputs or fabricate external facts or signer actions.
+
 Treat a supplied DOCX as the design authority. Preserve the source and edit a copy unless overwrite is explicitly requested.
 
 ## Workflow

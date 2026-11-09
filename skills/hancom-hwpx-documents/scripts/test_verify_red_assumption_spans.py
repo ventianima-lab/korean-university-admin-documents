@@ -37,10 +37,10 @@ class RedSpans(unittest.TestCase):
         shutil.rmtree(resolved)
 
     def write(self, path, red=(), text=None, font='0', table='1', preexisting='#FF0000',
-              added=True, style_size='1000', inline=False, other='unchanged'):
+              added=True, style_size='1000', inline=False, other='unchanged', normal='#000000'):
         text = self.text if text is None else text
         red = set(red)
-        props = (f'<hh:charPr id="0" height="1000" textColor="#000000"><hh:fontRef hangul="0" latin="0"/></hh:charPr>'
+        props = (f'<hh:charPr id="0" height="1000" textColor="{normal}"><hh:fontRef hangul="0" latin="0"/></hh:charPr>'
                  f'<hh:charPr id="1" height="1000" textColor="{preexisting}"><hh:fontRef hangul="0" latin="0"/></hh:charPr>')
         if added:
             props += f'<hh:charPr id="2" height="{style_size}" textColor="#FF0000"><hh:fontRef hangul="{font}" latin="0"/></hh:charPr>'
@@ -81,6 +81,31 @@ class RedSpans(unittest.TestCase):
         result = gate.verify(self.before, self.after, self.spec)
         self.assertEqual(result['status'], 'PASS')
         self.assertEqual(result['assumption_characters'], len('option'))
+
+    def test_standing_preference_preserves_blue_fixed_text(self):
+        self.write(self.before, added=False, preexisting='#0000FF', normal='#0000FF')
+        self.write(self.after, red=range(self.start, self.end), preexisting='#0000FF', normal='#0000FF')
+        self.spec = self.inventory()
+        self.spec['red_instruction'] = 'synthetic standing instruction for later documents'
+        self.spec['red_instruction_scope'] = 'standing_preference'
+        self.assertEqual(gate.verify(self.before, self.after, self.spec)['status'], 'PASS')
+
+    def test_standing_mode_cannot_normalize_fixed_blue_to_black(self):
+        self.write(self.before, added=False, preexisting='#0000FF')
+        self.write(self.after, red=range(self.start, self.end), preexisting='#000000')
+        self.spec = self.inventory()
+        self.spec['red_instruction_scope'] = 'standing_preference'
+        with self.assertRaisesRegex(ValueError, 'existing character style definition changed'):
+            gate.verify(self.before, self.after, self.spec)
+
+    def test_unknown_scope_and_missing_standing_reference_fail(self):
+        self.spec['red_instruction_scope'] = 'automatic_without_user_instruction'
+        with self.assertRaisesRegex(ValueError, 'red_instruction_scope'):
+            gate.verify(self.before, self.after, self.spec)
+        self.spec['red_instruction_scope'] = 'standing_preference'
+        self.spec['red_instruction'] = ''
+        with self.assertRaisesRegex(ValueError, 'standing user instruction reference'):
+            gate.verify(self.before, self.after, self.spec)
 
     def test_missing_one_assumption_character_fails(self):
         self.write(self.after, red=range(self.start+1,self.end)); self.refresh()

@@ -5,6 +5,8 @@
 - Correct current template and source evidence
 - Protected-value comparison passed
 - Required labels and fields present
+- Complete independently inventoried writable inputs and required attachments under [the shared authoring policy](../../submission-ready-authoring/SKILL.md); every remaining blank has a specific external-fact, controlled-action or inapplicability basis
+- Current/standing authorized assumptions have exact red spans; confirmed inputs and fixed template/user colors retain their normal formatting, with provenance and preservation checks passed
 - No unsupported facts inserted
 - Source preserved and output path distinct unless overwrite was requested
 - Exact final-byte SHA-256 recorded for important deliverables

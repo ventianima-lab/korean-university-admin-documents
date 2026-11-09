@@ -5,6 +5,8 @@ description: Draft, revise, polish, or review clear, natural, unambiguous Korean
 
 # Fluent Korean
 
+For requested document artifacts, apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md) before drafting. Its standing/current instruction route governs complete input and attachment coverage and exact red marking; ordinary replies and read-only reviews retain their existing scope.
+
 Before drafting or revising substantive Korean prose, read [references/fluent-korean-not-coding.md](references/fluent-korean-not-coding.md) completely and apply it to the Korean deliverable.
 
 - Apply this skill directly when its routing conditions are met. If the required reference cannot be read, do not improvise a replacement rule set or apply this skill.
@@ -33,7 +35,7 @@ Before drafting or revising substantive Korean prose, read [references/fluent-ko
 
 - For administrative public letters, plans, expense forms, and reports, do not add agent-created memos, remarks, parenthetical caveats, workflow explanations, or attachment instructions that the user did not request. A blank 비고 cell is not an invitation to explain the drafting process.
 - Use conversational background to choose accurate dates, quantities, and actual expenditure; do not automatically quote that background in the document. For example, delayed card receipt can change snack-expense calculations without adding a card-delay explanation or a “receipt to be attached manually” note.
-- Preserve required official form wording and fill supported business fields normally. Leave unsupported values blank rather than inserting “확인 필요”, “추후 입력”, or similar agent notes into the document.
+- Preserve required official form wording and fill supported business fields normally. Use the shared authoring policy for authorized unconfirmed drafting choices; keep unavailable external facts and controlled actions unasserted rather than inserting “확인 필요”, “추후 입력”, or similar agent notes into the document.
 - Default an otherwise empty 비고/remarks cell to blank. Populate it only with the minimum source-supported content explicitly requested there or required by the applicable official form/instructions. Do not fill space with repeated main-text facts, obvious explanations, drafting status, self-check notes, or rejected explanations moved from another field. At handoff, every newly populated remarks cell must have that specific basis; otherwise omit the addition. Preserve existing user-entered or mandatory remarks rather than clearing them under this rule.
 - Omit unrequested explanations instead of creating an extra approval question for them. Report a material missing fact briefly in the conversation when needed; preserve explanations required by the official form or explicitly requested by the user.
 - For a user-requested activity or case report, use the supplied plan, photographs and other reliable sources to develop the activity’s purpose, the participants’ contribution, observed results and prospective effects. Reflect the user’s stated educational or community significance; label event-wide attendance as event-wide, and do not invent individual roles, measured effects or funding links. Fill a shared role only when the user or evidence supports it.

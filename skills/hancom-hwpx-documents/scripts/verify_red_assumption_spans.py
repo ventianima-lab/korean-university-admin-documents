@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify explicitly requested red assumption spans against a pre-color HWPX.
+"""Verify currently or standing-authorized red assumption spans against a pre-color HWPX.
 
 Usage: verify_red_assumption_spans.py BEFORE.hwpx AFTER.hwpx PRIVATE_INVENTORY.json
 The private inventory is independently prepared before coloring; see the skill.
@@ -137,7 +137,9 @@ def verify(before, after, spec):
         if sha(path).lower() != expected.lower():
             raise ValueError('file hash mismatch: ' + key)
     if not isinstance(spec.get('red_instruction'), str) or not spec['red_instruction'].strip():
-        raise ValueError('explicit user instruction reference is required')
+        raise ValueError('current or standing user instruction reference is required')
+    if spec.get('red_instruction_scope', 'current_request') not in {'current_request', 'standing_preference'}:
+        raise ValueError('red_instruction_scope must be current_request or standing_preference')
     red = spec.get('red_color', '')
     if not isinstance(red, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', red):
         raise ValueError('explicit red color must be #RRGGBB')

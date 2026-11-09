@@ -1,0 +1,4 @@
+interface:
+  display_name: "Complete Document Authoring"
+  short_description: "Complete forms and verify authorized red choices."
+  default_prompt: "Use $submission-ready-authoring with the format-specific skill to complete the requested document and verify all inputs and attachments."

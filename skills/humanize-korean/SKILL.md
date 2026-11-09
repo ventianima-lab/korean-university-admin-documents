@@ -9,6 +9,8 @@ metadata:
 
 # Humanize Korean — Single-call Path (Codex · GitHub Copilot CLI)
 
+문서 작성·완성 작업에는 [공통 작성 정책](../submission-ready-authoring/SKILL.md)을 함께 적용한다. 윤문은 승인된 비보호 서술부에만 한정하고 기존 서식색·빨간색 가정 문자와 근거 매핑을 보존한다. 승인된 수정으로 문자 범위가 바뀌면 색상 검증을 다시 수행하며, 이 정책을 이유로 윤문 범위를 넓히지 않는다.
+
 한글 텍스트의 "AI 티"를 한 번에 탐지·윤문·자체검증한다. Codex와 GitHub Copilot CLI는 단일 호출 경로만 제공한다. 진단→겨냥 윤문→finalize로 이어지는 다중 호출 경로는 Claude Code 전용이다.
 
 ## Codex 자동 적용 모드
