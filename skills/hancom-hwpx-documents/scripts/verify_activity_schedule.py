@@ -15,6 +15,16 @@ within the section, including paragraphs in tables. The caller must enumerate
 all relevant paragraphs independently, including repeat dates elsewhere. The
 check reads selected paragraph text only and never suggests replacement dates.
 
+For form fields requiring clock intervals, use --require-clock with
+clock_fields:[{id,venue,start,end,source,template_source,time_cell,venue_cell}].
+start/end use source-backed HH:MM; each cell is {table,row,col}, zero-based
+table index and cellAddr coordinates in section. Every saved time cell must
+contain one matching clock range and its venue cell must equal venue. This
+also works for individually mapped cells in merged forms. Enumerate each
+session/venue and repeated occurrence independently; a duration or total alone
+does not satisfy a clock field. Do not supply invented clocks when only the
+duration is known. Sources and inventory completeness need independent review.
+
 For a confirmed correction across independently enumerated surfaces, use
 --reconcile INVENTORY.json instead of the two positional arguments. Its shape is::
 
@@ -183,10 +193,57 @@ def verify_weekdays(root, constraints):
     return checked
 
 
-def verify(path, spec, require_weekday=False):
+def verify_clock_fields(root, fields):
+    """Bind saved clock ranges to independently sourced venue-specific sessions."""
+    if not isinstance(fields, list) or not fields:
+        raise ValueError('At least one source-backed clock field is required')
+    tables = list(root.iter(HP + 'tbl'))
+    def cell_text(binding):
+        if (not isinstance(binding, dict) or set(binding) != {'table', 'row', 'col'} or
+                any(type(binding[k]) is not int or binding[k] < 0 for k in binding)):
+            raise ValueError('A clock/venue cell needs explicit table, row and col coordinates')
+        if binding['table'] >= len(tables):
+            raise ValueError('Clock/venue table not found')
+        cells = []
+        for tc in tables[binding['table']].findall(HP + 'tr/' + HP + 'tc'):
+            addr = tc.find(HP + 'cellAddr')
+            if addr is not None and (int(addr.get('rowAddr')), int(addr.get('colAddr'))) == (binding['row'], binding['col']):
+                cells.append(tc)
+        if len(cells) != 1:
+            raise ValueError('Clock/venue cell not unique or missing')
+        return ''.join(''.join(t.itertext()) for t in cells[0].iter(HP + 't'))
+    seen, targets = set(), set()
+    for field in fields:
+        if (not isinstance(field, dict) or
+                any(not nonempty(field.get(k)) for k in ('id', 'venue', 'source', 'template_source')) or
+                not _valid_clock(field.get('start')) or not _valid_clock(field.get('end')) or
+                field['start'] == field['end']):
+            raise ValueError('A session identity, venue, template authority and source-backed start/end are required')
+        if field['id'] in seen:
+            raise ValueError('Duplicate clock-field identity')
+        seen.add(field['id'])
+        actual = cell_text(field.get('time_cell'))
+        venue = cell_text(field.get('venue_cell'))
+        target = tuple(field['time_cell'][k] for k in ('table', 'row', 'col'))
+        if target in targets or field['time_cell'] == field['venue_cell']:
+            raise ValueError('Clock fields need distinct target cells and a separate venue cell')
+        targets.add(target)
+        if venue != field['venue']:
+            raise ValueError(f"Clock field venue mismatch: {field['id']}")
+        ranges = re.findall(r'(?<!\d)(\d{1,2}:[0-5]\d)\s*[~～〜–—-]\s*(\d{1,2}:[0-5]\d)(?!\d)', actual)
+        clocks = re.findall(r'(?<!\d)\d{1,2}:[0-5]\d(?!\d)', actual)
+        if len(ranges) != 1 or len(clocks) != 2:
+            raise ValueError(f"A clock interval, not duration alone, is required: {field['id']}")
+        normalized = tuple(f'{int(value.split(":")[0]):02d}:{value.split(":")[1]}' for value in ranges[0])
+        if normalized != (field['start'], field['end']):
+            raise ValueError(f"Clock interval differs from the venue/session source: {field['id']}")
+    return len(seen)
+
+
+def verify(path, spec, require_weekday=False, require_clock=False):
     if not isinstance(spec, dict) or not nonempty(spec.get('source')):
         raise ValueError('An independent schedule source is required')
-    unknown = set(spec) - {'section', 'source', 'table', 'headers', 'activities', 'weekly_constraints'}
+    unknown = set(spec) - {'section', 'source', 'table', 'headers', 'activities', 'weekly_constraints', 'clock_fields'}
     if unknown:
         raise ValueError('Unknown inventory fields: ' + ', '.join(sorted(unknown)))
     section = spec.get('section')
@@ -194,10 +251,13 @@ def verify(path, spec, require_weekday=False):
         raise ValueError('A section is required')
     has_table = any(key in spec for key in ('table', 'headers', 'activities'))
     has_weekday = 'weekly_constraints' in spec
+    has_clock = 'clock_fields' in spec
     if require_weekday and not has_weekday:
         raise ValueError('A weekday constraint is required by --require-weekday')
-    if not has_table and not has_weekday:
-        raise ValueError('A schedule table or weekday constraint is required')
+    if require_clock and not has_clock:
+        raise ValueError('Clock fields are required by --require-clock')
+    if not has_table and not has_weekday and not has_clock:
+        raise ValueError('A schedule table, weekday constraint or clock field is required')
     with ZipFile(path) as package:
         root = ET.fromstring(package.read(section))
     result = {'status': 'PASS'}
@@ -205,6 +265,8 @@ def verify(path, spec, require_weekday=False):
         result.update(verify_table(root, spec))
     result['weekday_constraints_checked'] = len(spec['weekly_constraints']) if has_weekday and isinstance(spec['weekly_constraints'], list) else 0
     result['session_dates_checked'] = verify_weekdays(root, spec['weekly_constraints']) if has_weekday else 0
+    if has_clock:
+        result['clock_fields_checked'] = verify_clock_fields(root, spec['clock_fields'])
     return result
 
 
@@ -328,17 +390,18 @@ def main():
     parser.add_argument('document', type=Path, nargs='?')
     parser.add_argument('inventory', type=Path, nargs='?')
     parser.add_argument('--require-weekday', action='store_true', help='fail if no weekday constraint is provided')
+    parser.add_argument('--require-clock', action='store_true', help='require source-backed start/end and venue checks for saved time cells')
     parser.add_argument('--reconcile', type=Path, metavar='INVENTORY', help='verify independently captured cross-surface correction snapshots')
     args = parser.parse_args()
     if args.reconcile:
-        if args.document is not None or args.inventory is not None or args.require_weekday:
-            parser.error('--reconcile cannot be combined with document, inventory, or --require-weekday')
+        if args.document is not None or args.inventory is not None or args.require_weekday or args.require_clock:
+            parser.error('--reconcile cannot be combined with document, inventory, --require-weekday or --require-clock')
     elif args.document is None or args.inventory is None:
         parser.error('document and inventory are required unless --reconcile is used')
     try:
         inventory = args.reconcile or args.inventory
         spec = json.loads(inventory.read_text(encoding='utf-8-sig'))
-        result = verify_reconciliation(spec, inventory.resolve().parent) if args.reconcile else verify(args.document, spec, require_weekday=args.require_weekday)
+        result = verify_reconciliation(spec, inventory.resolve().parent) if args.reconcile else verify(args.document, spec, require_weekday=args.require_weekday, require_clock=args.require_clock)
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except (OSError, BadZipFile, ValueError, KeyError, IndexError, ET.ParseError) as exc:
