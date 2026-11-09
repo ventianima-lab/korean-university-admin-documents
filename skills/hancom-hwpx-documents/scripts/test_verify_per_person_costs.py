@@ -87,6 +87,40 @@ class RoleConfirmationTests(unittest.TestCase):
             self.assertEqual(verify({"items": [item]})[0]["factors"], (3, 1200, 1))
 
 
+class PurposeSpecificPopulationTests(unittest.TestCase):
+    def test_party_insurance_and_lunch_use_independent_population_maps(self):
+        people = ([{"name": f"A{i}", "role": "group_a"} for i in range(6)]
+                  + [{"name": f"B{i}", "role": "group_b"} for i in range(4)]
+                  + [{"name": "G0", "role": "guest"}])
+        instruction = ("Synthetic instruction for event-alpha only: party and lunch include "
+                       "groups A/B and the guest; insurance includes groups A/B and excludes the guest.")
+
+        def population(purpose, roles, names, total, source=instruction):
+            return {"roles": roles, "total": total, "named_people": names,
+                    "text": f"{purpose} {total}명: " + ", ".join(f"{r} {n}명" for r, n in roles.items()),
+                    "source": source, "people_source": source}
+
+        party = population("party", {"group_a": 6, "group_b": 4, "guest": 1}, people, 11)
+        insurance = population("insurance", {"group_a": 6, "group_b": 4}, people[:-1], 10)
+        lunch = population("lunch", {"group_a": 6, "group_b": 4, "guest": 1}, people, 11)
+        for purpose, spec, total in (("party", party, 11), ("insurance", insurance, 10),
+                                     ("lunch", lunch, 11)):
+            with self.subTest(purpose=purpose):
+                self.assertEqual(verify_role_summary(spec)["total"], total)
+        # Propagating the party total and role counts must not replace the
+        # independently sourced insurance population, even when arithmetic agrees.
+        copied = {**insurance, "roles": party["roles"], "total": party["total"], "text": party["text"]}
+        with self.assertRaisesRegex(ValueError, "approved total"):
+            verify_role_summary(copied)
+        reduced_lunch = {**lunch, "roles": insurance["roles"], "total": 10, "text": insurance["text"]}
+        with self.assertRaisesRegex(ValueError, "approved total"):
+            verify_role_summary(reduced_lunch)
+        # A different explicit instruction may include the same role in insurance.
+        other = population("insurance", party["roles"], people, 11,
+                           "Synthetic event-beta instruction: insurance includes groups A/B and the guest.")
+        self.assertEqual(verify_role_summary(other)["total"], 11)
+
+
 class CarryForwardTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
