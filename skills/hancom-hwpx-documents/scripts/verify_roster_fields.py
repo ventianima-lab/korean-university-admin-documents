@@ -198,3 +198,22 @@ def check_roster_fields(roster):
     if seen != expected_coords:
         issue("planned_roster_cell_inventory_coverage")
     return issues
+
+
+def check_person_record_order(source_records, output_records, role_order, key_field):
+    """Compare independently transcribed complete records under an explicit order.
+
+    Stable sort retains source order inside each role. This does not read files
+    or authenticate the instruction, source, or transcription completeness.
+    """
+    if not source_records or not role_order or len(role_order) != len(set(role_order)):
+        raise ValueError('Complete source records and unique instructed roles required')
+    keys = [record[key_field] for record in source_records]
+    if any(not key for key in keys) or len(keys) != len(set(keys)):
+        raise ValueError('Unique source person keys required')
+    if any(record.get('role') not in role_order for record in source_records):
+        raise ValueError('Person role outside instructed order')
+    expected = sorted(source_records, key=lambda record: role_order.index(record['role']))
+    if output_records != expected:
+        raise ValueError('Whole-person record association or instructed order mismatch')
+    return {'status': 'PASS', 'records': len(expected), 'scope': 'Provided records only'}

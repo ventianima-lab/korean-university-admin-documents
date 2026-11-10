@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from zipfile import ZipFile
 
-from verify_roster_fields import HP, check_roster_fields
+from verify_roster_fields import HP, check_roster_fields, check_person_record_order
 
 
 def source(text):
@@ -23,6 +23,26 @@ def value(field, text, authorization=None):
 
 def literal(text):
     return {"kind": "literal", "text": text, "source": source('x' + text)}
+
+
+class PersonRecordOrderTest(unittest.TestCase):
+    def test_whole_record_sort_and_population_separation(self):
+        original = [dict(person_id='S1', role='student', name='Person A', contact='contact A'),
+                    dict(person_id='I1', role='instructor', name='Person B', contact='contact B'),
+                    dict(person_id='H1', role='head', name='Person C', contact='contact C'),
+                    dict(person_id='A1', role='assistant', name='Person D', contact='contact D')]
+        order = ['head', 'instructor', 'assistant', 'student']
+        good = [original[i].copy() for i in (2,1,3,0)]
+        self.assertEqual(check_person_record_order(original,good,order,'person_id')['status'],'PASS')
+        wrong=copy.deepcopy(good);wrong[0]['contact'],wrong[1]['contact']=wrong[1]['contact'],wrong[0]['contact']
+        with self.assertRaises(ValueError):check_person_record_order(original,wrong,order,'person_id')
+        wrong=copy.deepcopy(good);wrong[0]['person_id'],wrong[1]['person_id']=wrong[1]['person_id'],wrong[0]['person_id']
+        with self.assertRaises(ValueError):check_person_record_order(original,wrong,order,'person_id')
+        with self.assertRaises(ValueError):check_person_record_order(original,good[1:],order,'person_id')
+        insurance=[x for x in original if x['role']!='head']
+        self.assertEqual(check_person_record_order(insurance,good[1:],order,'person_id')['records'],3)
+        reverse=list(reversed(order));rev=sorted(original,key=lambda x:reverse.index(x['role']))
+        self.assertEqual(check_person_record_order(original,rev,reverse,'person_id')['status'],'PASS')
 
 
 class RosterFieldTest(unittest.TestCase):

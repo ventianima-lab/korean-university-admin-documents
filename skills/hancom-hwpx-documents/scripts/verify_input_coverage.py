@@ -50,6 +50,28 @@ def verify(path, inventory):
     if found!=set(listed):raise ValueError('Inventory contains absent or non-input cells')
     return {'status':'PASS','blank_cells':blanks,'inventoried_cells':len(found)}
 
+def verify_identity_assets(source, output, assets):
+    """Byte preservation only; roles/recognition come from pre-edit source inventory."""
+    if not isinstance(assets, list) or not assets:
+        raise ValueError('Identity asset inventory must not be empty')
+    seen_source, seen_target = set(), set()
+    with ZipFile(source) as original, ZipFile(output) as candidate:
+        for item in assets:
+            src, dst = item['source_member'], item['target_member']
+            if src in seen_source or dst in seen_target:
+                raise ValueError('Duplicate identity asset mapping')
+            seen_source.add(src); seen_target.add(dst)
+            if not item.get('role', '').strip() or item.get('recognition') not in {'recognized', 'unresolved'}:
+                raise ValueError('Identity asset role/recognition missing')
+            try:
+                before, after = original.read(src), candidate.read(dst)
+            except KeyError as error:
+                raise ValueError('Source identity asset missing in package') from error
+            if hashlib.sha256(before).hexdigest() != item.get('sha256') or before != after:
+                raise ValueError('Identity asset not preserved')
+    return len(assets)
+
+
 def verify_template_inventory(path, inventory):
     """Map an independently selected template cell range to exact saved inputs.
 
@@ -68,6 +90,8 @@ def verify_template_inventory(path, inventory):
     expected_hash=template.get('sha256')
     if not isinstance(expected_hash,str) or not re.fullmatch(r'[a-fA-F0-9]{64}',expected_hash): raise ValueError('Invalid template hash')
     if hashlib.sha256(source.read_bytes()).hexdigest()!=expected_hash.lower(): raise ValueError('Template hash mismatch')
+    if 'identity_assets' in inventory:
+        verify_identity_assets(source, path, inventory['identity_assets'])
     target_hash=hashlib.sha256(Path(path).read_bytes()).hexdigest();evidence_hashes={}
     section=template.get('section');table_index=template.get('table')
     if not isinstance(section,str) or not re.fullmatch(r'Contents/section[0-9]+\.xml',section) or type(table_index) is not int or table_index<0:

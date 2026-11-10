@@ -25,6 +25,19 @@ class TemplateInventory(unittest.TestCase):
     cell=E.SubElement(tr,H+"tc");E.SubElement(cell,H+"cellAddr",rowAddr=str(index),colAddr=str(col));sub=E.SubElement(cell,H+"subList");par=E.SubElement(sub,H+"p");run=E.SubElement(par,H+"run");E.SubElement(run,H+"t").text=text
   with ZipFile(path,"w") as z:z.writestr("Contents/section0.xml",E.tostring(root,encoding="utf-8"))
  def check(self):return v.verify_template_inventory(self.output,self.m)
+ def test_original_seal_missing_or_changed_cannot_pass(self):
+  seal=b'GIF89a-synthetic-issuer-object'
+  with ZipFile(self.template,'a') as z:z.writestr('BinData/seal.gif',seal)
+  self.m['template']['sha256']=self.hash(self.template)
+  self.m['identity_assets']=[{'source_member':'BinData/seal.gif','target_member':'BinData/seal.gif','sha256':hashlib.sha256(seal).hexdigest(),'role':'issuer seal','recognition':'recognized'}]
+  with self.assertRaisesRegex(ValueError,'asset missing'):self.check()
+  with ZipFile(self.output,'a') as z:z.writestr('BinData/seal.gif',b'different issuer')
+  with self.assertRaisesRegex(ValueError,'not preserved'):self.check()
+  self.make(self.output,[("Indicator","planned goal"),("Notes","supported note"),("Signature","")])
+  with ZipFile(self.output,'a') as z:z.writestr('BinData/seal.gif',seal)
+  self.assertEqual(self.check()['status'],'PASS')
+  self.m['identity_assets'][0]['recognition']='unresolved'
+  self.assertEqual(self.check()['status'],'PASS') # byte preservation, not semantic recognition
  def test_complete_mapping_passes(self):self.assertEqual(self.check()["mapped_fields"],3)
  def test_omitted_source_field_fails_even_if_output_is_filled(self):
   self.m["fields"].pop(0)
