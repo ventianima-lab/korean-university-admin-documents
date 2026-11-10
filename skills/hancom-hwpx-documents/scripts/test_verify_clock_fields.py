@@ -90,6 +90,39 @@ class ClockFieldTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'not duration alone'):
             verify(self.path, self.spec)
 
+    def test_shifted_two_paid_windows_from_independent_itinerary(self):
+        # Independent fictional planning chain; allowances are not real route claims.
+        chain = [('09:00', '09:15', 'check-in A'),
+                 ('09:15', '10:15', 'paid A'),
+                 ('10:15', '10:40', 'transfer B'),
+                 ('10:40', '11:25', 'retained confirmed B'),
+                 ('11:25', '12:10', 'meal'),
+                 ('12:10', '12:30', 'transfer C'),
+                 ('12:30', '12:40', 'check-in C'),
+                 ('12:40', '13:40', 'paid C'),
+                 ('13:40', '14:05', 'return-leg transfer D'),
+                 ('14:05', '14:35', 'unpaid schedule-only D'),
+                 ('14:35', '15:20', 'return')]
+        minutes = lambda clock: int(clock[:2]) * 60 + int(clock[3:])
+        for previous, current in zip(chain, chain[1:]):
+            self.assertEqual(previous[1], current[0])
+        paid = [item for item in chain if item[2].startswith('paid ')]
+        self.assertEqual([minutes(end) - minutes(start) for start, end, _ in paid], [60, 60])
+        self.rows = [[start + '~' + end, venue] for start, end, venue in paid]
+        for index, (start, end, venue) in enumerate(paid):
+            self.spec['clock_fields'][index].update(start=start, end=end, venue=venue)
+        self.package()
+        self.assertEqual(verify(self.path, self.spec, require_clock=True)['clock_fields_checked'], 2)
+        # Either stale equal-duration window must fail despite unchanged paid hours.
+        expected_rows = copy.deepcopy(self.rows)
+        for index, stale in enumerate(['09:00~10:00', '14:00~15:00']):
+            with self.subTest(stale_window=index):
+                self.rows = copy.deepcopy(expected_rows)
+                self.rows[index][0] = stale
+                self.package()
+                with self.assertRaisesRegex(ValueError, 'differs from the venue/session source'):
+                    verify(self.path, self.spec, require_clock=True)
+
     def test_cli_requires_nonempty_clock_mapping(self):
         inventory = Path(self.temp.name) / 'inventory.json'
         command = [sys.executable, '-B', str(Path(__file__).with_name('verify_activity_schedule.py')),

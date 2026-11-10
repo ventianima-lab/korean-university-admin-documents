@@ -120,3 +120,36 @@ Use symbolic companies/vehicles only. These decisions establish the role classif
 | A candidate labelled only insurance certificate has no readable insured-subject or coverage fields. | Keep kind unresolved among passenger coverage, vehicle coverage and company bond; do not bind it as ready to any such requirement. A newly explicit read-only inspection may proceed despite an earlier post-save-QA waiver. | Assigning type from the generic title, claiming absence from unreadable fields, running saved-output QA or asking the source worker to wait for publication. |
 
 Run the three `CompositeEvidenceInvocationTests` in `test_preapproval_phase_scope.py` for the synthetic role-to-checker interface. The page/identity interpretation above remains an independent inspection gate; those tests read no actual records.
+
+## Itinerary chain, paid windows and schedule-only addition
+
+Synthetic authority: the latest user itinerary retains Sites A, B and C, adds unpaid Stop D only to the return-leg schedule, allows existing activity times to change in linked forms, requests no empty gaps, and preserves two paid sessions of 60 minutes each and the original fee. An older unbooked optional ride is not a confirmed visit or evidence of provider cancellation. The following intervals are fictional planning inputs, not real travel estimates.
+
+| Expected interval | Required chain item | Independent basis |
+| --- | --- | --- |
+| 09:00~09:15 | Site A check-in | Synthetic venue entry allowance: 15 minutes |
+| 09:15~10:15 | Site A paid session | First required 60-minute window |
+| 10:15~10:40 | Transfer to Site B | Synthetic route allowance: 25 minutes |
+| 10:40~11:25 | Retained confirmed Site B | Latest synthetic itinerary: 45 minutes |
+| 11:25~12:10 | Meal | Latest synthetic itinerary: 45 minutes |
+| 12:10~12:30 | Transfer to Site C | Synthetic route allowance: 20 minutes |
+| 12:30~12:40 | Site C check-in | Synthetic entry allowance: 10 minutes |
+| 12:40~13:40 | Site C paid session | Second required 60-minute window |
+| 13:40~14:05 | Return-leg transfer to Stop D | Synthetic route allowance: 25 minutes |
+| 14:05~14:35 | Added unpaid Stop D | User-authorized schedule-only visit: 30 minutes |
+| 14:35~15:20 | Return travel | Synthetic route allowance: 45 minutes |
+
+Before authoring, map the existing main-form and instructor-plan Site A windows independently from 09:00~10:00 to 09:15~10:15 and Site C windows from 14:00~15:00 to 12:40~13:40, each to its own source and coordinates. Preserve two paid hours and the fee basis. Map Stop D only to the authorized itinerary rows; preserve the main letter's goals, budget and narrative, allowing only the instructed existing time fields to change.
+
+| Proposed disposition | Expected decision |
+| --- | --- |
+| Chain above, all retained sites, two explicit shifted paid windows, unchanged fees and Stop D only in the itinerary | Accept planned mapping; no actual-document verification follows from this fixture. |
+| Fill the post-meal gap with agency operations or implausibly extended transit | Reject: an interval label cannot establish a supported chain. |
+| Drop confirmed Site B or describe the unbooked ride as provider-canceled | Reject: retained-site scope and confirmation status fail. |
+| Preserve the two-hour total but leave either old paid window in an affected form | Reject: each independently mapped clock window must agree. |
+| Count Stop D as a third paid session, or add it to all goals/budget/narrative fields | Reject: payment and document-placement scope fail. |
+| Refuse authorized existing time updates because Stop D is schedule-only | Reject: the new-content restriction does not exclude authorized linked-time changes. |
+| User waives post-save review | Retain pre-write chain and individual field mapping; skip all actual-record QA and report review reserved. |
+| Another programme has no no-gap request | Do not impose this synthetic continuous agenda or invent activities to fill its unused rows. |
+
+Run `python skills/hancom-hwpx-documents/scripts/test_verify_clock_fields.py` for the synthetic two-window invocation. The checker cannot establish route reasonableness, source authority or narrative placement; the independent decisions above cover those limits. No actual record or browser/UI is used.
