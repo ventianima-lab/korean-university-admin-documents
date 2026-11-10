@@ -5,6 +5,8 @@ description: Delegate a bounded task to a user-specified provider and model thro
 
 # Exact model delegation
 
+A task already dispatched to an execution worker is not a request for that worker to select itself again. Before calling a child-spawn or model-selection tool, check the parent assignment and the user's latest execution instruction. An assigned worker executes its bounded task with its available tools; do not nest delegation solely to satisfy its own assignment. A rejected child-model selection establishes only that route's failure, not that the current worker's file, browser, or desktop tools are unavailable. If the user directs an assigned worker to continue directly, test the actual required operation and report a blocker only when that operation fails. Complete the applicable final-artifact checks before claiming success.
+
 A family nickname is not a provider/version identifier. A tool catalog can list one provider's model while the existing local gateway exposes another provider's newer model. Never substitute the visible family member merely because its nickname matches.
 
 1. Preserve the user's latest provider, model version, and requested effort as a delegation contract. Resolve an ambiguous nickname from current conversation and verified local history before asking the user. A correction replaces the earlier assumption.
@@ -15,6 +17,8 @@ A family nickname is not a provider/version identifier. A tool catalog can list 
 6. Apply and independently verify the returned artifact against the user's facts and requested format. For document design, preserve native editable content and perform the format-specific visual and structural checks. Report design advice as advice; claim file creation only after the file exists and opens.
 
 ## Design briefs and visual references
+
+For independent creative model comparisons or when the user requests creative freedom, provide verified facts, the output format, and essential bounds only. Do not preassign model-specific styles, headlines, palettes, layouts, or reference motifs unless the user asks for them. Before dispatch, check that the prompts do not prescribe invented creative decisions; afterward, compare each model's actual output rather than a direction assigned to it. Explicit user requirements and necessary brand assets remain binding.
 
 Before delegating branded document or presentation design, inspect the source assets and the existing result visually. Supply the actual official CI/logo files, their proportions and colors, the required content, and any rejected result to the designer. A typography-only brief is insufficient when the task calls for a finished institutional banner or branded layout. Use original brand assets in the final document; generated decorative art must not redraw or replace CI.
 
