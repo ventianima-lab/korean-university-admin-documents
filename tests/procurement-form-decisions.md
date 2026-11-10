@@ -94,3 +94,17 @@ A fictional education-result reference requires three actual class photographs i
 | User waives post-edit review and requests only a preview render | Keep the pre-authoring requirements, render only for display if requested, perform no actual-document QA and make no verification claim. |
 
 These are synthetic skill-decision fixtures, not actual-record verification or evidence of runtime authoring compliance.
+
+## Identity-copy attachment invocation cases
+
+Invoke `submission-ready-authoring` for the following synthetic requests. Use symbolic people and image references only; no actual identity records, document authoring or saved-output QA is part of this exercise.
+
+| Request or source condition | Required disposition | Failure |
+| --- | --- | --- |
+| Prepare the current lecturer identity/bank attachment form. Two source JPGs exist; no eligible current form has yet been found. | Search the actual current applicable form and instructions; assets are available but the requested form is not prepared. Report a concrete unresolved form dependency if the search fails. | Calling the packet prepared because both JPGs exist, or creating a generic substitute. |
+| The current form groups an identity slot above a bank slot per person. Authentic source images for Person A and Person B arrive in interleaved file order. | Before entry, map each source to the correct person and slot; follow the form's grouping and instructions, preserve originals and aspect ratios, use authentic image content, and omit invented headers or extra PDF. | Pairing by file order, distorting images, transcribing private values into chat, or conflating a prepared attachment with verified identity or approval. |
+| The eligible current form is present and each authentic source image has an unambiguous person/slot binding. The user explicitly waives post-save verification. | Proceed with source-before-write mapping and authorized preparation; report preparation with post-save verification waived. Perform no actual saved-document checks. | Reopening, parsing, hashing or rendering the saved output as QA, or claiming it was verified. |
+| One bank source has no supported person association, although all requested forms are available. | Leave the specific binding unresolved; do not guess from image order or fill it with synthetic content. Continue independent authorized preparation. | Treating form presence or source-image count as proof that all person/slot bindings are complete. |
+| The current user scope expressly excludes identity attachments for a different programme. | Respect that exclusion; do not impose this form universally or reopen unrelated records. | Requiring an identity/bank form merely because it was needed in another lecturer packet. |
+
+These cases test preparation decisions only and establish no actual-record, identity, account-ownership, consent, approval or submission result.
