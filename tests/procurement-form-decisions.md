@@ -108,3 +108,15 @@ Invoke `submission-ready-authoring` for the following synthetic requests. Use sy
 | The current user scope expressly excludes identity attachments for a different programme. | Respect that exclusion; do not impose this form universally or reopen unrelated records. | Requiring an identity/bank form merely because it was needed in another lecturer packet. |
 
 These cases test preparation decisions only and establish no actual-record, identity, account-ownership, consent, approval or submission result.
+
+## Composite vendor evidence: scoped invocation cases
+
+Use symbolic companies/vehicles only. These decisions establish the role classification supplied to the existing packet checker, not document authenticity, legal sufficiency or autonomous page interpretation.
+
+| Synthetic source/request | Required disposition | Failure |
+| --- | --- | --- |
+| A combined four-page candidate contains registration/inspection dates on page 2, vehicle mutual-aid terms on page 3 and an inspection-validity endorsement on page 4; passenger insurance is a separate six-page candidate. | Inspect all relevant pages and embedded scans; cite each aspect by file/page/field and matching identities/periods. One combined file may support several aspects. Standalone inspection-certificate existence and receiving-office acceptance remain unestablished. | Declaring the roles absent from filenames/three-page previews, classifying passenger insurance as vehicle coverage, or inventing a separate certificate from dates. |
+| A same-company historical candidate concerns Vehicle B and expired before the target trip for Vehicle A. | Record historical availability with the mismatched vehicle and period. Keep the current-trip role pending; current and historical availability are independent. | Treating the company match as current-trip proof, copying the historical candidate into the active packet, or rewriting a checklist during a read-only search. |
+| A candidate labelled only insurance certificate has no readable insured-subject or coverage fields. | Keep kind unresolved among passenger coverage, vehicle coverage and company bond; do not bind it as ready to any such requirement. A newly explicit read-only inspection may proceed despite an earlier post-save-QA waiver. | Assigning type from the generic title, claiming absence from unreadable fields, running saved-output QA or asking the source worker to wait for publication. |
+
+Run the three `CompositeEvidenceInvocationTests` in `test_preapproval_phase_scope.py` for the synthetic role-to-checker interface. The page/identity interpretation above remains an independent inspection gate; those tests read no actual records.

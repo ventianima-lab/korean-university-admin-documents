@@ -183,5 +183,58 @@ class TravelStageScopeTests(unittest.TestCase):
         self.assertEqual(check(candidate, preparation_scope=True)["status"], "PASS")
 
 
+class CompositeEvidenceInvocationTests(unittest.TestCase):
+    """Test supplied role decisions, not PDF interpretation or legal acceptance."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.combined = Path(self.temp.name) / "symbolic-combined.txt"
+        self.combined.write_text("Fictional page inventory only; no actual record.", encoding="utf-8")
+
+    def packet(self, roles, ready):
+        return {
+            "requirements": [{"id": r, "source": "Fictional scoped request"} for r in roles],
+            "artifacts": [{"id": r, "status": "ready", "paths": [str(self.combined)],
+                "verification": evidence} for r, evidence in ready.items()],
+            "expense_reviews": [{"category": "vendor evidence", "source": "Fictional scoped request",
+                "items": [{"label": r, "status": "required", "requirement_id": r} for r in roles]}],
+        }
+
+    def test_combined_role_presence_does_not_establish_standalone_certificate(self):
+        ready = {"registration": "Synthetic page 2 registration fields match target vehicle.",
+                 "vehicle-cover": "Synthetic page 3 mutual-aid subject and period match.",
+                 "inspection-date": "Synthetic page 4 validity endorsement; date evidence only."}
+        candidate = self.packet(list(ready), ready)
+        self.assertEqual(check(candidate)["status"], "PASS")
+        candidate = self.packet([*ready, "standalone-inspection-certificate"], ready)
+        result = check(candidate)
+        self.assertEqual(result["status"], "INCOMPLETE")
+        self.assertEqual(result["requirements"][-1]["status"], "missing_role")
+
+    def test_historical_wrong_vehicle_and_expired_period_cannot_fill_current_role(self):
+        candidate = self.packet(["current-vehicle-cover"], {
+            "historical-reference": "Same symbolic company; different vehicle; expired before target trip."})
+        # An unscoped historical role is rejected by the existing interface.
+        with self.assertRaisesRegex(ValueError, "absent from requirements"):
+            check(candidate)
+        candidate["artifacts"] = []  # Keep historical findings in the response inventory.
+        result = check(candidate)
+        self.assertEqual(result["status"], "INCOMPLETE")
+        self.assertEqual(result["requirements"][0]["status"], "missing_role")
+        self.assertTrue(self.combined.exists())  # Historical availability is independent.
+
+    def test_generic_insurance_kind_unresolved_leaves_distinct_roles_unfilled(self):
+        roles = ["passenger-cover", "vehicle-cover", "company-bond"]
+        candidate = self.packet(roles, {
+            "unclassified-insurance": "Generic label; subject and coverage unreadable; kind unresolved."})
+        with self.assertRaisesRegex(ValueError, "absent from requirements"):
+            check(candidate)
+        candidate["artifacts"] = []  # An unresolved kind is not a ready role binding.
+        result = check(candidate)
+        self.assertEqual(result["status"], "INCOMPLETE")
+        self.assertEqual([r["status"] for r in result["requirements"]], ["missing_role"] * 3)
+
+
 if __name__ == "__main__":
     unittest.main()
