@@ -78,3 +78,19 @@ A teaching report has a requested activity photograph and a separate requested t
 The current instruction assigns vendor contract execution to an administrative office after all covering letters are approved. A broadly labelled advance checklist includes a contract with an after-approval sealing qualifier. Inventory the trigger and owner before selecting current requirements: retain the future obligation outside the current preparation scope and do not call a signed department contract missing now. A separate vendor-requested unsigned information form remains required on its own terms. Unknown ownership stays pending; an actually missing current plan still blocks. Run `python tests/test_preapproval_phase_scope.py` for the six scoped-invocation fixtures; these validate checker behavior after independent classification, not autonomous interpretation of the source.
 
 A fictional vendor form has an author-fillable blank request date, a usage entry that the user explicitly corrects, an unrelated entered date and a genuinely signer-controlled blank date. Apply only the two authorized changes, preserve the other date fields and source originals, and use clean active filenames when requested. Keep the originals separately and revision provenance outside the clean filename. Fail if every blank date is filled, authentic evidence is silently overwritten, a revision suffix is forced against the user's naming instruction, or the edited copy is described as officially reissued, signed again or vendor-confirmed without evidence. Specific private dates and usages are not public examples.
+
+
+## Reference-defined main-page image groups
+
+A fictional education-result reference requires three actual class photographs in one horizontal row and nine teaching-slide images in a 3-by-3 grid, together on one main page. Build these expectations from the reference before composing the document; they are not universal form requirements. Exercise the following independent dispositions:
+
+| Proposed disposition | Expected decision |
+| --- | --- |
+| One large class photo and one readable slide on the main page; all 17 available source images in a nine-page appendix | Reject: appendix completeness and `main_uses_readable_representatives=true` do not satisfy either main-page group count. |
+| Three class photos and nine slide images on the main page, but photos stacked vertically | Reject: category counts pass while the specified horizontal photo row fails. |
+| Three projected-screen classroom photos used as the photo row and another nine classroom photos used as slides | Reject: image counts cannot replace the independent slide category. |
+| Three class photos in one row and nine slide images in a 3-by-3 grid, but the groups split across separate pages | Reject: shared main-page grouping fails. |
+| Both correct category grids on the same main page, preserving the reference table structure and relative density | Accept the proposed disposition; this synthetic decision does not verify an actual saved document. |
+| User waives post-edit review and requests only a preview render | Keep the pre-authoring requirements, render only for display if requested, perform no actual-document QA and make no verification claim. |
+
+These are synthetic skill-decision fixtures, not actual-record verification or evidence of runtime authoring compliance.
