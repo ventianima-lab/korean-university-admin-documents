@@ -9,3 +9,35 @@ On a sharing violation or apparent file lock, diagnose the exact path read-only 
 Use `finally` cleanup for task-opened documents and verified task-owned objects. Close/release only those resources; verify that a whole-object quit will not close pre-existing user documents. Never terminate all application processes, attach to an arbitrary active object to quit it, or infer authority to close an older automation instance from its command-line flags. Preserve other workers' instances and pre-existing user objects. A cleanup call returning, or an exception being swallowed, does not prove release; it also does not by itself establish a defect in the shared security guard.
 
 After the last native reopen/render/verification, complete cleanup and re-enumerate owners of every exact file opened by this run. Compare process identity using PID plus start time and the tracked object association, not a recycled PID. Require evidence that this run left no attributable new file lock; legitimate pre-existing locks need not disappear. Preserve the exact verified file bytes and final hash. If a task-attributable lock remains or the ownership/release check cannot be completed, report that precise unresolved cleanup status rather than claiming release or asking the user to close the same document again. This gate does not authorize modifying the source or closing any unowned object.
+
+## Strict-mode caller preflight
+
+A caller that dot-sources the guard inherits strict mode. An empty process baseline has no `.Id` property: materialize IDs by pipeline before COM creation, rather than using `$baseline.Id`. In the existing caller path, use this baseline block before creating its guarded object:
+
+<!-- ownership-baseline-start -->
+```powershell
+$baselineIds = @($baseline | ForEach-Object { [int]$_.Id })
+$owned = $false
+$ownerId = 0
+$ownerStart = $null
+```
+<!-- ownership-baseline-end -->
+
+After security registration and the same object's window-to-PID binding have succeeded, supply `$boundProcessId`, the independently read `$ownerProcess` and that object's `$initialDocumentCount`. Perform this binding block before log serialization, file hashing/opening, visibility changes or other unrelated throwing work:
+
+<!-- ownership-binding-start -->
+```powershell
+if ($boundProcessId -le 0 -or $ownerProcess.Id -ne $boundProcessId -or
+    $ownerProcess.ProcessName -ne 'Hwp' -or $boundProcessId -in $baselineIds) {
+    throw 'Unbound or pre-existing process; no file access or quit authorized.'
+}
+if ($initialDocumentCount -ne 1) {
+    throw 'Initial document scope is not exclusive; preserve the unowned object.'
+}
+$ownerId = [int]$boundProcessId
+$ownerStart = $ownerProcess.StartTime
+$owned = $true
+```
+<!-- ownership-binding-end -->
+
+Keep creation and binding inside the same `try/finally`. Only after this block may the caller write its ownership evidence and proceed; if evidence writing fails, `finally` still has the bound identity for scoped cleanup. Recheck that identity and document scope before a whole-object quit. Unbound/shared objects remain unresolved and must not be quit speculatively. A run-local mutex serializes only callers using that exact mutex; do not describe it as a global canonical lock unless a verified shared implementation exists. Run `scripts/test_hancom_owner_preflight.ps1` for zero/one-baseline and post-binding-failure regressions without launching Hancom. This test proves the caller pattern, not native application opening or process exit.

@@ -5,7 +5,7 @@ description: Create, revise, inspect, repair, render, and verify Hancom HWPX doc
 
 # Hancom HWPX documents
 
-For document creation or completion, apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md): complete all writable inputs and attachments, honor standing red-marking instructions, and preserve exact provenance and template colors. A draft label does not waive input coverage; review-only work remains read-only.
+For institutional-form creation, completion or revision, mandatorily apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md): complete all writable inputs and attachments, honor standing red-marking instructions, and preserve exact provenance and template colors. A draft label does not waive input coverage; review-only work remains read-only.
 
 
 For supplied vendor forms and attendee/sign-in rosters, invoke the original-master identity inventory and explicit whole-record role-order route in [references/procurement-forms.md](references/procurement-forms.md) before reconstruction or row movement. A previously generated blank/generic draft is not the supplied master.
