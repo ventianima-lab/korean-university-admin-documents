@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -91,6 +92,150 @@ class EventOutputGroupingTest(unittest.TestCase):
                                        'paths': [str(current)], 'verification': 'Unrequested split'})
             with self.assertRaisesRegex(ValueError, 'absent from requirements'):
                 packet.audit(split)
+
+
+class OutputGroupGateTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.packet_dir = self.root / 'packet'
+        self.packet_dir.mkdir()
+        self.attendance = self.packet_dir / 'attendance.txt'
+        self.attendance.write_text('Synthetic shared attendance', encoding='utf-8')
+        self.manifest = {
+            'requirements': [{'id': name, 'source': 'Synthetic reviewed event and cost rules'}
+                             for name in ('class', 'refreshments')],
+            'artifacts': [{'id': name, 'status': 'ready', 'paths': [str(self.attendance)],
+                           'verification': 'Synthetic session and population inspected'}
+                          for name in ('class', 'refreshments')],
+            'expense_reviews': [{'category': name, 'source': 'Synthetic cost rules',
+                                 'items': [{'label': 'attendance', 'status': 'required',
+                                            'requirement_id': name}]}
+                                for name in ('class', 'refreshments')],
+            'output_group_check': {
+                'packet_directory': str(self.packet_dir), 'active_files': [],
+                'groups': [{'id': 'event-attendance',
+                            'source': 'Synthetic reviewed authority: one shared session/population output',
+                            'requirement_ids': ['class', 'refreshments'], 'expected_file_count': 1}]
+            }
+        }
+        self.snapshot()
+
+    def snapshot(self):
+        self.manifest['output_group_check']['active_files'] = [
+            {'path': str(p), 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+            for p in self.packet_dir.rglob('*') if p.is_file()]
+
+    def audit(self):
+        return packet.audit(self.manifest, output_group_check=True)
+
+    def problems(self):
+        return {i['problem'] for i in self.audit()['output_group_issues']}
+
+    def split(self):
+        other = self.packet_dir / 'refreshments.txt'
+        other.write_bytes(self.attendance.read_bytes())
+        self.manifest['artifacts'][1]['paths'] = [str(other)]
+        self.snapshot()
+        return other
+
+    def test_two_cost_roles_reuse_one_path(self):
+        self.assertEqual(self.audit()['status'], 'PASS')
+        self.assertEqual(self.problems(), set())
+
+    def test_duplicate_files_even_identical_bytes_cannot_satisfy_one_output(self):
+        self.split()
+        # The previous API passes this independently plausible two-ID manifest.
+        self.assertEqual(packet.audit(self.manifest)['status'], 'PASS')
+        self.assertEqual(self.audit()['status'], 'INCOMPLETE')
+        self.assertIn('output_group_file_count_mismatch', self.problems())
+
+    def test_independently_authorized_two_outputs_can_pass(self):
+        self.split()
+        group = self.manifest['output_group_check']['groups'][0]
+        group['source'] = 'Synthetic office instruction explicitly requires separate participant confirmations'
+        group['expected_file_count'] = 2
+        self.assertEqual(self.audit()['status'], 'PASS')
+
+    def test_file_omitted_from_both_manifest_and_snapshot_is_detected(self):
+        nested = self.packet_dir / 'nested'
+        nested.mkdir()
+        (nested / 'unrequested-copy.txt').write_bytes(self.attendance.read_bytes())
+        self.assertIn('active_file_unlisted', self.problems())
+        self.assertIn('active_file_unmapped', self.problems())
+
+    def test_snapshotted_but_unmapped_extra_file_is_detected(self):
+        (self.packet_dir / 'extra.txt').write_text('Synthetic extra', encoding='utf-8')
+        self.snapshot()
+        self.assertIn('active_file_unmapped', self.problems())
+        self.assertNotIn('active_file_unlisted', self.problems())
+
+    def test_stale_hash_and_removed_file_are_detected(self):
+        self.attendance.write_text('Synthetic changed content', encoding='utf-8')
+        self.assertIn('active_snapshot_hash_mismatch', self.problems())
+        self.attendance.unlink()
+        self.assertIn('active_snapshot_file_missing', self.problems())
+        self.assertIn('group_file_missing', self.problems())
+
+    def test_reviewed_retained_record_does_not_need_an_expense_role(self):
+        original = self.packet_dir / 'retained-original.txt'
+        original.write_text('Synthetic original', encoding='utf-8')
+        self.manifest['output_group_check']['retained_records'] = [
+            {'path': 'retained-original.txt', 'source': 'Synthetic explicit instruction to retain original'}]
+        self.snapshot()
+        self.assertEqual(self.audit()['status'], 'PASS')
+
+    def test_pending_actual_evidence_does_not_mask_group_check_result(self):
+        self.manifest['requirements'].append({'id': 'actual_receipt', 'source': 'Synthetic cost rules'})
+        self.manifest['artifacts'].append({'id': 'actual_receipt', 'status': 'pending', 'paths': [],
+                                           'verification': 'Actual receipt remains outstanding'})
+        result = self.audit()
+        self.assertEqual(result['status'], 'INCOMPLETE')
+        self.assertEqual(result['output_group_issues'], [])
+
+    def test_new_role_cannot_hide_its_file_as_retained_record(self):
+        self.split()
+        check = self.manifest['output_group_check']
+        check['groups'][0]['requirement_ids'] = ['class']
+        check['retained_records'] = [{'path': self.manifest['artifacts'][1]['paths'][0],
+                                      'source': 'Synthetic attempted retained-record bypass'}]
+        self.assertIn('active_artifact_requirement_ungrouped', self.problems())
+
+    def test_invalid_group_authority_count_and_membership_are_rejected(self):
+        base = copy.deepcopy(self.manifest)
+        for field, value in [('source', ''), ('expected_file_count', True),
+                             ('expected_file_count', -1), ('requirement_ids', ['missing']),
+                             ('requirement_ids', ['class', 'class'])]:
+            with self.subTest(field=field, value=value):
+                self.manifest = copy.deepcopy(base)
+                self.manifest['output_group_check']['groups'][0][field] = value
+                with self.assertRaises(ValueError):
+                    self.audit()
+
+    def test_snapshot_path_escape_and_missing_opt_in_schema_are_rejected(self):
+        self.manifest['output_group_check']['active_files'][0]['path'] = '../outside.txt'
+        with self.assertRaisesRegex(ValueError, 'escapes'):
+            self.audit()
+        del self.manifest['output_group_check']
+        self.assertEqual(packet.audit(self.manifest)['status'], 'PASS')
+        with self.assertRaisesRegex(ValueError, 'must be an object'):
+            self.audit()
+
+    def test_cli_opt_in_pass_and_duplicate_failure(self):
+        manifest_path = self.root / 'manifest.json'
+        def run():
+            manifest_path.write_text(json.dumps(self.manifest), encoding='utf-8')
+            return subprocess.run([sys.executable, str(module_path), str(manifest_path), '--output-group-check'],
+                                  capture_output=True, text=True, encoding='utf-8',
+                                  creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        good = run()
+        self.assertEqual(good.returncode, 0, good.stderr)
+        self.assertEqual(json.loads(good.stdout)['output_group_issues'], [])
+        self.split()
+        bad = run()
+        self.assertEqual(bad.returncode, 1, bad.stderr)
+        self.assertIn('output_group_file_count_mismatch', bad.stdout)
 
 
 class UserManagedPreparationTest(unittest.TestCase):

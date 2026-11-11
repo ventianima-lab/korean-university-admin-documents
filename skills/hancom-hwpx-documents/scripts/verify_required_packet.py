@@ -531,9 +531,125 @@ def check_planned_rosters(rosters, artifacts):
     return issues
 
 
+def check_output_groups(check, requirements, artifacts):
+    """Check reviewed group counts against a fresh, exhaustive on-disk snapshot.
+
+    This checks the supplied authority, not its authenticity or institutional
+    acceptance. Pending evidence remains pending in the enclosing packet audit.
+    """
+    if not isinstance(check, dict):
+        raise ValueError('output_group_check must be an object')
+    directory = check.get('packet_directory')
+    if not isinstance(directory, str) or not directory.strip():
+        raise ValueError('output groups need packet_directory')
+    root = Path(directory).resolve(strict=True)
+    if not root.is_dir():
+        raise ValueError('packet_directory must be a directory')
+    snapshots, groups = check.get('active_files'), check.get('groups')
+    retained = check.get('retained_records', [])
+    if not isinstance(snapshots, list) or not isinstance(groups, list) or not groups or not isinstance(retained, list):
+        raise ValueError('output groups need active_files, nonempty groups and optional retained_records lists')
+    issues = []
+
+    def issue(problem, **detail):
+        issues.append(dict(problem=problem, **detail))
+
+    def active_path(value):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError('output-group file paths must be nonempty strings')
+        path = Path(value)
+        path = (path if path.is_absolute() else root / path).resolve()
+        if not path.is_relative_to(root):
+            raise ValueError('output-group file path escapes packet_directory')
+        return path
+
+    # No filename, extension, hidden-file or subdirectory allowlist: omitting a
+    # duplicate from the manifest must not omit it from the actual inventory.
+    actual = set()
+    for path in root.rglob('*'):
+        if path.is_symlink():
+            issue('active_symlink_unverifiable', path=str(path))
+        elif path.is_file():
+            actual.add(active_path(str(path)))
+    listed = set()
+    for item in snapshots:
+        if not isinstance(item, dict):
+            raise ValueError('active_files entries must be objects')
+        path = active_path(item.get('path'))
+        digest = item.get('sha256')
+        if not isinstance(digest, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', digest):
+            raise ValueError('active_files entries need SHA-256')
+        if path in listed:
+            issue('active_snapshot_duplicate', path=str(path))
+        listed.add(path)
+        if path in actual and hashlib.sha256(path.read_bytes()).hexdigest() != digest.lower():
+            issue('active_snapshot_hash_mismatch', path=str(path))
+    for path in sorted(actual - listed):
+        issue('active_file_unlisted', path=str(path))
+    for path in sorted(listed - actual):
+        issue('active_snapshot_file_missing', path=str(path))
+
+    by_id = {item['id']: item for item in artifacts}
+    known = {item['id'] for item in requirements}
+    group_ids, assigned, mapped = set(), set(), set()
+    for group in groups:
+        if not isinstance(group, dict):
+            raise ValueError('output groups must be objects')
+        key, source = group.get('id'), group.get('source')
+        ids, expected = group.get('requirement_ids'), group.get('expected_file_count')
+        if (not isinstance(key, str) or not key.strip() or key in group_ids
+                or not isinstance(source, str) or not source.strip()
+                or not isinstance(ids, list) or not ids
+                or any(not isinstance(i, str) or i not in known for i in ids)
+                or len(set(ids)) != len(ids)
+                or type(expected) is not int or expected < 0):
+            raise ValueError('group needs unique id, source, known requirement_ids and nonnegative expected_file_count')
+        group_ids.add(key)
+        overlap = assigned.intersection(ids)
+        if overlap:
+            issue('requirement_in_multiple_output_groups', group=key, requirement_ids=sorted(overlap))
+        assigned.update(ids)
+        paths = set()
+        for req in ids:
+            for raw in by_id.get(req, {}).get('paths', []):
+                # Artifact paths retain their existing audit API semantics.
+                path = Path(raw).resolve()
+                if not path.is_relative_to(root):
+                    issue('group_artifact_outside_packet', group=key, path=str(path))
+                else:
+                    paths.add(path)
+        if len(paths) != expected:
+            issue('output_group_file_count_mismatch', group=key, expected=expected,
+                  observed=len(paths), paths=sorted(map(str, paths)))
+        for path in sorted(paths - actual):
+            issue('group_file_missing', group=key, path=str(path))
+        mapped.update(paths)
+
+    # An artifact cannot be hidden from its group by declaring it a retained
+    # record. External/pending roles with no active paths need no output group.
+    for item in artifacts:
+        for raw in item.get('paths', []):
+            path = Path(raw).resolve()
+            if path.is_relative_to(root) and item['id'] not in assigned:
+                issue('active_artifact_requirement_ungrouped', requirement_id=item['id'], path=str(path))
+    retained_paths = set()
+    for item in retained:
+        if not isinstance(item, dict) or not isinstance(item.get('source'), str) or not item['source'].strip():
+            raise ValueError('retained record needs path and independent source authorization')
+        path = active_path(item.get('path'))
+        if path in retained_paths or path in mapped:
+            issue('retained_record_duplicate_or_grouped', path=str(path))
+        retained_paths.add(path)
+    for path in sorted(retained_paths - actual):
+        issue('retained_record_missing', path=str(path))
+    for path in sorted(actual - mapped - retained_paths):
+        issue('active_file_unmapped', path=str(path))
+    return issues
+
+
 def audit(manifest, advance_source_check=False, attachment_check=False, planned_roster_check=False,
           role_expense_check=False, preparation_scope=False, attachment_template_check=False,
-          attachment_order_check=False):
+          attachment_order_check=False, output_group_check=False):
     requirements = manifest.get('requirements')
     artifacts = manifest.get('artifacts')
     if not isinstance(requirements, list) or not requirements or not isinstance(artifacts, list):
@@ -659,11 +775,13 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
         roster_paths = {Path(roster['path']).resolve() for roster in manifest['planned_rosters']}
         if planned_paths != roster_paths:
             roster_issues.append({'problem': 'planned_roster_attachment_mapping_mismatch'})
+    group_issues = (check_output_groups(manifest.get('output_group_check'), requirements, artifacts)
+                    if output_group_check else [])
     acceptable = {'ready', 'not_applicable'}
     if preparation_scope:
         acceptable.add('user_managed')
     complete = (not source_issues and not expense_issues and not attachment_issues and not order_issues and not template_issues and not roster_issues
-                and not role_issues
+                and not role_issues and not group_issues
                 and all(r['status'] in acceptable and
                         not r['missing_files'] and not r['title_band_issues'] for r in results))
     result = {'status': 'PASS' if complete else 'INCOMPLETE', 'requirements': results,
@@ -682,6 +800,8 @@ def audit(manifest, advance_source_check=False, attachment_check=False, planned_
         result['planned_roster_issues'] = roster_issues
     if role_check_enabled:
         result['role_expense_issues'] = role_issues
+    if output_group_check:
+        result['output_group_issues'] = group_issues
     return result
 
 
@@ -702,11 +822,14 @@ def main():
                    help='independently reconcile role conditions, payment triggers, and saved role labels')
     p.add_argument('--preparation-scope', action='store_true',
                    help='check authorized preparation; user-managed roles do not imply attachment or submission')
+    p.add_argument('--output-group-check', action='store_true',
+                   help='check reviewed unique output counts and exhaustive hashed active-directory inventory')
     args = p.parse_args()
     try:
         result = audit(json.loads(args.manifest.read_text(encoding='utf-8-sig')), args.advance_source_check,
                        args.attachment_check, args.planned_roster_check, args.role_expense_check,
-                       args.preparation_scope, args.attachment_template_check, args.attachment_order_check)
+                       args.preparation_scope, args.attachment_template_check, args.attachment_order_check,
+                       args.output_group_check)
     except (OSError, ValueError, KeyError, TypeError, BadZipFile, ET.ParseError, IndexError) as error:
         p.exit(2, f'PACKET_INVENTORY_ERROR: {error}\n')
     print(json.dumps(result, ensure_ascii=False))
