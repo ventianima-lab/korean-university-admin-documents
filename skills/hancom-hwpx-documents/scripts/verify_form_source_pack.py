@@ -11,6 +11,8 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+from zipfile import BadZipFile
+import xml.etree.ElementTree as ET
 
 
 def text(value, label):
@@ -65,7 +67,7 @@ def aliases(a, b):
     return a == b or (a.exists() and b.exists() and a.samefile(b))
 
 
-def check_pack(inventory, pack, active_dir):
+def check_pack(inventory, pack, active_dir, guidance_check=False, guidance_evidence=None):
     """Return issues; invalid/incomplete manifests raise ValueError or OSError."""
     if not isinstance(inventory, dict) or not isinstance(pack, dict):
         raise ValueError('inventory and pack must be objects')
@@ -180,6 +182,28 @@ def check_pack(inventory, pack, active_dir):
             if sha == hashes[sid] or aliases(path, original_paths[sid]):
                 issue('whole_manual_is_not_extracted_form', rid)
             text(mapped.get('extraction_review'), f'{rid}.extraction_review')
+        if guidance_check and path.suffix.lower() == '.hwpx':
+            spec_path = mapped.get('guidance_spec')
+            if spec_path is None:
+                issue('annotated_official_guidance_spec_missing', rid)
+            else:
+                try:
+                    from verify_form_guidance import check_guidance
+                    guidance_path = absolute(spec_path, f'{rid}.guidance_spec')
+                    guidance_raw = guidance_path.read_bytes()
+                    guidance = json.loads(guidance_raw.decode('utf-8-sig'))
+                    record = {'id': rid, 'spec_sha256': hashlib.sha256(guidance_raw).hexdigest(),
+                              'source_sha256': hashes[sid], 'blank_sha256': sha, 'status': 'FAILED'}
+                    if guidance_evidence is not None:
+                        guidance_evidence.append(record)
+                    if not isinstance(guidance, dict) or guidance.get('stage') != 'blank':
+                        raise ValueError('source-pack guidance stage must be blank')
+                    guidance_issues = check_guidance(guidance, source_override=original_paths[sid], target_override=path)
+                    record['status'] = 'FAILED' if guidance_issues else 'PASSED'
+                    for problem in guidance_issues:
+                        issues.append({'problem': 'official_guidance_check_failed', 'id': rid, 'detail': problem})
+                except (OSError, ValueError, TypeError, KeyError, RuntimeError, BadZipFile, ET.ParseError) as error:
+                    issues.append({'problem': 'official_guidance_check_unverifiable', 'id': rid, 'detail': str(error)})
     for rid in forms.keys() - required:
         issue('mapped_form_not_currently_required', rid)
     if not required:
@@ -192,8 +216,10 @@ def main():
     parser.add_argument('--inventory', required=True, type=Path)
     parser.add_argument('--pack', required=True, type=Path)
     parser.add_argument('--active-dir', required=True, type=Path)
+    parser.add_argument('--guidance-check', action='store_true', help='require annotated-original guidance/table checks for each HWPX blank')
     args = parser.parse_args()
     binding = {}
+    guidance_evidence = []
     try:
         inv_bytes, pack_bytes = args.inventory.read_bytes(), args.pack.read_bytes()
         inventory = json.loads(inv_bytes.decode('utf-8-sig'))
@@ -203,11 +229,14 @@ def main():
                    'active_dir': str(args.active_dir.resolve()),
                    'event_id': inventory.get('event_id') if isinstance(inventory, dict) else None,
                    'phase': inventory.get('phase') if isinstance(inventory, dict) else None}
-        issues = check_pack(inventory, pack, args.active_dir)
+        issues = check_pack(inventory, pack, args.active_dir, guidance_check=args.guidance_check,
+                            guidance_evidence=guidance_evidence)
     except (OSError, ValueError, TypeError, RuntimeError) as error:
         issues = [{'problem': 'invalid_or_unreadable_preflight', 'detail': str(error)}]
     result = {'gate': 'FORM_SOURCE_PACK', 'status': 'FAILED' if issues else 'PASSED',
               'issues': issues, 'scope': 'pre-write declared source-pack coverage only',
+              'guidance_checked': args.guidance_check,
+              'guidance_checks': guidance_evidence,
               'checked_at_utc': datetime.now(timezone.utc).isoformat(), **binding}
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 1 if issues else 0

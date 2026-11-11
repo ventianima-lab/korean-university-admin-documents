@@ -1,4 +1,4 @@
 interface:
   display_name: "Complete Document Authoring"
   short_description: "Complete forms and verify authorized red choices."
-  default_prompt: "Use $submission-ready-authoring with the format-specific skill: inspect established grouping, pass the active event official form-source-pack preflight before authoring, then complete and verify authorized inputs and attachments while preserving user-reserved fields."
+  default_prompt: "Use $submission-ready-authoring with the format skill: preserve grouping, pass the source pack and HWPX --guidance-check before writing, follow every original memo/inline instruction, and preserve official structure, latest live content and user-reserved fields."
