@@ -21,6 +21,10 @@ foreach ($case in $cases) {
     $baseline = @($case.Existing)
     . $baselineBlock
     if ($baselineIds.Count -ne $baseline.Count) { throw 'Baseline identity loss' }
+    if (-not $baselineJson.Trim().StartsWith('[') -or -not $baselineJson.Trim().EndsWith(']')) { throw 'Baseline must serialize as a JSON array, including zero/one records' }
+    $roundTrip = @(ConvertFrom-Json -InputObject $baselineJson)
+    $roundTripIds = @($roundTrip | ForEach-Object { [int]$_.Id })
+    if ($roundTrip.Count -ne $baseline.Count -or ($roundTripIds -join ',') -ne ($baselineIds -join ',')) { throw 'Baseline JSON round-trip lost process identities' }
     $boundProcessId = $case.Bound
     $ownerProcess = [pscustomobject]@{Id=$case.Bound; ProcessName='Hwp'; StartTime=[datetime]'2020-01-01Z'}
     $initialDocumentCount = $case.Count

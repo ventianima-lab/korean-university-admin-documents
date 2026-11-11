@@ -12,11 +12,12 @@ After the last native reopen/render/verification, complete cleanup and re-enumer
 
 ## Strict-mode caller preflight
 
-A caller that dot-sources the guard inherits strict mode. An empty process baseline has no `.Id` property: materialize IDs by pipeline before COM creation, rather than using `$baseline.Id`. In the existing caller path, use this baseline block before creating its guarded object:
+A caller that dot-sources the guard inherits strict mode. An empty process baseline has no `.Id` property: materialize IDs by pipeline before COM creation, rather than using `$baseline.Id`. Serialize with `ConvertTo-Json -InputObject @($baseline)`, since piping an empty baseline can produce no JSON instead of `[]`. In the existing caller path, use this baseline block before creating its guarded object:
 
 <!-- ownership-baseline-start -->
 ```powershell
 $baselineIds = @($baseline | ForEach-Object { [int]$_.Id })
+$baselineJson = ConvertTo-Json -InputObject @($baseline) -Depth 4
 $owned = $false
 $ownerId = 0
 $ownerStart = $null
@@ -40,4 +41,4 @@ $owned = $true
 ```
 <!-- ownership-binding-end -->
 
-Keep creation and binding inside the same `try/finally`. Only after this block may the caller write its ownership evidence and proceed; if evidence writing fails, `finally` still has the bound identity for scoped cleanup. Recheck that identity and document scope before a whole-object quit. Unbound/shared objects remain unresolved and must not be quit speculatively. A run-local mutex serializes only callers using that exact mutex; do not describe it as a global canonical lock unless a verified shared implementation exists. Run `scripts/test_hancom_owner_preflight.ps1` for zero/one-baseline and post-binding-failure regressions without launching Hancom. This test proves the caller pattern, not native application opening or process exit.
+Keep creation and binding inside the same `try/finally`. Only after this block may the caller write its ownership evidence and proceed; if evidence writing fails, `finally` still has the bound identity for scoped cleanup. Recheck that identity and document scope before a whole-object quit. Unbound/shared objects remain unresolved and must not be quit speculatively. A run-local mutex serializes only callers using that exact mutex; do not describe it as a global canonical lock unless a verified shared implementation exists. Run `scripts/test_hancom_owner_preflight.ps1` for zero/one-baseline ID extraction, JSON array round-trips and post-binding-failure regressions without launching Hancom. This test proves the caller pattern, not native application opening or process exit.
