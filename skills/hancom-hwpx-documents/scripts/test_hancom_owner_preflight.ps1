@@ -22,7 +22,7 @@ foreach ($case in $cases) {
     . $baselineBlock
     if ($baselineIds.Count -ne $baseline.Count) { throw 'Baseline identity loss' }
     if (-not $baselineJson.Trim().StartsWith('[') -or -not $baselineJson.Trim().EndsWith(']')) { throw 'Baseline must serialize as a JSON array, including zero/one records' }
-    $roundTrip = @(ConvertFrom-Json -InputObject $baselineJson)
+    $roundTrip = @(foreach ($record in (ConvertFrom-Json -InputObject $baselineJson)) { $record })
     $roundTripIds = @($roundTrip | ForEach-Object { [int]$_.Id })
     if ($roundTrip.Count -ne $baseline.Count -or ($roundTripIds -join ',') -ne ($baselineIds -join ',')) { throw 'Baseline JSON round-trip lost process identities' }
     $boundProcessId = $case.Bound
