@@ -217,3 +217,56 @@ def check_person_record_order(source_records, output_records, role_order, key_fi
     if output_records != expected:
         raise ValueError('Whole-person record association or instructed order mismatch')
     return {'status': 'PASS', 'records': len(expected), 'scope': 'Provided records only'}
+
+
+def check_person_record_change(source_records, output_records, *, operation,
+                               key_field, target_keys, expected_dependencies,
+                               output_dependencies, name_edits=None):
+    """Check one independently resolved population; never read/write documents.
+
+    Dependencies map precise inventoried locations to expected/actual values.
+    Reserved keys headcount and premium_total additionally check source records.
+    Premiums use integer minor units; None means an unresolved issuer amount.
+    The caller resolves intent, full inventory, source authority and adjustments.
+    This helper handles an unadjusted sum only, never an insurance transaction.
+    """
+    if operation not in {'exclude_person', 'correct_name'}:
+        raise ValueError('Explicit person operation required')
+    keys = [record[key_field] for record in source_records]
+    targets = set(target_keys)
+    if (not targets or len(keys) != len(set(keys)) or any(not key for key in keys)
+            or not targets <= set(keys)):
+        raise ValueError('Unique source keys and known target keys required')
+    edits = name_edits or {}
+    if operation == 'exclude_person':
+        if edits:
+            raise ValueError('Name edits cannot substitute for person exclusion')
+        expected = [dict(record) for record in source_records
+                    if record[key_field] not in targets]
+    else:
+        if set(edits) != targets or any(not value for value in edits.values()):
+            raise ValueError('Exact authorized name edits required')
+        expected = [dict(record, **{'name': edits[record[key_field]]})
+                    if record[key_field] in targets else dict(record)
+                    for record in source_records]
+    if output_records != expected:
+        raise ValueError('Whole-person membership or protected record mismatch')
+    if not expected_dependencies or set(expected_dependencies) != set(output_dependencies):
+        raise ValueError('Independent dependency inventory coverage mismatch')
+    if ('headcount' in expected_dependencies
+            and expected_dependencies['headcount'] != len(expected)):
+        raise ValueError('Expected headcount contradicts retained population')
+    premium_status = 'not_in_scope'
+    if 'premium_total' in expected_dependencies:
+        amounts = [record.get('premium') for record in expected]
+        if any(amount is not None and (type(amount) is not int or amount < 0)
+               for amount in amounts):
+            raise ValueError('Source premiums must be integer minor units or unknown')
+        total = None if any(amount is None for amount in amounts) else sum(amounts)
+        if expected_dependencies['premium_total'] != total:
+            raise ValueError('Premium must use actual retained source amounts, never proration')
+        premium_status = 'issuer_dependency' if total is None else 'source_sum_only'
+    if output_dependencies != expected_dependencies:
+        raise ValueError('Linked current dependency mismatch')
+    return {'status': 'PASS', 'records': len(expected),
+            'premium_status': premium_status, 'scope': 'Provided values only; no backend verification'}
