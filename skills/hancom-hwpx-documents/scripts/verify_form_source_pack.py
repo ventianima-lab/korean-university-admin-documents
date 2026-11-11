@@ -57,6 +57,9 @@ def digest(path):
     return sha.hexdigest()
 
 
+CHECKER_SHA256 = digest(Path(__file__))
+
+
 def expected_hash(value, label):
     if not isinstance(value, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', value):
         raise ValueError(f"{label}: SHA-256 required")
@@ -188,12 +191,13 @@ def check_pack(inventory, pack, active_dir, guidance_check=False, guidance_evide
                 issue('annotated_official_guidance_spec_missing', rid)
             else:
                 try:
-                    from verify_form_guidance import check_guidance
+                    from verify_form_guidance import check_guidance, CHECKER_SHA256 as guidance_checker_sha256
                     guidance_path = absolute(spec_path, f'{rid}.guidance_spec')
                     guidance_raw = guidance_path.read_bytes()
                     guidance = json.loads(guidance_raw.decode('utf-8-sig'))
                     record = {'id': rid, 'spec_sha256': hashlib.sha256(guidance_raw).hexdigest(),
-                              'source_sha256': hashes[sid], 'blank_sha256': sha, 'status': 'FAILED'}
+                              'source_sha256': hashes[sid], 'blank_sha256': sha, 'status': 'FAILED',
+                              'checker_sha256': guidance_checker_sha256}
                     if guidance_evidence is not None:
                         guidance_evidence.append(record)
                     if not isinstance(guidance, dict) or guidance.get('stage') != 'blank':
@@ -234,6 +238,7 @@ def main():
     except (OSError, ValueError, TypeError, RuntimeError) as error:
         issues = [{'problem': 'invalid_or_unreadable_preflight', 'detail': str(error)}]
     result = {'gate': 'FORM_SOURCE_PACK', 'status': 'FAILED' if issues else 'PASSED',
+              'checker_sha256': CHECKER_SHA256,
               'issues': issues, 'scope': 'pre-write declared source-pack coverage only',
               'guidance_checked': args.guidance_check,
               'guidance_checks': guidance_evidence,

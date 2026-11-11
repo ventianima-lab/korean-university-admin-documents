@@ -12,8 +12,13 @@ from pathlib import Path
 import re
 from zipfile import ZipFile, BadZipFile
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 
+import verify_form_source_pack as source_pack_helpers
 from verify_form_source_pack import absolute, expected_hash, text, indexed, rows, digest
+
+CHECKER_SHA256 = digest(Path(__file__))
+SOURCE_PACK_DEPENDENCY_SHA256 = digest(Path(source_pack_helpers.__file__))
 
 
 def local(tag):
@@ -479,6 +484,9 @@ def main():
     except (OSError, ValueError, TypeError, KeyError, RuntimeError, BadZipFile, ET.ParseError) as error:
         result = {'gate': 'FORM_GUIDANCE', 'status': 'FAILED', 'issues': [str(error)]}
         code = 1
+    result.update(checker_sha256=CHECKER_SHA256,
+                  source_pack_dependency_sha256=SOURCE_PACK_DEPENDENCY_SHA256,
+                  checked_at_utc=datetime.now(timezone.utc).isoformat())
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return code
 

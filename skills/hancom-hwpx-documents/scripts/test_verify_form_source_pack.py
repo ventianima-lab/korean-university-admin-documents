@@ -181,6 +181,7 @@ class SourcePackTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['event_id'], self.inventory['event_id'])
         self.assertEqual(json.loads(result.stdout)['inventory_sha256'], digest(inv))
         self.assertEqual(json.loads(result.stdout)['pack_sha256'], digest(pack))
+        self.assertEqual(json.loads(result.stdout)['checker_sha256'], digest(Path(__file__).with_name('verify_form_source_pack.py')))
         self.pack['forms'].pop()
         pack.write_text(json.dumps(self.pack), encoding='utf-8-sig')
         result = subprocess.run(command, capture_output=True, text=True)

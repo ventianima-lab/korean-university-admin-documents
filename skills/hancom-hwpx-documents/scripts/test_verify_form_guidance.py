@@ -303,6 +303,9 @@ class GuidanceTests(unittest.TestCase):
         self.assertEqual(data['status'], 'PASSED')
         self.assertEqual(data['target_sha256'], digest(self.target))
         self.assertEqual(data['spec_sha256'], digest(specfile))
+        self.assertEqual(data['checker_sha256'], digest(Path(__file__).with_name('verify_form_guidance.py')))
+        self.assertEqual(data['source_pack_dependency_sha256'], digest(Path(__file__).with_name('verify_form_source_pack.py')))
+        self.assertTrue(data['checked_at_utc'].endswith('+00:00'))
         changed = copy.deepcopy(self.xml)
         changed.remove(changed[2])
         package(self.target, changed)
@@ -310,6 +313,28 @@ class GuidanceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout)['status'], 'FAILED')
         self.assertNotIn('Traceback', result.stderr)
+
+    def test_cli_binds_checker_version_when_inputs_and_target_are_unchanged(self):
+        clone = self.root/'runtime-copy'
+        clone.mkdir()
+        for name in ('verify_form_guidance.py', 'verify_form_source_pack.py'):
+            (clone/name).write_bytes(Path(__file__).with_name(name).read_bytes())
+        specfile = self.root/'unchanged-inputs.json'
+        specfile.write_text(json.dumps(self.spec), encoding='utf-8')
+        script = clone/'verify_form_guidance.py'
+        command = [sys.executable, '-B', str(script), '--spec', str(specfile)]
+        first = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        original = json.loads(first.stdout)
+        script.write_bytes(script.read_bytes() + b'\n# synthetic reporting-version change\n')
+        second = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+        changed = json.loads(second.stdout)
+        self.assertNotEqual(original['checker_sha256'], changed['checker_sha256'])
+        self.assertEqual(changed['checker_sha256'], digest(script))
+        self.assertEqual(original['spec_sha256'], changed['spec_sha256'])
+        self.assertEqual(original['target_sha256'], changed['target_sha256'])
+        self.assertEqual(original['source_pack_dependency_sha256'], changed['source_pack_dependency_sha256'])
 
     def test_pack_guidance_flag_enforces_review_and_official_original_binding(self):
         active = self.root/'active-realpack'
