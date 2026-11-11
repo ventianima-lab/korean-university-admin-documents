@@ -1,5 +1,5 @@
 interface:
   display_name: "Hancom HWPX Documents"
   short_description: "Create and repair print-ready HWPX forms."
-  default_prompt: "Use $hancom-hwpx-documents to create or revise a print-ready Hancom HWPX document."
+  default_prompt: "Use $hancom-hwpx-documents to create or revise HWPX: before writing, inspect or reuse the active event form-source pack and pass the source-bound applicability, copy-hash and full-role preflight; preserve working finals and user-reserved fields."
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "Complete Document Authoring"
   short_description: "Complete forms and verify authorized red choices."
-  default_prompt: "Use $submission-ready-authoring with the format-specific skill: inspect and preserve established folder and packet grouping before organization questions, then complete and verify all inputs, attachments and output destinations."
+  default_prompt: "Use $submission-ready-authoring with the format-specific skill: inspect established grouping, pass the active event official form-source-pack preflight before authoring, then complete and verify authorized inputs and attachments while preserving user-reserved fields."
