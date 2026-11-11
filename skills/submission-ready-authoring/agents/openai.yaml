@@ -1,4 +1,4 @@
 interface:
   display_name: "Complete Document Authoring"
   short_description: "Complete forms and verify authorized red choices."
-  default_prompt: "Use $submission-ready-authoring with the format-preservation skill for every institutional form: retain the complete per-business source pack before writing, inspect all instruction payloads/anchors, preserve official structure and latest user content, and reconcile guidance, attachments and exact saved layout before completion."
+  default_prompt: "Use $submission-ready-authoring with the format-preservation skill for every institutional form: retain the complete per-business source pack before writing, inspect all instruction payloads/anchors, preserve official structure and latest user content, and reconcile guidance, attachments and exact saved layout before completion. Before evidence placement, carry the latest receipt dispositions and reserved physical-mount blanks into the role/slot map, inspect true upright orientation beyond EXIF, and verify every inserted image and empty slot in the exact saved artifact."

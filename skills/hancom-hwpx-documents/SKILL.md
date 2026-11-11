@@ -5,6 +5,8 @@ description: Create, revise, inspect, repair, render, and verify Hancom HWPX doc
 
 # Hancom HWPX documents
 
+Before placing authentic evidence images, apply the [receipt disposition and blank-mount gate](references/procurement-forms.md#receipt-disposition-and-blank-mount-gate) and [evidence-photo orientation gate](references/procurement-forms.md#consistent-evidence-photo-layout). Carry the current role/slot map into the authoring invocation; inspect upright orientation before insertion and verify every inserted image and reserved blank against the exact saved artifact.
+
 For institutional-form creation, completion or revision, mandatorily apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md): complete all writable inputs and attachments, honor standing red-marking instructions, and preserve exact provenance and template colors. A draft label does not waive input coverage; review-only work remains read-only.
 
 

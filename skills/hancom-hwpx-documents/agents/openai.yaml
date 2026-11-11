@@ -1,5 +1,5 @@
 interface:
   display_name: "Hancom HWPX Documents"
   short_description: "Create and repair print-ready HWPX forms."
-  default_prompt: "Use $hancom-hwpx-documents to create or revise HWPX: before writing, pass the active source-pack --guidance-check against the annotated official original, inspect actual guidance payloads/anchors, preserve official structure and latest user content, and reconcile every instruction/attachment and the exact saved structure/layout."
+  default_prompt: "Use $hancom-hwpx-documents to create or revise HWPX: before writing, pass the active source-pack --guidance-check against the annotated official original, inspect actual guidance payloads/anchors, preserve official structure and latest user content, and reconcile every instruction/attachment and the exact saved structure/layout. Before evidence placement, carry the latest receipt dispositions and reserved physical-mount blanks into the role/slot map, inspect true upright orientation beyond EXIF, and verify every inserted image and empty slot in the exact saved artifact."
 
