@@ -8,7 +8,9 @@ It never reads or hashes user working finals, copies files, or authorizes edits.
 import argparse
 import hashlib
 import json
+import os
 import re
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from zipfile import BadZipFile
@@ -70,7 +72,8 @@ def aliases(a, b):
     return a == b or (a.exists() and b.exists() and a.samefile(b))
 
 
-def check_pack(inventory, pack, active_dir, guidance_check=False, guidance_evidence=None):
+def check_pack(inventory, pack, active_dir, guidance_check=False, guidance_evidence=None,
+               source_dir=None):
     """Return issues; invalid/incomplete manifests raise ValueError or OSError."""
     if not isinstance(inventory, dict) or not isinstance(pack, dict):
         raise ValueError('inventory and pack must be objects')
@@ -83,6 +86,29 @@ def check_pack(inventory, pack, active_dir, guidance_check=False, guidance_evide
     root = root_arg.resolve(strict=True)
     if not root.is_dir():
         raise ValueError('active-dir: directory required')
+    source_root = None
+    if source_dir is not None:
+        source_arg = Path(source_dir)
+        if not source_arg.is_absolute():
+            raise ValueError('source-dir: absolute official-forms subfolder required')
+        source_root = source_arg.resolve(strict=True)
+        if not source_root.is_dir() or source_root == root or not source_root.is_relative_to(root):
+            raise ValueError('source-dir: separate subfolder inside current working packet required')
+
+        def visible(path):
+            # Check both lexical and resolved paths: a visible link must not hide
+            # a hidden source or escape the independently selected packet root.
+            for item in (path, *path.parents):
+                attrs = getattr(item.stat(), 'st_file_attributes', 0)
+                if item.name.startswith('.') or attrs & stat.FILE_ATTRIBUTE_HIDDEN:
+                    raise ValueError('source-dir: hidden path or file cannot satisfy visible source pack')
+                if item == root:
+                    break
+
+        visible(source_arg)
+        visible(source_root)
+        if not os.access(source_root, os.R_OK):
+            raise ValueError('source-dir: unreadable official-forms folder')
     for key in ('event_id', 'phase'):
         text(inventory.get(key), key)
         if inventory[key] != pack.get(key):
@@ -110,6 +136,13 @@ def check_pack(inventory, pack, active_dir, guidance_check=False, guidance_evide
         path = absolute(value, label)
         if not path.is_relative_to(root):
             raise ValueError(f'{label}: outside active event folder')
+        if source_root is not None:
+            if not path.is_relative_to(source_root):
+                raise ValueError(f'{label}: outside selected official-forms subfolder')
+            visible(Path(value))
+            visible(path)
+            if not os.access(path, os.R_OK):
+                raise ValueError(f'{label}: unreadable official-forms file')
         if any(aliases(path, final) for final in finals):
             raise ValueError(f'{label}: aliases a protected working final')
         if path.stat().st_size == 0:
@@ -220,6 +253,8 @@ def main():
     parser.add_argument('--inventory', required=True, type=Path)
     parser.add_argument('--pack', required=True, type=Path)
     parser.add_argument('--active-dir', required=True, type=Path)
+    parser.add_argument('--source-dir', type=Path,
+                        help='visible official-forms subfolder inside the actual current working packet; required by the authoring workflow')
     parser.add_argument('--guidance-check', action='store_true', help='require annotated-original guidance/table checks for each HWPX blank')
     args = parser.parse_args()
     binding = {}
@@ -231,16 +266,18 @@ def main():
         binding = {'inventory_sha256': hashlib.sha256(inv_bytes).hexdigest(),
                    'pack_sha256': hashlib.sha256(pack_bytes).hexdigest(),
                    'active_dir': str(args.active_dir.resolve()),
+                   'source_dir': str(args.source_dir.resolve()) if args.source_dir else None,
                    'event_id': inventory.get('event_id') if isinstance(inventory, dict) else None,
                    'phase': inventory.get('phase') if isinstance(inventory, dict) else None}
         issues = check_pack(inventory, pack, args.active_dir, guidance_check=args.guidance_check,
-                            guidance_evidence=guidance_evidence)
+                            guidance_evidence=guidance_evidence, source_dir=args.source_dir)
     except (OSError, ValueError, TypeError, RuntimeError) as error:
         issues = [{'problem': 'invalid_or_unreadable_preflight', 'detail': str(error)}]
     result = {'gate': 'FORM_SOURCE_PACK', 'status': 'FAILED' if issues else 'PASSED',
               'checker_sha256': CHECKER_SHA256,
               'issues': issues, 'scope': 'pre-write declared source-pack coverage only',
               'guidance_checked': args.guidance_check,
+              'source_dir_checked': args.source_dir is not None and not issues,
               'guidance_checks': guidance_evidence,
               'checked_at_utc': datetime.now(timezone.utc).isoformat(), **binding}
     print(json.dumps(result, ensure_ascii=False, indent=2))

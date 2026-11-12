@@ -72,6 +72,61 @@ class SourcePackTests(unittest.TestCase):
             self.assertEqual(self.problems(), set())
         self.assertEqual(self.final.read_bytes(), before)
 
+    def test_visible_folder_passes_without_reading_working_final(self):
+        real_digest = digest
+        def only_sources(path):
+            self.assertNotEqual(path, self.final)
+            return real_digest(path)
+        with patch('verify_form_source_pack.digest', side_effect=only_sources):
+            self.assertEqual(check_pack(self.inventory, self.pack, self.active.parent,
+                                        source_dir=self.active), [])
+
+    def test_source_folder_cannot_be_active_root_or_external(self):
+        for source in (self.active, self.official):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'separate subfolder'):
+                check_pack(self.inventory, self.pack, self.active, source_dir=source)
+
+    def test_copy_elsewhere_in_active_packet_cannot_pass_source_folder(self):
+        selected = self.active / 'Official forms and guidance'
+        selected.mkdir()
+        with self.assertRaisesRegex(ValueError, 'outside selected official-forms'):
+            check_pack(self.inventory, self.pack, self.active, source_dir=selected)
+
+    def test_hidden_folder_and_hidden_file_fail(self):
+        hidden = self.active / '.hidden-forms'
+        hidden.mkdir()
+        with self.assertRaisesRegex(ValueError, 'hidden'):
+            check_pack(self.inventory, self.pack, self.active, source_dir=hidden)
+        hidden_file = self.active / '.hidden-manual.hwpx'
+        hidden_file.write_bytes(self.manual.read_bytes())
+        self.pack['sources'][0]['path'] = str(hidden_file)
+        with self.assertRaisesRegex(ValueError, 'hidden'):
+            check_pack(self.inventory, self.pack, self.active.parent, source_dir=self.active)
+
+    def test_windows_hidden_attribute_and_unreadable_source_fail(self):
+        import stat
+        real_stat = Path.stat
+        def hidden_stat(path, *args, **kwargs):
+            result = real_stat(path, *args, **kwargs)
+            if path == self.active:
+                from types import SimpleNamespace
+                return SimpleNamespace(st_mode=result.st_mode,
+                                       st_file_attributes=stat.FILE_ATTRIBUTE_HIDDEN)
+            return result
+        with patch.object(Path, 'stat', hidden_stat), self.assertRaisesRegex(ValueError, 'hidden'):
+            check_pack(self.inventory, self.pack, self.active.parent, source_dir=self.active)
+        with patch('verify_form_source_pack.os.access', return_value=False), self.assertRaisesRegex(ValueError, 'unreadable'):
+            check_pack(self.inventory, self.pack, self.active.parent, source_dir=self.active)
+
+    def test_source_folder_link_escape_fails(self):
+        link = self.active / 'official-forms-link'
+        try:
+            link.symlink_to(self.official, target_is_directory=True)
+        except OSError as error:
+            self.skipTest(f'symlink capability unavailable: {error}')
+        with self.assertRaisesRegex(ValueError, 'separate subfolder'):
+            check_pack(self.inventory, self.pack, self.active, source_dir=link)
+
     def test_single_main_form_does_not_cover_missing_applicable_form(self):
         self.pack['forms'].pop()
         self.assertIn('applicable_blank_form_missing', self.problems())
@@ -178,10 +233,17 @@ class SourcePackTests(unittest.TestCase):
         result = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout)['status'], 'PASSED')
+        self.assertFalse(json.loads(result.stdout)['source_dir_checked'])
         self.assertEqual(json.loads(result.stdout)['event_id'], self.inventory['event_id'])
         self.assertEqual(json.loads(result.stdout)['inventory_sha256'], digest(inv))
         self.assertEqual(json.loads(result.stdout)['pack_sha256'], digest(pack))
         self.assertEqual(json.loads(result.stdout)['checker_sha256'], digest(Path(__file__).with_name('verify_form_source_pack.py')))
+        visible_command = command[:-2] + ['--active-dir', str(self.active.parent),
+                                         '--source-dir', str(self.active)]
+        visible_result = subprocess.run(visible_command, capture_output=True, text=True)
+        self.assertEqual(visible_result.returncode, 0, visible_result.stdout + visible_result.stderr)
+        self.assertTrue(json.loads(visible_result.stdout)['source_dir_checked'])
+        self.assertEqual(json.loads(visible_result.stdout)['source_dir'], str(self.active.resolve()))
         self.pack['forms'].pop()
         pack.write_text(json.dumps(self.pack), encoding='utf-8-sig')
         result = subprocess.run(command, capture_output=True, text=True)

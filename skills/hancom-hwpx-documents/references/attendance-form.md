@@ -1,10 +1,12 @@
 # Attendance-sheet reference
 
-Identify the user-supplied or user-edited authoritative attendance-sheet master at task time. Do not substitute a remembered local path or a generic template.
+Identify the current responsible-office official attendance-sheet blank, version and role first; do not substitute a user-supplied filled record, remembered local path or generic template for that search.
 
 Treat the selected master as read-only unless the user explicitly requests an edit to that exact file.
 
-When the user asks for a similar attendance form:
+For institutional authoring, bind current official structure and retain its visible source pack before consulting this historical visual/content reference. Only an explicit current-task instruction selecting another structural master instead of the official form permits that exception. A latest live user-edited sheet remains the protected baseline for scoped revisions; this rule does not authorize rebuilding it.
+
+When the user asks for a similar attendance form, after resolving that authority:
 
 - inspect the current master at task time rather than relying on remembered numeric geometry or color values;
 - preserve its exact page orientation, margins, title placement, information table, main-table dimensions, cell fills, character styling, fonts, spacing, borders, and line weights;

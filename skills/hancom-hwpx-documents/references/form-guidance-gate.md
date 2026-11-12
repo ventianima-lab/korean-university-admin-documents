@@ -18,13 +18,15 @@ For new filled authoring/check invocations, set top-level `require_field_semanti
 
 The checker rejects missing required mappings and operational-phrase replacements without declared placement authority, even when identity evidence and XML checks pass. Legacy specs remain readable with the flag absent/false; CLI `field_semantics_required: false` means that required coverage was not checked and cannot clear a new filled-authoring invocation. A provided mapping is validated even in legacy mode. No new requirement applies to an unchanged annotated blank pack. The checker cannot infer semantic roles from names, authenticate a quote, prove its field applicability or detect false classifications: independently review those assertions and compare every actual edited cell's meaning and placement before completion. Preserve review waivers and user-reserved records; synthetic helper tests never authorize checking those documents.
 
+Before this preflight, bind the current responsible-office official blank identity, version and document role; historical filled records are content/calculation/wording precedent only after that binding. On initial authoring and every follow-up, retain the intact annotated blanks and guidance in the user-visible official-forms subfolder of the actual current working packet; reuse an existing equivalent folder. Require `source_dir_checked: true` and the intended `source_dir` in the source-pack result. A broad parent or coverage-only legacy PASS does not establish this boundary. Only an explicit current-task structural override changes official-form authority; keep live user content and scoped edit permissions protected.
+
 ## Commands and scope
 
 ```text
 python <skill-dir>/scripts/verify_form_guidance.py --inspect <original-annotated.hwpx>
 python <skill-dir>/scripts/verify_form_guidance.py --inspect <active-blank-or-authorized-candidate.hwpx>
 python <skill-dir>/scripts/verify_form_guidance.py --spec <private-guidance-spec.json>
-python <skill-dir>/scripts/verify_form_source_pack.py --inventory <private-inventory.json> --pack <private-pack.json> --active-dir <event-folder> --guidance-check
+python <skill-dir>/scripts/verify_form_source_pack.py --inventory <private-inventory.json> --pack <private-pack.json> --active-dir <current-working-packet-folder> --source-dir <visible-official-forms-subfolder> --guidance-check
 ```
 
 Inspection returns `UNREVIEWED`, never clearance. It enumerates every meaningful raw XML text/tail in XML/HPF/relationships parts, controls/memo/comment observations, reference candidates, XML comments, node paths/fingerprints and separate `visible_body_text` excluding MEMO subtrees. Reference candidates are mechanical IDRef matches, not semantic proof of an anchor. All observed source text/annotation IDs need independent classification and decisions, including explicit out-of-scope dispositions for other forms in a manual. Do not generate a passing decision map merely from the output file list or by auto-labeling every observation as metadata.
