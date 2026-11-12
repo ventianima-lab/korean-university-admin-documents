@@ -7,6 +7,8 @@ description: Create, revise, inspect, repair, render, and verify Hancom HWPX doc
 
 Before placing authentic evidence images, apply the [receipt disposition and blank-mount gate](references/procurement-forms.md#receipt-disposition-and-blank-mount-gate) and [evidence-photo orientation gate](references/procurement-forms.md#consistent-evidence-photo-layout). Carry the current role/slot map into the authoring invocation; inspect upright orientation before insertion and verify every inserted image and reserved blank against the exact saved artifact.
 
+For stock purchased once for use across several sessions, apply the [purchase-lot and session reconciliation](references/procurement-forms.md#purchase-lots-used-across-sessions) before setting expense-form periods, calculation bases or goods-photo metadata. Receipt dates and receipt-form counts do not determine the operating scope.
+
 For institutional-form creation, completion or revision, mandatorily apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md): complete all writable inputs and attachments, honor standing red-marking instructions, and preserve exact provenance and template colors. A draft label does not waive input coverage; review-only work remains read-only.
 
 
@@ -22,7 +24,7 @@ For corrected packets, apply the independent rejected-explanation and role-speci
 
 ## Mandatory Hancom COM security gate
 
-- Before the first Hancom COM or GUI automation in a task, run `scripts/test_hancom_security_module.ps1` and require `REGISTERED=True`. A failed preflight blocks all document access.
+- Before the first Hancom COM or GUI automation in a task, run `scripts/test_hancom_security_module.ps1` and require a successful exit, `REGISTERED=True`, `OWNERSHIP=BOUND` and `CLEANUP=VERIFIED` under the [ownership-safe preflight](references/hancom-lock-ownership.md#strict-mode-caller-preflight). A failed preflight blocks all document access.
 - Every PowerShell helper and every ad hoc COM command must dot-source `scripts/hancom_com_guard.ps1` and create each COM object with `New-HancomGuardedObject`. Do not instantiate `HWPFrame.HwpObject` directly outside that guard.
 - The guard fixes the module name to `FilePathCheckerModuleExample` and requires `RegisterModule('FilePathCheckDLL', 'FilePathCheckerModuleExample') == true` before visibility changes, `SetMessageBoxMode`, `Open`, `Save`, or `SaveAs`. Do not expose a caller override for the module name.
 - `SetMessageBoxMode` may be enabled only by the guarded constructor after successful registration. Use `Close-HancomGuardedObject` only when the whole application object is verified to be exclusively task-owned: the helper calls `Quit`, so it must not be used on an object whose application scope is unverified or shared. If binding fails, do not open a document or invoke `Quit`; release only caller-held COM references when demonstrably safe, and report unresolved process cleanup.

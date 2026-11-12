@@ -31,7 +31,8 @@ function New-HancomGuardedObject {
     }
     catch {
         if ($null -ne $hwp) {
-            try { $hwp.Quit() } catch {}
+            # Registration failed before caller ownership binding: release only.
+            Write-Warning 'Security registration failed; unbound application cleanup remains unresolved. No Quit attempted.'
             try {
                 [void][System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($hwp)
             }

@@ -12,6 +12,8 @@ After the last native reopen/render/verification, complete cleanup and re-enumer
 
 ## Strict-mode caller preflight
 
+The security-module preflight follows this ownership rule too: run `scripts/test_hancom_security_module.ps1` without `-Hidden` on its constructor, bind that exact object's `XHwpWindows` handles through `GetWindowThreadProcessId`, and require a non-baseline Hwp PID/start time with one initial document before any whole-object cleanup. Recheck handles, process identity and document count before Quit, then verify that bound process exited. Registration failure precedes ownership binding, so the shared guard releases its caller reference without Quit. Require a successful exit plus `REGISTERED=True`, `OWNERSHIP=BOUND` and `CLEANUP=VERIFIED`; registration alone does not clear an unresolved cleanup. Run `scripts/test_hancom_security_preflight_contract.ps1` for synthetic registration, baseline/shared-object, binding, document-scope and cleanup-failure checks without launching Hancom; actual window binding remains a separate native check.
+
 A caller that dot-sources the guard inherits strict mode. An empty process baseline has no `.Id` property: materialize IDs by pipeline before COM creation, rather than using `$baseline.Id`. Serialize with `ConvertTo-Json -InputObject @($baseline)`, since piping an empty baseline can produce no JSON instead of `[]`. In the existing caller path, use this baseline block before creating its guarded object:
 
 <!-- ownership-baseline-start -->
