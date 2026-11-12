@@ -153,3 +153,17 @@ Before authoring, map the existing main-form and instructor-plan Site A windows 
 | Another programme has no no-gap request | Do not impose this synthetic continuous agenda or invent activities to fill its unused rows. |
 
 Run `python skills/hancom-hwpx-documents/scripts/test_verify_clock_fields.py` for the synthetic two-window invocation. The checker cannot establish route reasonableness, source authority or narrative placement; the independent decisions above cover those limits. No actual record or browser/UI is used.
+
+## Ambiguous certificate roles: original context before mapping
+
+Use these fictional request contexts to assess the evidence-role invocation; no actual records or institutional requirements are supplied.
+
+| Source context or proposed conclusion | Required disposition |
+| --- | --- |
+| Only the label `정기 검사 확인증` is available in an indexed excerpt. | Inspect the original full attachment list and governing section/table before assigning a role; if unavailable, keep the subject unresolved. |
+| The generic inspection label appears near facility safety evidence, while vehicle inspection is separately named later. | Keep the two roles distinct. Facility interpretation is an inference pending confirmation of the exact facility/equipment and issuer with the source owner. |
+| Another original table explicitly identifies the generic inspection certificate as a vehicle record. | Follow that direct context; do not apply a universal facility rule. |
+| A registration record shows a valid inspection period. | Report that field only; it does not prove a standalone inspection certificate exists or that the recipient accepts substitution. |
+| A checklist separately requests contract/insurance material, a traveler enrollment roster and a traveler mutual-aid certificate, without naming the mutual-aid scheme. | Map each requested aspect independently. Keep scheme/issuer and acceptance unresolved; a traveler policy, vehicle mutual-aid paper or agency guarantee does not automatically satisfy the traveler mutual-aid role. |
+
+Completion requires source locations for the request context and candidate evidence, direct/inferred/unresolved role status, and specific owner/recipient questions. These manual decision fixtures do not verify actual files or receiving-office acceptance.
