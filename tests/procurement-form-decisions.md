@@ -203,7 +203,17 @@ Fictional institution: the current document rule permits omission of a physical 
 | Only templates are accessible; the owning rule repository or referenced appendix cannot be read | State the actual bounded sources/sections searched and the unresolved authority; do not conclude that the mark is optional or create a source pack during this read-only task. |
 | Applicable current provisions and the target role are verified | Give the conditional conclusion with exact symbolic rule/version/article, mark/placement and exception analysis; make no claim that a document was signed, sealed or sent. |
 
-These manual cases test the read-only invocation and condition-to-action mapping. They neither establish actual institutional requirements nor authorize source edits.
+Additional fictional binding: current Procedure R expressly incorporates Appendix I for an internal approval request. Appendix I identifies its recipient as `Internal approval` and provides an approval block rather than an issued-letter sender/seal block. The target's current recipient field literally reads `Internal approval`, and its role matches that incorporated form. Bind these facts together; do not infer a universal rule for every document described informally as internal.
+
+| Proposed opening verdict or applicability shortcut | Expected decision |
+| --- | --- |
+| Yes, the issued-letter omission-label rule exists; explain the internal-request distinction only later | Reject: the generally true rule does not answer this evidenced target. Lead with its nonapplicability to the specific Procedure R/Appendix I request; cite that binding and the actual recipient field. |
+| Do not add the issued-letter omission label to this matched internal approval request on the cited issued-letter rule | Accept the target-bound verdict, supported by Procedure R, incorporated Appendix I and the current recipient/role rather than blank-form absence alone. Preserve the source document during review. |
+| The target instead names an office head as recipient, so immediately answer that the label is mandatory | Reject the automatic affirmation: reclassify the actual addressed document and establish every relevant issuance/omission condition before its case-specific verdict. |
+| One page or many examined precedents establish which marking rule applies | Reject: neither page count nor precedent count replaces the document-role, literal-recipient and normative-trigger comparison. |
+| The actual target recipient cannot be read, but give an affirmative answer because the general issued-letter rule is clear | Reject: state the conditional rule and unresolved target classification in the opening claim instead of presenting a case-specific yes. |
+
+These manual cases test the read-only invocation, condition-to-action mapping and final target-bound verdict. They neither establish actual institutional requirements nor authorize source edits.
 
 ## Ambiguous certificate roles: original context before mapping
 
