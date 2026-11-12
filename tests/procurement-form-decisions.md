@@ -154,6 +154,22 @@ Before authoring, map the existing main-form and instructor-plan Site A windows 
 
 Run `python skills/hancom-hwpx-documents/scripts/test_verify_clock_fields.py` for the synthetic two-window invocation. The checker cannot establish route reasonableness, source authority or narrative placement; the independent decisions above cover those limits. No actual record or browser/UI is used.
 
+## Itinerary correction: relative visit and meal order
+
+Synthetic follow-up: an earlier agent plan places Site C before lunch and appends a ride. The user now specifies lunch after Site B, followed by the ride, then Site C. The live file also contains a user-added conditional detour at Site A. Before assigning times, independently inventory the required edges `B -> lunch`, `lunch -> ride`, and `ride -> C`, while retaining the conditional detour and other current edits. The initial placement was unspecified; the correction establishes the current order rather than proving an earlier explicit instruction was disobeyed.
+
+| Proposed saved activity order or action | Expected decision |
+| --- | --- |
+| A, B, lunch, ride, C, return; grouped transfers, current conditional detour preserved | Accept the ordering disposition after checking each source-derived edge against saved activity identities; actual times and rendering require their own checks. |
+| A, B, C, lunch, ride, return; all original sites and durations present | Reject: `ride -> C` is reversed despite complete site coverage. |
+| A, B, ride, lunch, C, return | Reject: `lunch -> ride` is reversed; checking only that the ride precedes C is insufficient. |
+| A, B, lunch, C, return; ride dropped to retain the row count | Reject: a required activity identity and its edges are missing. |
+| Reconstruct from the old agent candidate and lose the live conditional detour | Reject: route correction does not authorize discarding current unrelated user edits. |
+| Group a transfer and two visits in one row whose text puts C before the ride | Reject: grouping must preserve the within-row semantic order as well as row order. |
+| User waives post-save review | Inventory and apply the same edges before writing; skip actual-record QA and report preparation without a saved-order verification claim. |
+
+These manual synthetic decisions exercise sequence preservation independently of site counts and timing checks. They use no real records, travel estimates or browser/UI actions.
+
 ## Ambiguous certificate roles: original context before mapping
 
 Use these fictional request contexts to assess the evidence-role invocation; no actual records or institutional requirements are supplied.
