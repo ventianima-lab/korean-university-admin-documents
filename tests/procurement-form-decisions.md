@@ -188,6 +188,23 @@ Synthetic follow-up: an earlier agent plan places Site C before lunch and append
 
 These manual synthetic decisions exercise sequence preservation independently of site counts and timing checks. They use no real records, travel estimates or browser/UI actions.
 
+## Normative marking requirement: conditional rules before template absence
+
+Fictional institution: the current document rule permits omission of a physical seal for eligible routine issued letters; a related current seal rule requires an omission label beside the issuer when that permission is exercised. A separate appendix excludes special certified statements from this permission. An internal approval draft has not yet been issued, and a safety checklist separately requires its confirmer's signature. These are synthetic conditions and symbolic provisions, not real institutional rules or universal legal guidance.
+
+| Evidence or proposed conclusion | Expected decision |
+| --- | --- |
+| A blank letter template has no omission label, so report that no mandatory basis exists without checking the owning rules | Reject: template absence is not a normative search. Identify role/issuer/recipient, then inspect current owning and related provisions and appendices. |
+| An eligible routine letter will be issued without the physical seal | Map eligibility and omission permission separately from the related required label and stated issuer-relative position; cite both current symbolic provisions. |
+| Add the omission label to every document, including the internal draft and excluded certified statement | Reject: first establish the actual document stage and exception applicability; a conditional permission/marking rule is not universal. |
+| Remove the checklist confirmer's signature because the letter may omit its physical seal | Reject: a confirmation signature is a separate role and obligation. |
+| An older filled letter lacks the label, but current owning rules require it under the established conditions | Follow the applicable current normative condition; treat the older record as historical practice, not an exemption. Do not edit it during a read-only review. |
+| A current office instruction conflicts with the owning rule, or the effective version cannot be verified | Report the precise conflict or missing version and responsible authority; do not select a rule solely because it resembles the template. |
+| Only templates are accessible; the owning rule repository or referenced appendix cannot be read | State the actual bounded sources/sections searched and the unresolved authority; do not conclude that the mark is optional or create a source pack during this read-only task. |
+| Applicable current provisions and the target role are verified | Give the conditional conclusion with exact symbolic rule/version/article, mark/placement and exception analysis; make no claim that a document was signed, sealed or sent. |
+
+These manual cases test the read-only invocation and condition-to-action mapping. They neither establish actual institutional requirements nor authorize source edits.
+
 ## Ambiguous certificate roles: original context before mapping
 
 Use these fictional request contexts to assess the evidence-role invocation; no actual records or institutional requirements are supplied.
