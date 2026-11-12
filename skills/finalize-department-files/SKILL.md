@@ -1,6 +1,6 @@
 ---
 name: finalize-department-files
-description: Finalize completed university department-file work and archive incoming department scans by identifying business packets, preserving active work and unresolved evidence, standardizing names, verifying moves and hashes, recording manifests, and refreshing the local index. Use for completed task cleanup or incoming scans for ongoing or archived department work.
+description: Finalize completed university department-file work and archive incoming department scans by identifying business packets, preserving active work and unresolved evidence, standardizing names, verifying moves and hashes, recording manifests, and refreshing the local index. Use for completed task cleanup or incoming scans for ongoing or archived department work. Also use when the user asks to gather component originals under an active packet while exposing named canonical bundles.
 ---
 
 # Finalize Department Files
@@ -8,6 +8,14 @@ description: Finalize completed university department-file work and archive inco
 Treat completed-work archiving as verified records closeout. Handle incoming scans for ongoing work using the scoped path below.
 
 Do not broaden the cleanup to unrelated files merely because they share the same work folder.
+
+## Originals inside an active working packet
+
+When the user requests an original-storage folder while keeping named integrated bundles visible, treat that as working-folder organization, not business completion or permanent closeout. Use the requested original-storage folder inside the actual packet; this explicit layout overrides the generic prohibition on new archive wrappers for completed records. Keep the named canonical bundles at the requested working-folder level, preserve phase and claim boundaries inside original storage, and do not resave documents merely to move them.
+
+Inventory the current components and recoverable originals already moved to technical backup using the existing move maps. Bring those originals into durable original storage rather than leaving the user's only component copies in TEMP. Preserve relative business/stage paths, raw media, signatures, scans and source forms; do not flatten colliding names or merge unrelated activities. An entire folder may be relocated intact only within the user's authorized layout scope.
+
+Before moving linked sources, inventory their current reference consumers. After byte-preserving moves, update authorized calendar/index references through their current versioned interfaces and verify the saved paths while preserving unrelated fields; do not keep scattered active copies solely to avoid repairing links. Record collisions or failed reference updates precisely. Require the requested visible canonical-file set, preserved original inventory and move-integrity results. Keep technical manifests outside the active deliverable view. A content-review waiver does not invite document resaving or rendering during this organization step; perform only the authorized move-integrity and reference checks.
 
 ## Incoming scans for an existing business packet
 
