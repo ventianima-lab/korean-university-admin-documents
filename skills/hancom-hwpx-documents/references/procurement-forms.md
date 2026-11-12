@@ -2,6 +2,8 @@
 
 Read this reference before proposing a programme budget, including a chat estimate, or drafting or revising purchase preapproval, purchase inspection records, expense settlement, vendor quotations, receipt attachment forms, or evidence-photo pages. Use the user's current edited files as the baseline. Keep active records in their working folder when the user requests that; organization is not permission to archive them.
 
+Before assigning supplier/payee text in a cost table, apply the [field-semantic mapping gate](form-guidance-gate.md#field-semantic-mapping-before-filling) to the actual expense row and column. The supplier-column convention for a goods row does not determine a lecturer-fee row's entry. Confirmed lecturer identity is value evidence, not permission to replace the form's payment-method wording. Carry the independent role/placement map into authoring and edited-cell completion checks.
+
 ## Permission and factual fields
 
 - A request to prepare a document includes the user's clearance with the named vendor or party for that preparation and requested use of supplied names, seals, and signatures. Do not ask whether that permission exists or request it again.

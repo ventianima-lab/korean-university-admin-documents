@@ -196,6 +196,27 @@ def styles(package, regions, views=None):
     return result
 
 
+def field_semantic_issues(edit, required=False):
+    """Validate declared placement review, not the truth of its authority."""
+    mapping = edit.get('field_semantics')
+    if mapping is None:
+        return ['field_semantics_missing'] if required else []
+    if not isinstance(mapping, dict) or any(
+            not isinstance(mapping.get(k), str) or not mapping[k].strip()
+            for k in ('field_context', 'semantic_role', 'placement_evidence')):
+        return ['field_semantics_incomplete']
+    if mapping.get('source_kind') not in {'placeholder', 'actual_value', 'operational_phrase', 'blank'}:
+        return ['field_semantics_source_kind_invalid']
+    if mapping['source_kind'] == 'operational_phrase' and edit.get('old') != edit.get('new'):
+        authority = mapping.get('change_authority', {})
+        if (not isinstance(authority, dict)
+                or authority.get('kind') not in {'explicit_user_instruction', 'field_specific_authority'}
+                or any(not isinstance(authority.get(k), str) or not authority[k].strip()
+                       for k in ('reference', 'quote'))):
+            return ['operational_phrase_replacement_without_placement_authority']
+    return []
+
+
 def check_guidance(spec, source_override=None, target_override=None):
     if not isinstance(spec, dict) or spec.get('schema_version') != 1:
         raise ValueError('guidance schema_version must be 1')
@@ -300,6 +321,9 @@ def check_guidance(spec, source_override=None, target_override=None):
     edits = rows(spec.get('text_edits'), 'text_edits')
     insertions = rows(spec.get('text_insertions', []), 'text_insertions')
     deletions = rows(spec.get('deletions'), 'deletions')
+    semantic_required = spec.get('require_field_semantics', False)
+    if not isinstance(semantic_required, bool):
+        raise ValueError('require_field_semantics must be boolean')
     if stage == 'blank' and (edits or insertions or deletions):
         fail('blank_master_guidance_and_structure_must_be_preserved')
     expected = copy.deepcopy(before)
@@ -359,6 +383,8 @@ def check_guidance(spec, source_override=None, target_override=None):
         if not permission(edit.get('instruction_id'), location, 'fill', {'content_only'}):
             fail('fill_not_authorized_by_scoped_instruction', ident)
         text(edit.get('content_evidence'), 'text_edit.content_evidence')
+        for problem in field_semantic_issues(edit, semantic_required):
+            fail(problem, ident)
         if node.text != edit.get('old') or not isinstance(edit.get('new'), str) or len(node):
             raise ValueError('exact leaf text edit mismatch')
         node.text = edit['new']
@@ -374,6 +400,8 @@ def check_guidance(spec, source_override=None, target_override=None):
         if not permission(insertion.get('instruction_id'), location, 'fill', {'content_only'}):
             fail('empty_run_insertion_not_source_authorized', str(location))
         text(insertion.get('content_evidence'), 'text_insertion.content_evidence')
+        for problem in field_semantic_issues(insertion, semantic_required):
+            fail(problem, str(location))
         if not isinstance(insertion.get('new'), str):
             raise ValueError('inserted text must be a string')
         ET.SubElement(node, '{http://www.hancom.co.kr/hwpml/2011/paragraph}t').text = insertion['new']
@@ -479,6 +507,7 @@ def main():
             result = {'gate': 'FORM_GUIDANCE', 'status': 'FAILED' if issues else 'PASSED',
                       'issues': issues, 'spec_sha256': hashlib.sha256(raw).hexdigest(),
                       'source_sha256': spec['source_sha256'], 'target_sha256': digest(Path(spec['target'])),
+                      'field_semantics_required': spec.get('require_field_semantics', False),
                       'scope': 'declared original XML guidance/structure only; semantic and visual review separate'}
             code = 1 if issues else 0
     except (OSError, ValueError, TypeError, KeyError, RuntimeError, BadZipFile, ET.ParseError) as error:

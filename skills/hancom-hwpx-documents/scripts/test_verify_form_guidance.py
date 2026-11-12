@@ -248,6 +248,77 @@ class GuidanceTests(unittest.TestCase):
         package(self.target, changed)
         self.assertEqual(self.problems(), set())
 
+    def semantic_edit(self, old='강사 송금', new='가상인물', kind='operational_phrase'):
+        obs = next(t for t in observe(load_package(self.source))['texts'] if t['text'] == 'EXAMPLE INPUT')
+        node_at({PART: self.xml}, obs['location']).text = old
+        package(self.source, self.xml)
+        changed = copy.deepcopy(self.xml)
+        node_at({PART: changed}, obs['location']).text = new
+        package(self.target, changed)
+        self.spec = make_spec(self.source, self.target)
+        self.spec.update(stage='filled', require_field_semantics=True,
+                         content_authority={'kind': 'user_facts', 'basis': 'synthetic payee identity'})
+        next(r for r in self.spec['text_reviews'] if r['id'] == obs['id'])['classification'] = 'value'
+        self.spec['instructions'].append({'id': 'semantic-fill', 'evidence_ids': [obs['id']],
+          'applicability': 'applies', 'permission': 'content_only', 'action': 'fill',
+          'scope': [obs['location']], 'reason': 'synthetic writable field'})
+        edit = {'source': obs['location'], 'old': old, 'new': new,
+                'instruction_id': 'semantic-fill', 'content_evidence': 'synthetic identity confirmed',
+                'field_semantics': {'field_context': 'supplier column, lecturer-fee row',
+                  'semantic_role': 'payment method', 'source_kind': kind,
+                  'placement_evidence': 'synthetic official row uses a transfer phrase'}}
+        self.spec['text_edits'] = [edit]
+        return edit
+
+    def test_identity_evidence_does_not_authorize_operational_phrase_replacement(self):
+        self.semantic_edit()
+        self.assertIn('operational_phrase_replacement_without_placement_authority', self.problems())
+
+    def test_operational_phrase_change_accepts_only_explicit_placement_authority(self):
+        edit = self.semantic_edit()
+        for kind in ('explicit_user_instruction', 'field_specific_authority'):
+            edit['field_semantics']['change_authority'] = {
+                'kind': kind, 'reference': 'synthetic instruction, supplier cell',
+                'quote': 'Enter the named payee in this lecturer-fee supplier cell.'}
+            self.assertEqual(self.problems(), set())
+        edit['field_semantics']['change_authority']['kind'] = 'known_identity'
+        self.assertIn('operational_phrase_replacement_without_placement_authority', self.problems())
+
+    def test_operational_phrase_retention_passes(self):
+        self.semantic_edit(new='강사 송금')
+        self.assertEqual(self.problems(), set())
+
+    def test_legitimate_placeholder_replacement_passes(self):
+        edit = self.semantic_edit(old='EXAMPLE INPUT', new='supported vendor', kind='placeholder')
+        edit['field_semantics'].update(semantic_role='supplier identity',
+                                     placement_evidence='synthetic source requests actual supplier name')
+        self.assertEqual(self.problems(), set())
+
+    def test_required_semantics_cannot_be_replaced_by_identity_evidence(self):
+        edit = self.semantic_edit()
+        del edit['field_semantics']
+        self.assertIn('field_semantics_missing', self.problems())
+
+    def test_semantic_failure_is_reported_by_spec_cli(self):
+        edit = self.semantic_edit()
+        specfile = self.root/'semantic-spec.json'
+        specfile.write_text(json.dumps(self.spec), encoding='utf-8')
+        script = str(Path(__file__).with_name('verify_form_guidance.py'))
+        result = subprocess.run([sys.executable, script, '--spec', str(specfile)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertTrue(report['field_semantics_required'])
+        self.assertIn('operational_phrase_replacement_without_placement_authority',
+                      {i['problem'] for i in report['issues']})
+        self.assertEqual(report['source_sha256'], digest(self.source))
+        edit['field_semantics']['change_authority'] = {
+            'kind': 'explicit_user_instruction', 'reference': 'synthetic cell instruction',
+            'quote': 'Use the payee name in this supplier cell.'}
+        specfile.write_text(json.dumps(self.spec), encoding='utf-8')
+        result = subprocess.run([sys.executable, script, '--spec', str(specfile)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)['status'], 'PASSED')
+
     def test_memo_paired_field_end_is_observed_as_anchor(self):
         ET.SubElement(self.xml[1][0], '{'+HP+'}fieldEnd', {'beginIDRef': 'synthetic-memo'})
         package(self.source, self.xml)
@@ -413,6 +484,12 @@ class GuidanceTests(unittest.TestCase):
           'instruction_id': 'fill-empty', 'content_evidence': 'independently confirmed synthetic attachment'}]
         self.assertIn('blank_master_guidance_and_structure_must_be_preserved', self.problems())
         self.spec.update(stage='filled', content_authority={'kind': 'user_facts', 'basis': 'synthetic current content'})
+        self.assertEqual(self.problems(), set())
+        self.spec['require_field_semantics'] = True
+        self.assertIn('field_semantics_missing', self.problems())
+        self.spec['text_insertions'][0]['field_semantics'] = {
+            'field_context': 'attachment-title input', 'semantic_role': 'document title',
+            'source_kind': 'blank', 'placement_evidence': 'synthetic form title slot instruction'}
         self.assertEqual(self.problems(), set())
         self.spec['text_insertions'][0]['parent'] = loc(PART, [1,0])
         with self.assertRaisesRegex(ValueError, 'empty original'):
