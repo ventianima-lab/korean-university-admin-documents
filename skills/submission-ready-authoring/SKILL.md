@@ -5,6 +5,8 @@ description: Complete requested document artifacts and form packets from current
 
 # Complete document authoring
 
+For institutional official correspondence in any supported format, including internal approval drafts and issued letters, the [current-rules-before-authoring gate](../hancom-hwpx-documents/references/form-guidance-gate.md#mandatory-rules-before-correspondence-authoring) is mandatory before initial drafting and every follow-up revision. Pass the current source/version, actual rule reading and recipient/role-to-clause action map to the authoring worker before it writes; a form-pack PASS, remembered rule or historical example is insufficient. This correspondence-specific gate does not require a whole regulatory review for ordinary slides, receipts or unrelated form edits.
+
 When a user selects complete-for-submission preparation with red marking of unconfirmed assistant choices, honor that current request or standing preference across its applicable document-writing tasks without repeated permission questions. A later explicit task restriction controls; do not assume every user's opt-in.
 
 For requested document artifacts, produce the complete usable document or packet within the authorized scope. Calling a working file a draft does not justify leaving writable fields or required attachments unfinished. Respect a deliberate outline-only, review-only or limited-field request; this policy does not authorize changing unrelated records.

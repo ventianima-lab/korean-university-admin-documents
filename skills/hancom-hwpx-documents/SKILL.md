@@ -11,6 +11,8 @@ For stock purchased once for use across several sessions, apply the [purchase-lo
 
 For institutional-form creation, completion or revision, mandatorily apply [submission-ready-authoring](../submission-ready-authoring/SKILL.md): complete all writable inputs and attachments, honor standing red-marking instructions, and preserve exact provenance and template colors. A draft label does not waive input coverage; review-only work remains read-only.
 
+Before initial drafting and every follow-up revision of institutional official correspondence, including internal approval drafts and issued letters, mandatorily apply the [current-rules-before-authoring gate](references/form-guidance-gate.md#mandatory-rules-before-correspondence-authoring). Actually read the current applicable rules and bind their requirements to the target before writing; template or memory checks alone do not clear this gate. Ordinary slides, receipts and unrelated non-correspondence edits do not trigger it.
+
 For institutional questions about whether a sender, seal, signature or label is required, including read-only questions, invoke the [normative requirement check](references/form-guidance-gate.md#read-only-institutional-requirement-questions) before concluding from a template or precedent. Require its final verdict-to-target comparison even when a general rule has been found. This route checks the current owning rules and their conditions; it does not authorize document edits or source-pack creation.
 
 

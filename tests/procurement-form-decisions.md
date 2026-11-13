@@ -188,6 +188,23 @@ Synthetic follow-up: an earlier agent plan places Site C before lunch and append
 
 These manual synthetic decisions exercise sequence preservation independently of site counts and timing checks. They use no real records, travel estimates or browser/UI actions.
 
+## Mandatory current rules before correspondence authoring
+
+Use fictional Regulation R version V2, current Office Guide G and incorporated Appendix I for an internal approval request. A separate issued-letter provision and its applicable exception govern an addressed letter. These symbolic sources establish no real institution's requirements.
+
+| Request or proposed workflow | Expected decision |
+| --- | --- |
+| Draft the initial internal approval request using its official blank and a remembered rule summary | Do not write yet: actually read current R, G and applicable Appendix I, verify their versions, map the literal recipient/role to applicable clauses and pass that evidence to authoring. A valid source-pack PASS alone is insufficient. |
+| Revise one sentence in that existing correspondence after a previous review | Repeat the actual current-source reading/version and applicability check before the scoped write; preserve the latest live content and layout. A small edit does not waive the mandatory pre-write path. |
+| On follow-up, the user changes the target from internal approval to an addressed issued letter | Rebind the new recipient/role before writing; read the relevant issued-letter and seal/signature/delegation provisions and exceptions, then update the source-to-action map. Do not reuse the internal-request verdict or automatically add an omission label. |
+| Current R or a necessary incorporated appendix is inaccessible, but the old completed example opens normally | Continue independent authorized discovery and unaffected preparation; state the exact current-source dependency. Keep affected correspondence authoring pending and do not claim reviewed or verified-ready status. |
+| Read current R/G/I and map the actual target before entry, then save the scoped changes | Compare the exact saved recipient/role and affected approval/sender/mark fields with the clause/action map and official structure. Passing parsing or rendering alone does not verify normative compliance. |
+| All relevant rules have been read, but the mapped action assumes an authentic signature or external dispatch occurred | Reject the unsupported assertion: rule reading authorizes neither invented evidence nor claims of execution. |
+| Prepare only an ordinary teaching slide or replace an image in a receipt attachment | Do not impose this correspondence-specific review on the unrelated task; follow its existing applicable source and preservation checks. |
+| User explicitly waives post-save review of the correspondence | Still read and verify current sources and map applicability before writing; honor the QA waiver and report preparation without verified saved-artifact readiness. |
+
+These manual authoring-decision cases test the pre-write and follow-up invocation, failure boundary and saved-artifact comparison. They require no actual records, signatures, native automation or new executable helper.
+
 ## Normative marking requirement: conditional rules before template absence
 
 Fictional institution: the current document rule permits omission of a physical seal for eligible routine issued letters; a related current seal rule requires an omission label beside the issuer when that permission is exercised. A separate appendix excludes special certified statements from this permission. An internal approval draft has not yet been issued, and a safety checklist separately requires its confirmer's signature. These are synthetic conditions and symbolic provisions, not real institutional rules or universal legal guidance.
