@@ -1,0 +1,4 @@
+interface:
+  display_name: "학과자료 색인 검색"
+  short_description: "운영색인과 문서 본문에서 학과자료를 정확히 검색"
+  default_prompt: "Use $search-department-index to find and verify department records. If a recurring record is missing from the indexes, follow handover clues into other local data volumes and former user-profile folders before concluding it is unavailable."

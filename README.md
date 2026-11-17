@@ -23,6 +23,7 @@
 | `docx-template-editor` | Word 양식, 변경 내용 추적, 댓글, 렌더 검증 |
 | `spreadsheet-form-preservation` | Excel 양식의 셀·수식·숨김 시트·인쇄 설정 보존 |
 | `document-scan-cleaner` | 사진 문서를 원문 픽셀을 보존한 스캔 이미지/PDF로 정리 |
+| `search-department-index` | 운영·본문 색인과 색인 밖의 기존 사용자 폴더를 대조해 학과 기록의 실제 위치와 문서 역할을 확인 |
 | `finalize-department-files` | 완료된 학과자료를 본문·학년도·업무철 기준으로 분류하고 파일명·이동·해시·색인을 검증 |
 | `korean-student-group-chat-notice` | 근거 자료에서 학생에게 필요한 일정·행동만 골라 단톡방 공지글과 세로형 공지 이미지를 제작 |
 | `imagegen` | 안내·교육용 이미지 생성과 편집, 실제 인쇄 해상도 확인과 사용자가 선택한 원본 디자인 보존 |
