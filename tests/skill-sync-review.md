@@ -1,5 +1,11 @@
 # Document skill synchronization review — 2026-09-08
 
+## 2026-11-17 reference-led student-poster revision
+
+A student notice used repeated rounded information cards, decorative emphasis and generic encouragement. The notice skill now treats a user's combined wording and design corrections as one current output baseline, checks removed wording across all repeated output locations, and uses visually inspected references to choose typography, whitespace, alignment and illustration treatment when requested. The completion check compares the actual saved text and image with that baseline and the requested reduction of boxes and decoration. Display-copy edits remain separate from authority to change original records or calendar data.
+
+Compared both complete installed and public notice-skill folders, including invocation metadata. They matched before this update; no related pending delta or public-only file was omitted. Both manifests and the public release scan passed. This is an instruction-only change; no executable helpers changed. Private notices, source facts and reference screenshots are excluded.
+
 ## Shared calendar evidence hash gate
 
 A single modified document can be linked as evidence by several events. A file-level scan/finish decision can advance even when only one of those links has the current hash. Added a read-only verifier that accepts a separately captured complete versioned calendar response and selected absolute document paths, hashes each current file, and checks every matching event/source link. Missing, malformed or stale link hashes, missing files and selected documents with no links fail. The shared-source check runs after an authorized save and before advancing the affected finish decision; callers must independently establish API-response completeness and freshness and rerun after concurrent changes. It does not update any calendar field or document and cannot establish semantic file integrity.
