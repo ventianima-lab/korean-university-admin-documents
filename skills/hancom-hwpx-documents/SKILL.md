@@ -5,6 +5,8 @@ description: Create, revise, inspect, repair, render, and verify Hancom HWPX doc
 
 # Hancom HWPX documents
 
+Before authoring from an activity-dependent memo, apply the [instruction-outcome gate](references/form-guidance-gate.md#activity-specific-instruction-outcomes). Bind each applicable directive to the actual activity and document role, required saved block/fields and obsolete example fields; retaining the memo or any linked edit does not complete its action. Every new filled HWPX invocation requires `require_instruction_outcomes: true` and the per-guidance-text outcome map. Record precise source-authorized structural adaptation or an explicit scoped user override separately from content-only permission; verify the exact saved outcome and unchanged surrounding content without treating that declaration as a strict structural-check exemption. Preserve review waivers and skill-only boundaries.
+
 Before placing authentic evidence images, apply the [receipt disposition and blank-mount gate](references/procurement-forms.md#receipt-disposition-and-blank-mount-gate) and [evidence-photo orientation gate](references/procurement-forms.md#consistent-evidence-photo-layout). Carry the current role/slot map into the authoring invocation; inspect upright orientation before insertion and verify every inserted image and reserved blank against the exact saved artifact.
 
 For stock purchased once for use across several sessions, apply the [purchase-lot and session reconciliation](references/procurement-forms.md#purchase-lots-used-across-sessions) before setting expense-form periods, calculation bases or goods-photo metadata. Receipt dates and receipt-form counts do not determine the operating scope.

@@ -97,6 +97,111 @@ class GuidanceTests(unittest.TestCase):
     def test_exact_annotated_blank_passes(self):
         self.assertEqual(self.problems(), set())
 
+    def outcome_fixture(self):
+        self.spec.update(stage='filled', require_instruction_outcomes=True,
+                         content_authority={'kind': 'user_facts', 'basis': 'synthetic purchase'})
+        observed = observe(load_package(self.source))
+        guidance = [t for t in observed['texts'] if next(
+            r for r in self.spec['text_reviews'] if r['id'] == t['id'])['classification'] == 'guidance']
+        self.spec['instruction_outcomes'] = [
+            {'evidence_id': t['id'], 'instruction_id': 'instruction-' + t['id'],
+             'target_role': 'purchase-detail block', 'activity_type': 'materials purchase',
+             'disposition': 'no_adaptation', 'reason': 'synthetic unrelated retained guidance'}
+            for t in guidance]
+        outcome = self.spec['instruction_outcomes'][0]
+        cell = loc(PART, [2, 0, 0, 1, 0])
+        outcome.update(disposition='adapt', expected_result='itemized supported purchase inputs',
+                       target_block=loc(PART, [2, 0, 0]), target_tag='tbl',
+                       required_fields=[{'target': cell, 'expected': 'VERIFIED ITEM'}],
+                       forbidden_text=['EXAMPLE INPUT'])
+        return outcome, cell
+
+    def fill_outcome(self):
+        outcome, cell = self.outcome_fixture()
+        leaf = {**cell, 'path': cell['path'] + [1, 0, 0, 0]}
+        ident = 'text:' + PART + ':' + '.'.join(map(str, leaf['path']))
+        review = next(r for r in self.spec['text_reviews'] if r['id'] == ident)
+        review['classification'] = 'placeholder'
+        iid = 'fill-item'
+        self.spec['instructions'].append({
+            'id': iid, 'evidence_ids': [outcome['evidence_id']], 'applicability': 'applies',
+            'permission': 'content_only', 'action': 'fill', 'scope': [leaf],
+            'reason': 'synthetic authorized purchase text input'})
+        self.spec['text_edits'] = [{'source': leaf, 'old': 'EXAMPLE INPUT', 'new': 'VERIFIED ITEM',
+                                   'instruction_id': iid, 'content_evidence': 'synthetic confirmed item'}]
+        changed = copy.deepcopy(self.xml)
+        node_at({PART: changed}, leaf).text = 'VERIFIED ITEM'
+        package(self.target, changed)
+        return outcome, changed
+
+    def test_required_outcome_inventory_rejects_blanket_retain_decision(self):
+        self.outcome_fixture()
+        self.spec['instruction_outcomes'] = []
+        self.assertIn('applicable_guidance_outcome_not_reviewed', self.problems())
+
+    def test_existing_semantic_invocation_cannot_bypass_outcomes_with_missing_or_false_flag(self):
+        self.outcome_fixture()
+        self.spec['instruction_outcomes'] = []
+        self.spec['require_field_semantics'] = True
+        for flag in (None, False):
+            if flag is None:
+                self.spec.pop('require_instruction_outcomes', None)
+            else:
+                self.spec['require_instruction_outcomes'] = flag
+            self.assertIn('applicable_guidance_outcome_not_reviewed', self.problems())
+
+    def test_retained_wrong_block_fails_even_when_memos_and_structure_pass(self):
+        self.outcome_fixture()
+        self.assertIn('adapted_required_field_mismatch', self.problems())
+        self.assertIn('inapplicable_prior_block_text_retained', self.problems())
+
+    def test_exact_saved_field_adaptation_passes(self):
+        self.fill_outcome()
+        self.assertEqual(self.problems(), set())
+
+    def test_matching_text_elsewhere_cannot_satisfy_target_cell(self):
+        self.outcome_fixture()
+        changed = copy.deepcopy(self.xml)
+        ET.SubElement(ET.SubElement(changed, '{'+HP+'}p'), '{'+HP+'}t').text = 'VERIFIED ITEM'
+        package(self.target, changed)
+        self.assertIn('adapted_required_field_mismatch', self.problems())
+
+    def test_memo_text_cannot_satisfy_saved_body_outcome(self):
+        outcome, _ = self.outcome_fixture()
+        outcome.update(target_block=loc(PART, [1]), target_tag='p', required_fields=[
+            {'target': loc(PART, [1]), 'expected': 'MEMO: delete trip block only if inapplicableOFFICIAL LABEL'}])
+        self.assertIn('adapted_required_field_mismatch', self.problems())
+
+    def test_outcome_field_outside_declared_block_is_rejected(self):
+        outcome, _ = self.outcome_fixture()
+        outcome['required_fields'][0]['target'] = loc(PART, [1])
+        with self.assertRaisesRegex(ValueError, 'inside its saved target block'):
+            self.problems()
+
+    def test_declared_structural_authority_never_exempts_original_fidelity(self):
+        outcome, changed = self.fill_outcome()
+        outcome.update(structure_change_required=True, structural_authority={
+            'kind': 'explicit_user_instruction', 'reference': 'synthetic scoped correction',
+            'quote': 'change only this purchase detail block', 'source_scope': [loc(PART, [2, 0, 0])]})
+        node_at({PART: changed}, loc(PART, [2, 0, 0])).set('colCnt', '3')
+        package(self.target, changed)
+        self.assertIn('original_table_labels_merges_or_protected_structure_changed', self.problems())
+
+    def test_outcome_cli_reports_flag_and_wrong_saved_block_failure(self):
+        self.fill_outcome()
+        specfile = self.root/'outcome-spec.json'
+        command = [sys.executable, str(Path(__file__).with_name('verify_form_guidance.py')),
+                   '--spec', str(specfile)]
+        specfile.write_text(json.dumps(self.spec), encoding='utf-8')
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(json.loads(result.stdout)['instruction_outcomes_required'])
+        package(self.target, self.xml)
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('adapted_required_field_mismatch', {
+            i['problem'] for i in json.loads(result.stdout)['issues']})
+
     def test_hidden_memo_text_is_not_visible_body(self):
         observed = observe(load_package(self.source))
         self.assertNotIn('delete trip', observed['visible_body_text'][PART])
@@ -268,7 +373,18 @@ class GuidanceTests(unittest.TestCase):
                   'semantic_role': 'payment method', 'source_kind': kind,
                   'placement_evidence': 'synthetic official row uses a transfer phrase'}}
         self.spec['text_edits'] = [edit]
+        self.retained_synthetic_outcomes()
         return edit
+
+    def retained_synthetic_outcomes(self):
+        # These legacy fixtures retain the trip block and instructions by construction;
+        # production callers must independently classify each actual directive.
+        self.spec['instruction_outcomes'] = [
+            {'evidence_id': r['id'], 'instruction_id': r['instruction_ids'][0],
+             'target_role': 'synthetic retained trip form', 'activity_type': 'synthetic applicable trip',
+             'disposition': 'no_adaptation',
+             'reason': 'trip remains applicable; detailed-activity note is retained in this fixture'}
+            for r in self.spec['text_reviews'] if r['classification'] == 'guidance']
 
     def test_identity_evidence_does_not_authorize_operational_phrase_replacement(self):
         self.semantic_edit()
@@ -486,6 +602,7 @@ class GuidanceTests(unittest.TestCase):
         self.spec.update(stage='filled', content_authority={'kind': 'user_facts', 'basis': 'synthetic current content'})
         self.assertEqual(self.problems(), set())
         self.spec['require_field_semantics'] = True
+        self.retained_synthetic_outcomes()
         self.assertIn('field_semantics_missing', self.problems())
         self.spec['text_insertions'][0]['field_semantics'] = {
             'field_context': 'attachment-title input', 'semantic_role': 'document title',

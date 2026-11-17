@@ -217,6 +217,91 @@ def field_semantic_issues(edit, required=False):
     return []
 
 
+def visible_text(node):
+    return ''.join(n.text or '' for _, n, memo in walk(node)
+                   if local(n.tag) == 't' and not memo)
+
+
+def instruction_outcomes_required(spec):
+    flag = spec.get('require_instruction_outcomes', False)
+    if not isinstance(flag, bool):
+        raise ValueError('require_instruction_outcomes must be boolean')
+    # Existing mandatory semantic invocations cannot silently reuse the old retain-only path.
+    return flag or spec.get('require_field_semantics', False)
+
+
+def instruction_outcome_issues(spec, before, after, reviews, texts, instructions,
+                             origins, destinations):
+    """Check declared activity-specific results in saved blocks, not memo retention."""
+    required = instruction_outcomes_required(spec)
+    outcomes = indexed(spec.get('instruction_outcomes', []), 'evidence_id', 'instruction_outcomes')
+    issues = []
+    def fail(problem, ident):
+        issues.append({'problem': problem, 'id': ident})
+    applicable = {ident for ident, review in reviews.items()
+                  if ident in texts and review['classification'] == 'guidance'
+                  and within(texts[ident]['location'], origins)
+                  and any(instructions[i]['applicability'] == 'applies'
+                          for i in review['instruction_ids'] if i in instructions)}
+    if required and spec['stage'] == 'filled':
+        for ident in sorted(applicable - outcomes.keys()):
+            fail('applicable_guidance_outcome_not_reviewed', ident)
+    for ident, outcome in outcomes.items():
+        if ident not in applicable:
+            raise ValueError('outcome must bind selected applicable guidance text')
+        iid = outcome.get('instruction_id')
+        if (iid not in reviews[ident]['instruction_ids']
+                or instructions[iid]['applicability'] != 'applies'):
+            raise ValueError('outcome instruction is not bound to applicable evidence')
+        for field in ('target_role', 'activity_type', 'reason'):
+            text(outcome.get(field), 'instruction_outcome.' + field)
+        disposition = outcome.get('disposition')
+        if disposition == 'no_adaptation':
+            continue
+        if disposition != 'adapt':
+            raise ValueError('outcome disposition must be adapt or no_adaptation')
+        text(outcome.get('expected_result'), 'instruction_outcome.expected_result')
+        block = outcome.get('target_block')
+        if not key(block)[1] or not within(block, destinations):
+            raise ValueError('outcome target block must be a specific mapped saved block')
+        node = node_at(after, block)
+        if local(node.tag) != text(outcome.get('target_tag'), 'instruction_outcome.target_tag'):
+            fail('adapted_block_type_mismatch', ident)
+        fields = rows(outcome.get('required_fields'), 'instruction_outcome.required_fields', True)
+        seen = set()
+        for field in fields:
+            if not isinstance(field, dict):
+                raise ValueError('outcome required field must be an object')
+            location = field.get('target')
+            if not within(location, [key(block)]) or key(location) in seen:
+                raise ValueError('outcome field must be unique and inside its saved target block')
+            seen.add(key(location))
+            expected = text(field.get('expected'), 'instruction_outcome.required_field.expected')
+            if visible_text(node_at(after, location)) != expected:
+                fail('adapted_required_field_mismatch', ident)
+        body = visible_text(node)
+        for forbidden in rows(outcome.get('forbidden_text'), 'instruction_outcome.forbidden_text'):
+            if text(forbidden, 'instruction_outcome.forbidden_text') in body:
+                fail('inapplicable_prior_block_text_retained', ident)
+        structural = outcome.get('structure_change_required', False)
+        if not isinstance(structural, bool):
+            raise ValueError('structure_change_required must be boolean')
+        if structural:
+            authority = outcome.get('structural_authority', {})
+            if not isinstance(authority, dict):
+                raise ValueError('structural authority must be an object')
+            if authority.get('kind') not in {'explicit_user_instruction', 'source_instruction'}:
+                fail('structural_adaptation_authority_missing', ident)
+            for field in ('reference', 'quote'):
+                text(authority.get(field), 'structural_authority.' + field)
+            for scope in rows(authority.get('source_scope'), 'structural_authority.source_scope', True):
+                node_at(before, scope)
+                if not key(scope)[1] or not within(scope, origins):
+                    raise ValueError('structural authority must identify narrow selected original blocks')
+            # This records authority only; it never exempts structural comparison below.
+    return issues
+
+
 def check_guidance(spec, source_override=None, target_override=None):
     if not isinstance(spec, dict) or spec.get('schema_version') != 1:
         raise ValueError('guidance schema_version must be 1')
@@ -484,6 +569,8 @@ def check_guidance(spec, source_override=None, target_override=None):
         target_node, target_selected = selected_nodes(comparable_after, region['target'])
         if region_fingerprint(*expected_regions[i]) != region_fingerprint(target_node, target_selected):
             fail('original_table_labels_merges_or_protected_structure_changed', str(i))
+    issues.extend(instruction_outcome_issues(spec, before, after, reviews, texts,
+                                            instructions, origins, destinations))
     if styles(expected, [], views=expected_regions) != styles(comparable_after, [r['target'] for r in regions]):
         fail('original_style_or_font_fingerprint_changed')
     return issues
@@ -508,6 +595,7 @@ def main():
                       'issues': issues, 'spec_sha256': hashlib.sha256(raw).hexdigest(),
                       'source_sha256': spec['source_sha256'], 'target_sha256': digest(Path(spec['target'])),
                       'field_semantics_required': spec.get('require_field_semantics', False),
+                      'instruction_outcomes_required': instruction_outcomes_required(spec),
                       'scope': 'declared original XML guidance/structure only; semantic and visual review separate'}
             code = 1 if issues else 0
     except (OSError, ValueError, TypeError, KeyError, RuntimeError, BadZipFile, ET.ParseError) as error:
