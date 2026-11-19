@@ -38,6 +38,10 @@ For student-authored diaries or reports, verify the actual writing fields and co
 
 Close the search with an existing verified source path and precise fields, or a scoped account of checked roots, formats and actual access/parser limits. Do not infer nonexistence from one index. Stop broad scans once a matching source has been independently verified; do not move, recreate or copy the user's records during a read-only search.
 
+## Program identity and awarded budgets
+
+When the request identifies a program by the responsible person and activity but omits its official title or award amount, check the owning office's current selection or registration notice and attached roster or allocation table before asking the user. Search the notice system by academic year, program category and owning office. Search the department budget ledger in parallel when available. A generic manual, earlier filled packet or department-wide budget total does not establish the identity, award, or current balance of a particular project. Verify the department, responsible person and project on the same source row. Cite the notice ID and attachment sheet/row or page, and distinguish the amount awarded from actual spending and available balance. If still unresolved, say which source or access is missing.
+
 ## Roster completeness and affiliation searches
 
 For a requested list of people and their organizations, establish the department and semester scope from the user's wording and named examples. A timetable or parking register supplies candidates for that scope; one department's register cannot establish a workspace-wide exhaustive list. If a named person falls outside the initial filter, reopen that filter and inspect the relevant department's current register before asking the user for information already in records.
