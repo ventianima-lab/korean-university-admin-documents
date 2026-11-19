@@ -6,6 +6,7 @@ import json
 import posixpath
 import re
 from pathlib import Path
+from typing import BinaryIO
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
@@ -18,14 +19,14 @@ def sha256(path: Path) -> str:
 
 
 
-def verify_section_package(path: Path) -> dict:
+def verify_section_package(source: Path | BinaryIO) -> dict:
     """Check section registrations and reject the incompatible UTF-8 alias.
 
     This detects a specific packaging mismatch; it does not repair a file or
     establish that an extracted section retains its required controls or layout.
     """
     section_pattern = re.compile(r"Contents/section[0-9]+\.xml")
-    with ZipFile(path) as package:
+    with ZipFile(source) as package:
         names = package.namelist()
         if len(names) != len(set(names)):
             raise ValueError("Duplicate ZIP members prevent section verification")
@@ -76,6 +77,45 @@ def verify_section_package(path: Path) -> dict:
             raise ValueError("Header secCnt does not match package section count")
         return {"status": "PASS", "header_secCnt": int(raw_count),
                 "section_count": len(referenced)}
+
+
+def verify_table_grid(source: Path | BinaryIO) -> dict:
+    """Check that stored table rows and merged cell coordinates agree."""
+    ns = {"hp": "http://www.hancom.co.kr/hwpml/2011/paragraph"}
+    table_count = 0
+    with ZipFile(source) as package:
+        for name in package.namelist():
+            if not re.fullmatch(r"Contents/section[0-9]+\.xml", name):
+                continue
+            section = ET.fromstring(package.read(name))
+            for table in section.findall(".//hp:tbl", ns):
+                label = f"{name}, table {table.get('id', table_count + 1)}"
+                rows = table.findall("hp:tr", ns)
+                if int(table.get("rowCnt", "0")) != len(rows) or not rows:
+                    raise ValueError(f"{label}: rowCnt does not match {len(rows)} stored rows")
+                columns = int(table.get("colCnt", "0"))
+                covered = set()
+                for row, entry in enumerate(rows):
+                    for cell in entry.findall("hp:tc", ns):
+                        address = cell.find("hp:cellAddr", ns)
+                        span = cell.find("hp:cellSpan", ns)
+                        if address is None or span is None:
+                            raise ValueError(f"{label}: row {row} has a missing cell address or span")
+                        if int(address.get("rowAddr", "-1")) != row:
+                            raise ValueError(f"{label}: rowAddr does not match stored row {row}")
+                        column = int(address.get("colAddr", "-1"))
+                        row_span = int(span.get("rowSpan", "0"))
+                        col_span = int(span.get("colSpan", "0"))
+                        if (column < 0 or min(row_span, col_span) < 1
+                                or row + row_span > len(rows) or column + col_span > columns):
+                            raise ValueError(f"{label}: row {row}, column {column}: cell extends outside the grid")
+                        slots = {(r, c) for r in range(row, row + row_span)
+                                 for c in range(column, column + col_span)}
+                        if slots & covered:
+                            raise ValueError(f"{label}: row {row}, column {column}: overlapping cell span")
+                        covered.update(slots)
+                table_count += 1
+    return {"status": "PASS", "table_count": table_count}
 
 
 def verify_embedded_images(path: Path) -> dict:
@@ -252,13 +292,26 @@ def main() -> None:
                         help="Check saved XML text only; does not validate or render the document")
     parser.add_argument("--images-only", action="store_true",
                         help="Check embedded image references and Hancom manifest metadata; no rendering")
+    parser.add_argument("--table-grid-only", action="store_true",
+                        help="Check section packaging, table row counts, cell addresses and spans; no rendering")
     args = parser.parse_args()
+    if args.table_grid_only and (args.sections_only or args.images_only or args.fields_only
+                                 or args.fields or args.roundtrip_dir):
+        parser.error("--table-grid-only cannot be combined with other validation modes or roundtrip")
     if args.images_only and (args.sections_only or args.fields_only or args.fields or args.roundtrip_dir):
         parser.error("--images-only cannot be combined with other validation modes or roundtrip")
     if args.sections_only and (args.fields_only or args.fields or args.roundtrip_dir):
         parser.error("--sections-only cannot be combined with --fields, --fields-only or --roundtrip-dir")
     if args.fields_only and (not args.fields or args.roundtrip_dir):
         parser.error("--fields-only requires --fields and cannot be combined with --roundtrip-dir")
+    if args.table_grid_only:
+        rows = [{"file": str(source.resolve()), "sha256": sha256(source),
+                 "section_package": verify_section_package(source), "table_grid": verify_table_grid(source)}
+                for source in args.inputs]
+        emit_report({"engine": "hwpx-xml-table-grid-check",
+                     "scope": "Package and table structure only; native opening and layout are separate.",
+                     "rows": rows}, args.report)
+        return
     if args.images_only:
         rows = [{"file": str(source.resolve()), "sha256": sha256(source),
                  "embedded_images": verify_embedded_images(source)} for source in args.inputs]

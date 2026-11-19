@@ -1,4 +1,5 @@
 """Exercise the header/spine mismatch observed after extracting a form."""
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
@@ -6,7 +7,7 @@ import subprocess
 import sys
 import unittest
 
-from validate_hwpx_opensource import verify_section_package, verify_embedded_images
+from validate_hwpx_opensource import verify_section_package, verify_embedded_images, verify_table_grid
 
 
 class SectionPackageTests(unittest.TestCase):
@@ -75,6 +76,44 @@ class SectionPackageTests(unittest.TestCase):
                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(before, self.path.read_bytes())
+
+    def test_table_grid_rejects_unregistered_cloned_rows_and_stale_addresses(self):
+        script = Path(__file__).with_name("validate_hwpx_opensource.py")
+        for row_count, last_address, last_column, expected_error in [
+            (2, 1, 1, None),
+            (1, 1, 1, "rowCnt"),
+            (2, 0, 1, "rowAddr"),
+            (2, 1, 0, "overlapping cell span"),
+            (2, 1, 2, "cell extends outside the grid"),
+        ]:
+            with self.subTest(row_count=row_count, last_address=last_address, last_column=last_column):
+                section = f'''<sec xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph">
+                    <hp:tbl rowCnt="{row_count}" colCnt="2">
+                        <hp:tr><hp:tc><hp:cellAddr rowAddr="0" colAddr="0"/>
+                            <hp:cellSpan rowSpan="2" colSpan="1"/></hp:tc>
+                        <hp:tc><hp:cellAddr rowAddr="0" colAddr="1"/>
+                            <hp:cellSpan rowSpan="1" colSpan="1"/></hp:tc></hp:tr>
+                        <hp:tr><hp:tc><hp:cellAddr rowAddr="{last_address}" colAddr="{last_column}"/>
+                            <hp:cellSpan rowSpan="1" colSpan="1"/></hp:tc></hp:tr>
+                    </hp:tbl></sec>'''
+                self.package(section_xml=section)
+                before = self.path.read_bytes()
+                self.assertEqual(verify_section_package(BytesIO(before))["section_count"], 1)
+                if expected_error:
+                    with self.assertRaisesRegex(ValueError, expected_error):
+                        verify_table_grid(BytesIO(before))
+                else:
+                    self.assertEqual(verify_table_grid(BytesIO(before))["table_count"], 1)
+                result = subprocess.run([sys.executable, str(script), str(self.path), "--table-grid-only"],
+                                        capture_output=True, text=True,
+                                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                self.assertEqual(self.path.read_bytes(), before)
+                if expected_error:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(expected_error, result.stderr)
+                else:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertIn('"table_count": 1', result.stdout)
 
 
 class EmbeddedImagePackageTests(unittest.TestCase):
