@@ -13,6 +13,8 @@ When a user selects complete-for-submission preparation with red marking of unco
 
 For requested document artifacts, produce the complete usable document or packet within the authorized scope. Calling a working file a draft does not justify leaving writable fields or required attachments unfinished. Respect a deliberate outline-only, review-only or limited-field request; this policy does not authorize changing unrelated records.
 
+When the user requests files in each project's folder, bind each deliverable to its actual destination and requested format in the output map before writing. Save or export the usable file to that destination and return its local link. A shared presentation or a temporary export alone does not fulfill local delivery.
+
 ## Fill from an independent inventory
 
 Before asking how to split or combine programmes, packets or output folders, inspect the current business folders and their latest working documents and output sets. Map each requested programme to its established folder, packet boundary and destination. Preserve that grouping without duplicate confirmation when the current structure and contents establish it; naming alone, archived copies or a generic preference question are not substitutes for inspection. Ask only about a material ambiguity that remains after inspection or a genuine requested change, identifying the unresolved choice. Pass this source-backed grouping map to any authoring worker before it writes; do not merge, split, move or duplicate packets merely to impose a new organization.
@@ -100,6 +102,8 @@ Keep the template's and user's existing normal colors, including blue or other f
 For HWPX, use [the existing red-span gate](../hancom-hwpx-documents/references/red-assumption-spans.md): independently map provenance before entering/coloring, verify the filled pre-color candidate, preserve and hash it, then verify the final exact-character colors and unchanged text/structure. Cite the standing instruction in `red_instruction` with `red_instruction_scope: "standing_preference"` when applicable. For DOCX and spreadsheets, use an equivalent source-bound run/rich-text or cell check and current render; do not color a whole cell when only part is an assumption. If the format/tool cannot preserve the required span, report that concrete limitation. A color, text, source mapping or preservation failure is `VERIFICATION_FAILED`: roll back the affected candidate to its verified baseline and repair it before delivery; never pass it by broadening the allowed color changes.
 
 ## Completion and handoff
+
+Apply a post-save review waiver when explicitly requested or when the user has defined a standing shorthand for it, such as “빨리.” Carry the waiver into the authoring instructions before writing. Complete the applicable source, form, roster and destination mapping first. After a successful save, report the saved paths and the scope of the waiver without reopening, rendering, hashing or otherwise reviewing the saved artifacts. Where the user requires a specific check, perform that check.
 
 Report source-pack preparation and the actual preflight sequence separately from filled-document verification. Do not retroactively claim a missing pre-write gate was performed; repair the pack while preserving existing finals and require a current pass before further authorized edits.
 
