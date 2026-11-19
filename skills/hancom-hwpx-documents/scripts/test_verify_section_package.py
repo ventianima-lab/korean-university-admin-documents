@@ -16,7 +16,7 @@ class SectionPackageTests(unittest.TestCase):
         self.path = Path(self.tmp.name) / "sample.hwpx"
 
     def package(self, count=1, declared=("section0",), referenced=("section0",),
-                stored=("section0",), relative=False):
+                stored=("section0",), relative=False, section_xml="<sec/>"):
         href = lambda name: name + ".xml" if relative else "Contents/" + name + ".xml"
         items = "".join('<item id="%s" href="%s"/>' % (name, href(name)) for name in declared)
         spine = "".join('<itemref idref="%s"/>' % name for name in referenced)
@@ -25,7 +25,7 @@ class SectionPackageTests(unittest.TestCase):
             z.writestr("Contents/content.hpf", "<package><manifest>" + items +
                        "</manifest><spine>" + spine + "</spine></package>")
             for name in stored:
-                z.writestr("Contents/" + name + ".xml", "<sec/>")
+                z.writestr("Contents/" + name + ".xml", section_xml)
 
     def test_extracted_one_section_cannot_claim_three(self):
         self.package(count=3)
@@ -33,6 +33,21 @@ class SectionPackageTests(unittest.TestCase):
             verify_section_package(self.path)
         self.package(count=1)
         self.assertEqual(verify_section_package(self.path)["section_count"], 1)
+
+    def test_cli_rejects_utf8_alias_but_accepts_utf8_declaration(self):
+        script = Path(__file__).with_name("validate_hwpx_opensource.py")
+        for encoding, accepted in [("utf8", False), ("UTF-8", True), ("utf-8", True)]:
+            with self.subTest(encoding=encoding):
+                section = f"<?xml version='1.0' encoding='{encoding}'?><sec>가</sec>"
+                self.package(section_xml=section)
+                before = self.path.read_bytes()
+                result = subprocess.run([sys.executable, str(script), str(self.path), "--sections-only"],
+                                        capture_output=True, text=True, encoding="utf-8",
+                                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                self.assertEqual(self.path.read_bytes(), before)
+                if not accepted:
+                    self.assertIn("Contents/section0.xml declares 'utf8'", result.stderr)
 
     def test_three_registered_sections_and_relative_paths(self):
         sections = ("section0", "section1", "section2")

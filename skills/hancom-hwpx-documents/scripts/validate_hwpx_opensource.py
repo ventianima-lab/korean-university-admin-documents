@@ -19,7 +19,7 @@ def sha256(path: Path) -> str:
 
 
 def verify_section_package(path: Path) -> dict:
-    """Check header secCnt against section parts registered in the package spine.
+    """Check section registrations and reject the incompatible UTF-8 alias.
 
     This detects a specific packaging mismatch; it does not repair a file or
     establish that an extracted section retains its required controls or layout.
@@ -29,6 +29,15 @@ def verify_section_package(path: Path) -> dict:
         names = package.namelist()
         if len(names) != len(set(names)):
             raise ValueError("Duplicate ZIP members prevent section verification")
+        utf8_alias = re.compile(
+            rb"""(?:\xef\xbb\xbf)?<\?xml\b[^?]*\bencoding\s*=\s*(['"])utf8\1""",
+            re.IGNORECASE,
+        )
+        for name in names:
+            if name.lower().endswith((".xml", ".hpf", ".rdf", ".rels")):
+                with package.open(name) as member:
+                    if utf8_alias.match(member.read(512)):
+                        raise ValueError(f"{name} declares 'utf8'; use the Hancom-compatible 'UTF-8'")
         header = ET.fromstring(package.read("Contents/header.xml"))
         raw_count = header.get("secCnt")
         if raw_count is None or not re.fullmatch(r"[0-9]+", raw_count):
@@ -238,7 +247,7 @@ def main() -> None:
     parser.add_argument("--report", type=Path)
     parser.add_argument("--fields", type=Path, help="JSON cell/paragraph expectations with source/reason")
     parser.add_argument("--sections-only", action="store_true",
-                        help="Check section count and package references only; no rendering")
+                        help="Check section count, package references and the UTF-8 declaration; no rendering")
     parser.add_argument("--fields-only", action="store_true",
                         help="Check saved XML text only; does not validate or render the document")
     parser.add_argument("--images-only", action="store_true",
@@ -264,7 +273,7 @@ def main() -> None:
             rows.append({"file": str(source), "sha256": sha256(source),
                          "section_package": verify_section_package(source)})
         emit_report({"engine": "hwpx-xml-section-check",
-                     "scope": "Section metadata check only; native opening, layout and other package checks are separate.",
+                     "scope": "Section metadata and UTF-8 declaration only; native opening and layout are separate.",
                      "rows": rows}, args.report)
         return
     expectations = json.loads(args.fields.read_text(encoding="utf-8-sig")) if args.fields else None
