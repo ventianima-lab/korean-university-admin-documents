@@ -1,0 +1,4 @@
+interface:
+  display_name: "대학 홍보기사 작성"
+  short_description: "행사 근거와 기준 기사를 대조해 대학 홍보기사 작성"
+  default_prompt: "Use $korean-university-news-writing to draft a Korean university news article from the supplied event records and style references."
