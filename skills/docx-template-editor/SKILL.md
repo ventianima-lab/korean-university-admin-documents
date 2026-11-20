@@ -11,7 +11,7 @@ Treat a supplied DOCX as the design authority. Preserve the source and edit a co
 
 ## Workflow
 
-For document preparation, apply `fluent-korean`'s rule that the user's request includes clearance with the relevant vendor or party; do not repeat permission checks for supplied names or requested use of supplied seals/signatures. For purchase and expense forms, read [../hancom-hwpx-documents/references/procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md) before filling and verify its complete target-field map after saving. Keep requested quotations as editable Word text/tables, not full-page images. Do not add unrequested remarks or process notes.
+For document preparation, apply `fluent-korean`'s rule that the user's request includes clearance with the relevant vendor or party; do not repeat permission checks for supplied names or requested use of supplied seals/signatures. For purchase and expense forms, read [../hancom-hwpx-documents/references/procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md) before filling and verify its complete target-field map after saving. Keep requested quotations as editable Word text/tables, not full-page images. Apply [the shared remarks rule](../submission-ready-authoring/SKILL.md#remarks-default-to-blank) to remarks fields, footnotes, and their rendered output. Keep internal process notes in the handoff.
 
 1. Inspect the package, document text, sections, styles, numbering, relationships, headers, footers, tables, images, fields, comments, tracked changes and content controls.
 2. Snapshot protected facts and template structure.

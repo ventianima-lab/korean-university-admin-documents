@@ -13,6 +13,8 @@ metadata:
 
 한글 텍스트의 "AI 티"를 한 번에 탐지·윤문·자체검증한다. Codex와 GitHub Copilot CLI는 단일 호출 경로만 제공한다. 진단→겨냥 윤문→finalize로 이어지는 다중 호출 경로는 Claude Code 전용이다.
 
+[공통 비고 입력 규칙](../submission-ready-authoring/SKILL.md#remarks-default-to-blank)을 적용한다. 윤문 중 비고와 각주에 설명을 추가하려면 양식의 명시 요구 또는 사용자의 사전 허락이 있어야 한다.
+
 ## Codex 자동 적용 모드
 
 - **인라인 모드(기본)**: 에이전트가 자신의 한국어 답변이나 현재 작성 중인 산출물을 최종 점검할 때 사용한다. 필요한 규칙만 적용하여 최종 문장을 바로 반환하며, `_workspace` 폴더, `final.md`, HTML 요약 또는 별도의 진단 보고서를 만들지 않는다.
