@@ -1,6 +1,6 @@
 ---
 name: uerp-accounting-resolutions
-description: Look up, draft, revise, attach evidence to, and verify Korean university U-ERP 수입결의서 and 지출결의서 in 작성 status. Use for prior ERP resolutions, 결의내용, 관련첨부파일, and checks of the printed resolution. Extend the workflow only after an additional operation has been verified in an authorized real task.
+description: Look up, draft, revise, attach evidence to, and verify Korean university U-ERP 수입결의서 and 지출결의서 in 작성 status. Use for verified supplementary-budget lookup and draft entry, prior ERP resolutions, 결의내용, 관련첨부파일, and checks of the printed resolution. Extend the workflow only after an additional operation has been verified in an authorized real task.
 ---
 
 # U-ERP 수입·지출결의
@@ -28,6 +28,12 @@ description: Look up, draft, revise, attach evidence to, and verify Korean unive
 - 지출 저장 경고에 표시된 계정코드를 기록한다. 결의번호가 생겼는지 별도 탭에서 다시 조회한다. 화면의 작성 상태나 저장 확인창만으로 저장을 판정하지 않는다.
 - `예산회계 → 부서예산업무 → 예산현황 → 예산집행현황조회`에서 회계연도·회계단위·회계구분·수지구분·예산부서를 맞춘 뒤 같은 사업·계정 행의 전체편성예산·집행·잔액을 비교한다. 같은 조건으로 `추경예산편성현황`의 실제 반영 내역을 확인한다. 은행 입금과 수입결의는 지출 예산 배정을 입증하지 않는다. 부족한 예산을 피하기 위해 다른 계정으로 옮기거나 금액을 임의로 줄이지 않는다.
 - `예산회계 → 부서예산업무 → 예산신청 → 추경예산신청`의 신청 입력, 제출, 승인 후 예산 반영은 각각 별도 단계다. 현재 차수와 대상 부서 등 입력 조건을 확인하고 신청 목록에서 중복을 점검한다. 동일 사업 선례에서 수입·지출을 각각 신청한 경우에는 현재 지침과 양쪽 계정을 확인한 뒤 같은 금액을 각각의 수지구분에 매핑한다. 회신기한이 있으면 요청과 반영 확인의 일정 판단에 사용한다. 조회나 오류 진단 요청만 받은 경우에는 신청을 저장하거나 제출하지 않는다.
+
+## 추경예산 신청과 임시저장
+
+- 전례는 `예산신청현황조회 → 신청번호 편성내역`에서 회계연도·회계단위·회계구분·예산부서·예산구분을 맞춰 찾는다. 신청번호를 열어 차수, 수지구분, 사업코드, 계정코드, 금액, 처리상태를 확인한다. 이전 확정액과 이번 증액 요청액은 별도 값이다.
+- 임시저장 권한이 있는 경우에만 `추경예산신청`에서 부서와 회계 조건을 맞추고 필요한 수지구분별로 신규 작성한다. 기편성현황에는 있는 사업이 신규 신청의 사업 검색에 나오지 않으면 검색 결과만으로 사업 미등록을 판단하지 않는다. 신규 화면의 `본예산선택입력`이 켜진 상태인지 먼저 확인한 뒤 기존 빈 사업 행을 사용한다. 빈 행이 없을 때만 사업계획서의 행을 추가한다. 그 행의 사업 검색창에서 정확한 코드를 입력하고 조회를 눌러 선택한다. 선택한 사업 및 상세 계정의 코드와 수지구분을 확인한다.
+- 상세내역의 `예산신청내용`에 근거 있는 내역을 입력한다. `산출근거 입력` 창에서 행을 추가하고 계산식을 기재한 뒤 Enter로 자동 계산된 금액을 대조한다. 확인 후 상세내역의 신청예산이 일치하고 빈 사업 행이 없는지 확인한다. 해당 화면의 `저장`으로 임시저장한 뒤 신청번호와 처리상태를 확인하고 `예산신청현황조회`에서 다시 조회한다. 화면상의 임시저장은 제출·승인·예산 반영이 아니다. 제출이나 다른 상태 변경은 해당 작업을 명시적으로 요청한 경우에만 진행한다.
 
 ## 비고와 출력물 확인
 
