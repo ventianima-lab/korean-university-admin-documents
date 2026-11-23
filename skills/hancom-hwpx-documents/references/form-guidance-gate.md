@@ -30,6 +30,12 @@ Verify the actual typeface, point size, and line spacing of the applicable parag
 
 Review the full rendered page against the applicable form and the accepted precedent for the same document role. Inspect numbered items and subitems, label and value alignment, table caption and unit placement, the spacing around the table, the attachment line and ending mark, and the approval footer. A valid opening and a one-page render do not verify the lower half. If the user shows their own corrections, preserve their wording, values and layout within the requested scope. Raise any source discrepancy or optional wording change separately in the handoff.
 
+### List alignment around a body divider
+
+If an official letter introduces a detailed list after a divider such as `아래`, map the opening paragraphs, numbered detail items, lettered subitems, and any wrapped lines to the institution's current rule and form before editing. Use a suitable completed example to confirm how those requirements were applied where the official form leaves the placement open. Check each group separately, especially if the opening paragraphs and detail items share a paragraph-property ID in the current draft.
+
+For an indentation-only correction, clone any shared paragraph property and assign the corrected copy only to the affected items. Inspect the saved page at normal scale and compare the left edges of all peer markers, the inset of subitems, and any wrapped text against the source layout. Check the saved package for changes outside the intended paragraph properties, including fonts, neighbouring paragraphs and tables. Preserving the font or passing XML validation does not establish that visible indentation matches the form.
+
 ## Read-only institutional requirement questions
 
 A template or completed precedent without a disputed mark cannot establish that the mark is optional. For questions such as whether a sender title, seal, signature or omission label belongs on a document, first identify the actual document role/stage, issuer and recipient: an internal approval draft, an issued letter and a signed confirmation may have different rules. Search the institution's current owning document, seal or signature regulations, their cross-references and relevant appendices, and current responsible-office guidance before making a mandatory/optional/absence judgment. Bind the effective version and applicability; examples and historical practice are secondary evidence, not substitutes for the owning rules.
