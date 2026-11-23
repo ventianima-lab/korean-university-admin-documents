@@ -52,6 +52,12 @@ Before handing off a list or generating one document per organization, reconcile
 
 A parking-application list or one year's classroom schedule is a partial operational list, not a complete personnel register. Check its inclusion rule before using it to exclude a lecturer. An explicit user correction of department or people overrides an inferred scope; replace that scope rather than unioning departments. Once the user confirms a person list, use it as an allowlist and check both missing and additional people in the answer and generated artifacts. Preserve excluded drafts outside the active deliverable folder and leave original records unchanged.
 
+### Contact fields for external participants
+
+When an appointment list identifies an external participant but omits contact fields, follow the owning department and activity into the appointment request, meeting or payment packet, partner records, and the previous edition of the same event where accessible. Inspect pertinent original attachment rows and later sheets beyond index previews; an index miss, bare appointment list, or name-only match does not close the contact search.
+
+Before filling a form, reconcile each mobile number and email with the requested name, organization and role. A previous application may provide contacts for a same-name person at another organization. Reuse those details only when current records or explicit user confirmation establish that the records refer to the same person. Record the precise source location for each verified field, check the saved values against that mapping, and identify the owning record or office and remaining unverified fields when evidence is insufficient.
+
 ## Evidence-role searches
 
 For vendor/travel evidence availability, apply the composite-evidence role map in [procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md) before declaring a role absent. Use the limits below as an invocation gate: inspect the complete live candidate, including later pages and embedded scans, and cite each role's file/page/field. Match company, vehicle and effective period; distinguish passenger insurance, vehicle mutual-aid coverage and company bonds. Related date fields do not prove a separate certificate exists. Keep historical availability independent from current-trip suitability. For a read-only request, return the map in chat and leave source records, checklists and prepared packets unchanged; do not create a new inventory file.
