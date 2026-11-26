@@ -60,6 +60,14 @@ Before filling a form, reconcile each mobile number and email with the requested
 
 ## Evidence-role searches
 
+### Portraits and signature assets
+
+Before reporting a portrait or signature missing, inspect the relevant personnel folders and complete CV/application/payment records, not just name-matched image files or indexed text. Inspect embedded HWP OLE `BinData`, HWPX media and PDF page content in context. An initial CV without a photograph does not close the search across comparable records. A PDF can show a signature-like name through text glyphs or vector artwork even when its embedded-image count is zero. Check the source page visually and distinguish a styled typed name from a handwritten signature; neither an asset nor its filename proves renewed signing or consent.
+
+Bind each found asset to the named person's source record and its precise page, field or embedded member. For a requested name-only transparent export, preserve the original strokes or glyphs and exclude adjacent printed markers such as `(인)` or `(서명)` and opaque backgrounds. A rectangular page crop that still includes those markers is incomplete. When the source separates text/artwork objects, export only the relevant original objects with their original font, glyphs and placement; do not redraw a signature or substitute a font. If overlapping content cannot be separated faithfully, report that concrete limitation rather than silently changing the ink.
+
+Before handing off or archiving an exported asset, compare the complete visible result with its source, check for clipped strokes and unwanted neighbouring content, and verify the PNG actually has transparent pixels. Inspect a temporary contrasting-background preview when transparent black ink is invisible in the viewer; do not replace the transparent deliverable with that preview. When archiving is authorized, reuse the established signature/photo folder, check for an existing matching asset, preserve the source and record provenance outside the image. A lookup or archive request alone does not authorize inserting a signature into a new document.
+
 For vendor/travel evidence availability, apply the composite-evidence role map in [procurement-forms.md](../hancom-hwpx-documents/references/procurement-forms.md) before declaring a role absent. Use the limits below as an invocation gate: inspect the complete live candidate, including later pages and embedded scans, and cite each role's file/page/field. Match company, vehicle and effective period; distinguish passenger insurance, vehicle mutual-aid coverage and company bonds. Related date fields do not prove a separate certificate exists. Keep historical availability independent from current-trip suitability. For a read-only request, return the map in chat and leave source records, checklists and prepared packets unchanged; do not create a new inventory file.
 
 ## Content limits
