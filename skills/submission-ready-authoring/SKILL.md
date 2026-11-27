@@ -121,6 +121,9 @@ For HWPX, use [the existing red-span gate](../hancom-hwpx-documents/references/r
 
 ## Completion and handoff
 
+For a print mockup with temporarily substituted source content, keep the requested visible title, team labels and other intended layout content. Track replacement provenance and corrections in private work notes or the handoff. Before saving, scan the cover, table of contents, bylines, running headings and body for unrequested substitute, draft or process labels. Remove those labels unless the user or governing source specifically requests them. Keep team membership distinct from original authorship when the draft uses an existing example. When the user requests an editable Hangul booklet, verify one native-editable artifact with the full page order, actual contents-page destinations and in-place images. Use a temporary PDF only to check the exact native render when it is needed.
+
+
 When the user defines a rush shorthand such as “빨리” to skip post-save review, carry that instruction into the authoring plan. Complete applicable source, form, roster and destination mapping. Validate the actual serialized payload in memory before writing. Check package integrity, changed structural invariants and requested fields against independent inputs. Write the same checked bytes atomically. For rush work, omit post-save reopening, rendering and extra review, and report what was checked before saving. A failed pre-save check must be corrected before publication. Perform later checks only as authorized.
 
 Report source-pack preparation and the actual preflight sequence separately from filled-document verification. Do not retroactively claim a missing pre-write gate was performed; repair the pack while preserving existing finals and require a current pass before further authorized edits.
