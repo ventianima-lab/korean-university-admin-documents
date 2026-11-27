@@ -121,6 +121,8 @@ For HWPX, use [the existing red-span gate](../hancom-hwpx-documents/references/r
 
 ## Completion and handoff
 
+When the user expressly selects a prior booklet as the layout master, map its full printed sequence before authoring: cover, colophon, contents, each introductory subsection, diagrams, tables, activity-photo slots, paper styles and page-number scheme. Start from the actual corresponding master pages or objects, replace current-year content and retain their layout. A copied cover does not establish re-use of the introduction or booklet. Compare the rendered result side by side section by section, and check that no required source block was silently condensed into prose. Record any unavoidable layout adaptation and recalculate the contents against the actual native pages.
+
 For a print mockup with temporarily substituted source content, keep the requested visible title, team labels and other intended layout content. Track replacement provenance and corrections in private work notes or the handoff. Before saving, scan the cover, table of contents, bylines, running headings and body for unrequested substitute, draft or process labels. Remove those labels unless the user or governing source specifically requests them. Keep team membership distinct from original authorship when the draft uses an existing example. When the user requests an editable Hangul booklet, verify one native-editable artifact with the full page order, actual contents-page destinations and in-place images. Use a temporary PDF only to check the exact native render when it is needed.
 
 
